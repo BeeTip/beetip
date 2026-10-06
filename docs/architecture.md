@@ -1,6 +1,16 @@
 # Proposed pilot architecture
 
-Decision date: 6 October 2026. Status: recommendation for the application scaffolding step, not an implemented system.
+Decision date: 6 October 2026. Status: browser-local demo implemented; the connected pilot architecture below remains the next integration step.
+
+## Implemented foundation
+
+The monorepo now has a Next.js application, mobile-first cream-and-amber tokens, local SVG illustrations, self-hosted Geist Sans, shared TypeScript domain logic, shared Zod validation, and a versioned synthetic browser adapter. All member routes and a simulated admin area are connected. The reference payment-method strip was replaced with manual-funding instructions; QR codes appear only after the customer checks goods and requests confirmation.
+
+The demo demonstrates both listing journeys, immutable accepted terms, funding gates, amendment consent, receipt allocation, separate trip-order confirmations, disputes, second-admin transfer review, ambiguous-transfer recovery, CSV reconciliation, chat, ratings, and feedback. Reservations expire during local operation and when persisted records are restored. Tests run against domain rules and a production build.
+
+The adapter stores readable synthetic records in one browser and has no trusted security boundary or multi-user transaction isolation. It cannot establish authentic identity, real payment evidence, independent reviewers, protected addresses, or server token secrecy. Database concurrency, private storage, live funds, email delivery, and physical camera compatibility remain integration or device-validation gates.
+
+For post-purchase cancellation, the demo reimburses approved purchased goods and returns the fee and remainder after review. The connected implementation must replace that default with the PRD's evidence-based allocation policy. Listing cutoff defaults to 24 hours; delivery windows are text terms. There is no scheduler, notification service, native app, PWA cache, or deployment in this milestone.
 
 ## Product constraints
 

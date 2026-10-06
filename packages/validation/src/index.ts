@@ -1,0 +1,54 @@
+import { z } from "zod";
+
+export const listingSchema = z.object({
+  type: z.enum(["request", "trip"]),
+  title: z.string().trim().min(4, "Judul minimal 4 karakter").max(100),
+  shop: z.string().trim().min(2, "Isi lokasi belanja").max(100),
+  category: z.enum(["Makanan", "Minuman", "Belanja"]),
+  area: z.string().trim().min(2, "Isi area tujuan").max(100),
+  window: z.string().trim().min(2, "Isi waktu pengantaran").max(100),
+  item: z.string().trim().min(2, "Isi rincian item").max(500),
+  quantity: z.number().int().min(1).max(50),
+  budget: z.number().int().min(1000).max(150000, "Maksimal Rp150.000"),
+  fee: z.number().int().min(0).max(150000),
+  negotiable: z.boolean(),
+  bound: z.number().int().min(0).max(150000),
+  capacity: z.number().int().min(1).max(3),
+  spendingCapacity: z.number().int().min(1000).max(450000),
+}).refine(l => !l.negotiable || (l.type === "request" ? l.bound >= l.fee : l.bound <= l.fee), { path: ["bound"], message: "Batas tidak sesuai ongkos yang ditawarkan" });
+
+export type ListingInput = z.infer<typeof listingSchema>;
+
+const amount = z.number().int().nonnegative().safe();
+const timestamp = z.number().finite().nonnegative();
+const id = z.string().min(1);
+const terms = z.object({ title: id, item: id, quantity: z.number().int().positive(), budget: amount, fee: amount, destination: id, window: id });
+const orderSchema = z.object({
+  id, listingId: id, customerId: id, providerId: id, terms,
+  budget: amount, approvedItem: id,
+  state: z.enum(["awaiting_payment", "ready_to_purchase", "purchasing", "approval_required", "purchased", "delivering", "delivery_confirmed", "cancelled"]),
+  createdAt: timestamp, reservationUntil: timestamp,
+  funding: z.array(z.object({ id, amount, reference: id, status: z.enum(["pending", "verified"]), verifiedBy: id.optional() })),
+  receipts: z.array(z.object({ key: id, reference: id, line: id, amount })),
+  transfers: z.array(z.object({ id, kind: z.enum(["payout", "refund"]), amount, reference: id, status: z.enum(["review", "ready", "ambiguous", "completed"]), createdBy: id, reviewedBy: id.optional() })),
+  amendment: z.object({ item: id, budget: amount, reason: id, status: z.enum(["pending", "approved", "rejected"]) }).optional(),
+  dispute: z.object({ reason: id, openedBy: id, resolvedBy: id.optional(), resolution: id.optional() }).optional(),
+  confirmation: z.object({ code: z.string().regex(/^\d{6}$/), expiresAt: timestamp, attempts: z.number().int().nonnegative(), used: z.boolean() }).optional(),
+  retiredCodes: z.array(z.string().regex(/^\d{6}$/)).optional(),
+  confirmedBy: id.optional(), confirmedAt: timestamp.optional(), cancellationRequested: id.optional(),
+  ratings: z.array(z.object({ authorId: id, score: z.number().int().min(1).max(5), feedback: id })),
+});
+
+export const demoStorageSchema = z.object({
+  actorId: id,
+  state: z.object({
+    version: z.literal(1),
+    members: z.array(z.object({ id, name: id, verified: z.boolean(), admin: z.boolean() })).min(1),
+    listings: z.array(z.object({ id, ownerId: id, type: z.enum(["request", "trip"]), title: id, shop: id, category: z.enum(["Makanan", "Minuman", "Belanja"]), area: id, window: id, cutoff: timestamp, budget: amount, fee: amount, negotiable: z.boolean(), bound: amount, capacity: z.number().int().min(1).max(3), spendingCapacity: amount, item: id, quantity: z.number().int().positive(), closed: z.boolean() })),
+    offers: z.array(z.object({ id, listingId: id, authorId: id, fee: amount, budget: amount, item: id, quantity: z.number().int().positive(), destination: id, window: id, status: z.enum(["active", "withdrawn", "accepted"]) })),
+    orders: z.array(orderSchema),
+    messages: z.array(z.object({ id, orderId: id, authorId: id, text: id, at: timestamp })),
+    audit: z.array(z.object({ operationId: id, actorId: id, type: id, targetId: id, resultId: id.optional(), at: timestamp, detail: id })),
+    operations: z.array(id),
+  }),
+}).refine(data => data.state.members.some(m => m.id === data.actorId), "Persona tidak tersedia");
