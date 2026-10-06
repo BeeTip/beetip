@@ -27,7 +27,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         setState(parsed.state); setActorId(parsed.actorId);
       }
     } catch (error) {
-      if (error instanceof SyntaxError || (error instanceof Error && error.message === "incompatible")) { setCorrupt(true); setStorageIssue("Data demo tidak kompatibel atau rusak. Reset untuk mulai kembali."); }
+      if (error instanceof SyntaxError || (error instanceof Error && error.message === "incompatible")) { setCorrupt(true); setStorageIssue("Data lokal tidak kompatibel atau rusak. Reset untuk melanjutkan."); }
       else setStorageIssue("Penyimpanan browser tidak tersedia. Perubahan hanya bertahan selama sesi ini.");
     }
     setReady(true);
@@ -52,16 +52,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   };
   const service = new DemoService(state, actorId);
   const run = (command: Command) => {
-    if (corrupt) { const result: Result<string> = { ok: false, code: "INVALID_STATE", message: "Reset data demo sebelum melanjutkan." }; setNotice(result.message); return result; }
+    if (corrupt) { const result: Result<string> = { ok: false, code: "INVALID_STATE", message: "Reset data lokal sebelum melanjutkan." }; setNotice(result.message); return result; }
     const next = structuredClone(state);
     const result = new DemoService(next, actorId).execute(command, `demo-${crypto.randomUUID()}`);
     setState(next); persist(next, actorId);
-    setNotice(result.ok ? "Perubahan demo tersimpan." : result.message);
+    setNotice(result.ok ? "Perubahan tersimpan." : result.message);
     return result;
   };
   const reset = () => {
     const next = createSeed();
-    setState(next); setActorId("customer"); setCorrupt(false); setStorageIssue(""); setNotice("Demo direset ke contoh awal.");
+    setState(next); setActorId("customer"); setCorrupt(false); setStorageIssue(""); setNotice("Data lokal direset.");
     try {
       localStorage.setItem(key, JSON.stringify({ state: next, actorId: "customer" }));
       for (const member of next.members) sessionStorage.removeItem(`beetip-draft-${member.id}`);

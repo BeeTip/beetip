@@ -54,7 +54,7 @@ Browser tests build the production application and start an isolated server on p
 
 To start a fresh customer request, use the coffee request on Beranda: Rizky offers, Nadia accepts, Nadia records funding, an admin verifies it, and Rizky purchases and delivers. To try a combined trip, create one as Rizky and submit separate offers as Nadia, Salma, and Dimas. The seeded AEON trip already contains three customer orders at different stages.
 
-All personas are fictional. The selector is a demo tool, not login. Progress is stored under `beetip-demo-v1` in this browser; listing drafts use session storage. Reset demo restores fixtures. Corrupt or incompatible records require a visible reset. Blocked storage falls back to memory. Demo data does not synchronize across browsers or tabs.
+The interface uses product-facing copy without demo banners. All personas remain fictional, and the account selector is a local testing tool, not login. Progress is stored under `beetip-demo-v1` in this browser; listing drafts use session storage. Reset data lokal restores fixtures. Corrupt or incompatible records require a visible reset. Blocked storage falls back to memory. Data does not synchronize across browsers or tabs.
 
 QR scanning requires camera permission and localhost or HTTPS. Code entry is always available. Codes last 60 seconds, regeneration invalidates the preceding code, and five failed attempts require regeneration. Physical Android/iOS camera behavior remains a manual device check.
 

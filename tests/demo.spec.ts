@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 async function persona(page: Page, id: string) {
   await page.goto("/profile");
-  await page.getByLabel("Persona demo").selectOption(id);
+  await page.getByLabel("Akun aktif").selectOption(id);
 }
 
 test("handover and second-admin refund reconcile the PRD example", async ({ page }) => {
@@ -19,21 +19,21 @@ test("handover and second-admin refund reconcile the PRD example", async ({ page
   await page.getByRole("button", { name: "Konfirmasi penerimaan" }).click();
   await expect(page.getByRole("heading", { name: "Penerimaan dikonfirmasi" })).toBeVisible();
   await persona(page, "admin1"); await page.goto("/orders/BTP-001");
-  await page.getByRole("button", { name: "Siapkan payout simulasi" }).click();
+  await page.getByRole("button", { name: "Siapkan payout" }).click();
   await page.getByRole("button", { name: "Hasil ambigu" }).click();
   await expect(page.getByText("Hasil ambigu, perlu rekonsiliasi", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "Rekonsiliasi: terkirim" }).click();
-  await page.getByRole("button", { name: "Ajukan refund simulasi" }).click();
+  await page.getByRole("button", { name: "Ajukan refund" }).click();
   await page.getByRole("button", { name: "Tinjau dengan admin lain" }).click();
   await expect(page.getByRole("status")).toContainText("Administrator lain");
   await persona(page, "admin2"); await page.goto("/orders/BTP-001");
   await page.getByRole("button", { name: "Tinjau dengan admin lain" }).click();
   await page.getByRole("button", { name: "Catat transfer selesai" }).click();
-  await expect(page.getByText("Dana direkonsiliasi · demo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Dana direkonsiliasi", { exact: true })).toBeVisible();
   await expect(page.locator(".amount-row").filter({ hasText: "Payout selesai" })).toContainText("65.000");
   await expect(page.locator(".amount-row").filter({ hasText: "Refund selesai" })).toContainText("5.000");
   await persona(page, "customer"); await page.goto("/orders/BTP-001");
-  await page.getByLabel("Feedback pilot fiktif").fill("Titipan mudah dipantau (demo).");
+  await page.getByLabel("Ceritakan pengalamanmu").fill("Titipan mudah dipantau (demo).");
   await page.getByRole("button", { name: "Kirim rating & feedback" }).click();
   await expect(page.getByRole("heading", { name: "Bagaimana pengalamanmu?" })).toHaveCount(0);
 });
@@ -45,9 +45,9 @@ test("customer request completes from offer to settlement", async ({ page }) => 
   await page.getByRole("button", { name: "Terima penawaran" }).click();
   await expect(page).toHaveURL(/\/orders\/demo-/);
   const url = page.url();
-  await page.getByRole("button", { name: "Catat pembayaran simulasi" }).click();
+  await page.getByRole("button", { name: "Catat pembayaran" }).click();
   await persona(page, "admin1"); await page.goto(url);
-  await page.getByRole("button", { name: "Verifikasi dana simulasi" }).click();
+  await page.getByRole("button", { name: "Catat verifikasi dana" }).click();
   await persona(page, "provider"); await page.goto(url);
   await page.getByRole("button", { name: "Mulai pembelian" }).click();
   await page.getByRole("button", { name: "Simpan alokasi struk" }).click();
@@ -61,9 +61,9 @@ test("customer request completes from offer to settlement", async ({ page }) => 
   await page.getByRole("button", { name: "Konfirmasi penerimaan" }).click();
   await expect(page.getByRole("heading", { name: "Penerimaan dikonfirmasi" })).toBeVisible();
   await persona(page, "admin1"); await page.goto(url);
-  await page.getByRole("button", { name: "Siapkan payout simulasi" }).click();
+  await page.getByRole("button", { name: "Siapkan payout" }).click();
   await page.getByRole("button", { name: "Catat transfer selesai" }).click();
-  await expect(page.getByText("Dana direkonsiliasi · demo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Dana direkonsiliasi", { exact: true })).toBeVisible();
 });
 
 test("provider trip accepts three customers independently", async ({ page }) => {
@@ -73,7 +73,7 @@ test("provider trip accepts three customers independently", async ({ page }) => 
   await page.getByLabel("Toko / lokasi belanja").fill("AEON demo");
   await page.getByLabel("Contoh item / kategori tersedia").fill("Teh susu");
   await page.getByLabel("Ongkos minimal (Rp)").fill("7000");
-  await page.getByRole("button", { name: "Terbitkan listing demo" }).click();
+  await page.getByRole("button", { name: "Terbitkan listing" }).click();
   await expect(page).toHaveURL(/\/listings\/demo-/);
   const listingURL = page.url(); const orders: string[] = [];
   for (const customer of ["customer", "customer2", "customer3"]) {
@@ -92,28 +92,28 @@ test("provider trip accepts three customers independently", async ({ page }) => 
   await page.getByRole("button", { name: "Buka sengketa" }).click();
   await persona(page, "customer"); await page.goto(orders[0]);
   await expect(page.getByText("Sengketa aktif", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Catat pembayaran simulasi" }).click();
+  await page.getByRole("button", { name: "Catat pembayaran" }).click();
   await expect(page.getByText("Menunggu verifikasi", { exact: true })).toBeVisible();
 });
 
 test("private routes, unverified persona, chat persistence and reset", async ({ page }) => {
   await page.goto("/chat/BTP-001");
-  await page.getByLabel("Pesan demo").fill("Pesan sintetis untuk tes");
-  await page.getByRole("button", { name: "Kirim pesan demo" }).click();
+  await page.getByLabel("Pesan").fill("Pesan sintetis untuk tes");
+  await page.getByRole("button", { name: "Kirim pesan" }).click();
   await page.reload(); await expect(page.locator(".chat-message").filter({ hasText: "Pesan sintetis untuk tes" })).toBeVisible();
   await persona(page, "customer2"); await page.goto("/orders/BTP-001");
   await expect(page.getByRole("heading", { name: "Pesanan tidak tersedia" })).toBeVisible();
   await persona(page, "unverified"); await page.goto("/listings/new");
   await expect(page.getByRole("heading", { name: "Verifikasi diperlukan" })).toBeVisible();
-  await page.goto("/profile"); await page.getByRole("button", { name: "Reset demo", exact: true }).click();
-  await page.getByRole("button", { name: "Ya, reset demo" }).click();
+  await page.goto("/profile"); await page.getByRole("button", { name: "Reset data lokal", exact: true }).click();
+  await page.getByRole("button", { name: "Ya, reset data lokal" }).click();
   await page.goto("/chat/BTP-001"); await expect(page.locator(".chat-message").filter({ hasText: "Pesan sintetis untuk tes" })).toHaveCount(0);
 });
 
 test("corrupt storage requires reset and disabled storage remains usable", async ({ page }) => {
   await page.goto("/"); await page.evaluate(() => localStorage.setItem("beetip-demo-v1", "broken")); await page.reload();
   await expect(page.locator(".storage-warning")).toContainText("rusak");
-  await page.getByRole("button", { name: "Reset demo", exact: true }).click();
+  await page.getByRole("button", { name: "Reset data lokal", exact: true }).click();
   await expect(page.locator(".storage-warning")).toHaveCount(0);
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new DOMException("Unavailable", "SecurityError"); }; });
   await page.reload(); await persona(page, "provider");
