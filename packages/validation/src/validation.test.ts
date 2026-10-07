@@ -8,7 +8,7 @@ describe("persisted demo validation", () => {
     expect(demoStorageSchema.safeParse({ state, actorId: "customer" }).success).toBe(true);
     expect(demoStorageSchema.safeParse({ state, actorId: "unknown" }).success).toBe(false);
     expect(demoStorageSchema.safeParse({ state: { ...state, orders: [{ ...state.orders[0], funding: [{ amount: "bad" }] }] }, actorId: "customer" }).success).toBe(false);
-    expect(demoStorageSchema.safeParse({ state: { ...state, version: 2 }, actorId: "customer" }).success).toBe(false);
+    expect(demoStorageSchema.safeParse({ state: { ...state, version: 3 }, actorId: "customer" }).success).toBe(false);
   });
   it("rejects contradictory fee bounds and noninteger money", () => {
     const listing = createSeed().listings[0];

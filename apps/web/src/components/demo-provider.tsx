@@ -1,15 +1,15 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { createSeed, DemoService, type Command, type Result, type State } from "@beetip/domain";
+import { createSeed, DemoService, migrateState, type Command, type Result, type State } from "@beetip/domain";
 import { demoStorageSchema } from "@beetip/validation";
 
-const key = "beetip-demo-v1";
+const key = "beetip-demo-v2";
 type DemoContext = { service: DemoService; state: State; actorId: string; setActor: (id: string) => void; run: (c: Command) => Result<string>; ready: boolean; storageIssue: string; corrupt: boolean; reset: () => void; notice: string };
 const Context = createContext<DemoContext | null>(null);
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>(() => createSeed());
+  const [state, setState] = useState<State>(() => migrateState(createSeed()));
   const [actorId, setActorId] = useState("customer");
   const [ready, setReady] = useState(false);
   const [storageIssue, setStorageIssue] = useState("");
@@ -18,13 +18,14 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     queueMicrotask(() => {
     try {
-      const raw = localStorage.getItem(key);
+      const raw = localStorage.getItem(key) ?? localStorage.getItem("beetip-demo-v1");
       if (raw) {
         const result = demoStorageSchema.safeParse(JSON.parse(raw));
         if (!result.success) throw new Error("incompatible");
-        const parsed = result.data;
+        const parsed = { ...result.data, state: migrateState(result.data.state) };
         new DemoService(parsed.state, parsed.actorId).expireReservations();
         setState(parsed.state); setActorId(parsed.actorId);
+        try { localStorage.setItem(key, JSON.stringify(parsed)); } catch { setStorageIssue("Penyimpanan browser tidak tersedia. Perubahan hanya bertahan selama sesi ini."); }
       }
     } catch (error) {
       if (error instanceof SyntaxError || (error instanceof Error && error.message === "incompatible")) { setCorrupt(true); setStorageIssue("Data lokal tidak kompatibel atau rusak. Reset untuk melanjutkan."); }
@@ -60,11 +61,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     return result;
   };
   const reset = () => {
-    const next = createSeed();
+    const next = migrateState(createSeed());
     setState(next); setActorId("customer"); setCorrupt(false); setStorageIssue(""); setNotice("Data lokal direset.");
     try {
       localStorage.setItem(key, JSON.stringify({ state: next, actorId: "customer" }));
-      for (const member of next.members) sessionStorage.removeItem(`beetip-draft-${member.id}`);
+      for (const member of next.members) { sessionStorage.removeItem(`beetip-draft-${member.id}`); sessionStorage.removeItem(`beetip-draft-v2-${member.id}`); }
     } catch { setStorageIssue("Penyimpanan browser tidak tersedia."); }
   };
   return <Context.Provider value={{ state, service, actorId, setActor: id => { setActorId(id); persist(state, id); setNotice(""); }, run, ready, corrupt, storageIssue, reset, notice }}>{children}</Context.Provider>;

@@ -17,7 +17,7 @@ The demo uses Next.js, React, TypeScript, Tailwind CSS, Radix/shadcn-style primi
 | `packages/validation` | Shared input schemas and API contracts. |
 | `packages/database` | Generated database types and database access utilities. |
 | `supabase/migrations` | Schema, permissions, constraints, and atomic transaction functions. |
-| `docs/PRD.md` | Copy of the supplied review-draft PRD. |
+| `docs/PRD.md` | Product requirements and accepted UX decisions. |
 | `docs/architecture.md` | Proposed stack, PRD mapping, delivery sequence, and operational gates. |
 
 `packages/database` and `supabase/migrations` reserve ownership boundaries for the connected backend. Domain and validation packages already contain shared logic. Task orchestration is deferred.
@@ -54,13 +54,13 @@ Browser tests build the production application and start an isolated server on p
 
 To start a fresh customer request, use the coffee request on Beranda: Rizky offers, Nadia accepts, Nadia records funding, an admin verifies it, and Rizky purchases and delivers. To try a combined trip, create one as Rizky and submit separate offers as Nadia, Salma, and Dimas. The seeded AEON trip already contains three customer orders at different stages.
 
-The interface uses product-facing copy without demo banners. All personas remain fictional, and the account selector is a local testing tool, not login. Progress is stored under `beetip-demo-v1` in this browser; listing drafts use session storage. Reset data lokal restores fixtures. Corrupt or incompatible records require a visible reset. Blocked storage falls back to memory. Data does not synchronize across browsers or tabs.
+The interface uses product-facing copy without demo banners. All personas remain fictional, and the account selector is a local testing tool, not login. Progress is stored under `beetip-demo-v2` in this browser, with validated version 1 migration; listing drafts use session storage. Reset data lokal restores fixtures. Corrupt or incompatible records require a visible reset. Blocked storage falls back to memory. Data does not synchronize across browsers or tabs.
 
 QR scanning requires camera permission and localhost or HTTPS. Code entry is always available. Codes last 60 seconds, regeneration invalidates the preceding code, and five failed attempts require regeneration. Physical Android/iOS camera behavior remains a manual device check.
 
 ## Workflow and limits
 
-Defaults: three customers per trip, Rp150,000 item budget per customer, 15-minute unpaid reservations, and zero platform fees. Demo listings expire after 24 hours. Delivery windows are explicit text agreed in the offer. Reserving and checking capacity occur synchronously within the local service; this does not prove database concurrency safety.
+Defaults: three customers per offered jastip, Rp150,000 shopping budget per customer, 15-minute unpaid reservations, and zero platform fees. New listings have explicit WIB deadlines and delivery windows. Legacy order windows remain unchanged. Reserving and checking capacity occur synchronously within the local service; this does not prove database concurrency safety.
 
 Fulfillment and fund movements are separate. Receipt reference plus line allocation cannot be reimbursed twice. Funding, payout, and refund references are unique. Failed confirmation attempts are audited without recording the entered code. Refunds, disputed payouts, and post-purchase cancellation payouts require a second admin review.
 
@@ -81,3 +81,11 @@ The entire local dataset is visible to the browser and can be edited through dev
 ## Pilot boundary
 
 Payment verification, payouts, and refunds are supervised manual operations. Simulated payments must be labeled. Real funds require a suitable collection and payout arrangement, verified operators, and reconciliation procedures before launch. Delivery confirmation establishes payout eligibility; it does not prove an outgoing transfer.
+
+## Member UX upgrade
+
+Use the mobile + button to choose Minta dibelikan or Buka jasa titip. Create a request through three steps with item quantities, maximum prices, WIB delivery selectors, a separate service fee, and review. Jastip saya includes both services you offer and requests you fulfill; Pesanan filters distinguish Saya titip and Saya belikan.
+
+To try immediate acceptance, switch to Rizky and open Tolong belikan roti. Confirm Saya bisa belikan to create the order at its fixed fee. Negotiable requests still need the requester's approval. Shopping remains blocked until funds are verified. Administrators can moderate listings independently of existing orders and reply to support from their inbox. Hubungi bantuan is available from Profile and order details.
+
+Version 1 browser records migrate to version 2 without replacing accepted terms or money records. New drafts use versioned session storage. Support and order chat remain local to one browser; realtime delivery and live maps are documented follow-up work in the PRD and architecture. Friends' uncoached usability retesting remains a human validation step.

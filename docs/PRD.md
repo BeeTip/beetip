@@ -304,3 +304,21 @@ Do not commit a calendar deadline until team availability and implementation eff
 - Future customer and provider fee rates and evidence of willingness to pay.
 
 These do not block prototype development. The payment arrangement blocks acceptance of real customer funds. No software implementation, deployment, user testing, or real transaction has been completed as part of this PRD.
+
+## 18. UX decisions from member testing, 7 October 2026
+
+This section supersedes earlier UI wording and fixed-request selection behavior. Preserve detailed order information and expected arrival. Use Beranda for discovery, Jastip saya for services offered and requests fulfilled, and Pesanan with Saya titip/Saya belikan filters for transaction progress. One verified member account can do both jobs; administrators have additional operational permissions.
+
+Creation starts with Minta dibelikan or Buka jasa titip and progresses through Rincian, Lokasi dan waktu, and Biaya dan tinjauan. Requests have editable item rows, optional specifications, quantities, per-unit maximum prices, and a computed maximum shopping total capped at Rp150,000. Offered jastip collects shop, category, public area, delivery window, fee, and up to three customers; customers provide their item lists. Combined active shopping capacity defaults to Rp450,000 and is separate from the service fee or personal funding.
+
+Delivery uses date/time selectors in WIB with a future acceptance deadline before delivery starts and an end after the start. Exact handover instructions are private. Fixed fees have no editable negotiation fields and cannot be countered through any service command. Negotiation changes only the service fee: customer requests define a maximum and offered jastip defines a minimum. Item/budget amendments remain separate explicit approvals.
+
+The first verified member confirming a fixed-fee customer request receives the order immediately. Negotiable requests require requester approval. Offered jastip requires the service owner to approve the customer's offer. Acceptance checks availability and capacity and must be atomic in the future server implementation. Retry identifiers must not create duplicate orders.
+
+Administrators can pause, close, remove, and reactivate listings with reasons and audit history. These actions stop new offers/acceptances but preserve existing fulfillment and settlement. Reopening requires future valid scheduling and available capacity. Listing status is separate from payment and order status.
+
+Members can contact support from Profile or an order. Support has private persisted conversations, an administrator inbox, replies, and open/resolved status. The current implementation is browser-local and does not deliver across devices. No staffed-hours or response-time promises are implied.
+
+Realtime chat is subsequent backend work: durable messages, authenticated membership, reconnect catch-up, deduplication, unread indicators, recoverable drafts, and delivery failure states. Live maps are also deferred: opt-in active-delivery location sharing, participant-only visibility, stale-location indicators, and location retention limited to 24 hours after delivery/cancellation. Arrival estimates must disclose their basis rather than imply live tracking.
+
+Retest with members without coaching: distinguish the two listing types, explain shopping budgets versus service fees, create a multi-item request, and take a fixed request. Passing automated checks does not replace this user test or establish pilot readiness.

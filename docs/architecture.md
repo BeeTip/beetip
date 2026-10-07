@@ -10,7 +10,7 @@ The demo demonstrates both listing journeys, immutable accepted terms, funding g
 
 The adapter stores readable synthetic records in one browser and has no trusted security boundary or multi-user transaction isolation. It cannot establish authentic identity, real payment evidence, independent reviewers, protected addresses, or server token secrecy. Database concurrency, private storage, live funds, email delivery, and physical camera compatibility remain integration or device-validation gates.
 
-For post-purchase cancellation, the demo reimburses approved purchased goods and returns the fee and remainder after review. The connected implementation must replace that default with the PRD's evidence-based allocation policy. Listing cutoff defaults to 24 hours; delivery windows are text terms. There is no scheduler, notification service, native app, PWA cache, or deployment in this milestone.
+For post-purchase cancellation, the demo reimburses approved purchased goods and returns the fee and remainder after review. The connected implementation must replace that default with the PRD's evidence-based allocation policy. New listings use structured WIB delivery windows and explicit deadlines. Existing order windows are preserved during migration. There is no scheduler, notification service, native app, PWA cache, or deployment in this milestone.
 
 ## Product constraints
 
@@ -97,3 +97,15 @@ The first software milestone should be one complete, authorized customer request
 - [Supabase pricing](https://supabase.com/pricing)
 - [Supabase authentication rate limits and email restrictions](https://supabase.com/docs/guides/auth/rate-limits)
 - [Vercel Hobby permitted use](https://vercel.com/docs/plans/hobby)
+
+## UX upgrade, 7 October 2026
+
+Visible navigation uses Jastip saya while retaining `/trips`. Members can request and fulfill titipan with the same account. Creation separates both journeys into three steps, with item arrays, quantities, per-unit maximum prices, calculated budgets, explicit deadlines, and review. Shopping budgets exclude fees. Offered-jastip capacity limits combined active shopping budgets and does not represent personal advance funding.
+
+`takeRequest` immediately accepts a fixed-fee customer request; negotiable requests retain customer selection. Offered jastip retains owner approval. Item arrays are copied into accepted terms. `moderateListing` changes active/paused/closed/removed availability without rewriting orders. Expired or unscheduled listings require corrected dates before reopening. Existing operation identifiers, funding gates, and transfer review rules remain in effect.
+
+Storage version 2 uses `beetip-demo-v2` and reads validated version 1 records as a fallback. Migration preserves legacy windows, accepted terms, and financial records. Support conversations have an owner, optional order reference, persisted messages, and open/resolved status. Unverified members can request help; unrelated members cannot query or reply to another member's support thread through the service. These checks require authenticated server enforcement before multi-user use.
+
+Realtime order and support chat will use durable PostgreSQL messages and authenticated Supabase Realtime channels. Reconnection must fetch missed messages before merging events, deduplicate by message identifier, maintain unread cursors, and show connecting/offline/failed states while preserving unsent input. Each conversation requires its own membership checks.
+
+Live map tracking remains deferred. Require explicit consent during active delivery, participant-specific access, stale-location indicators, and clear separation of estimated arrival from measured movement. Stop sharing at completion, cancellation, or consent withdrawal, and delete raw locations within 24 hours after delivery or cancellation. Select a map provider and validate device/background behavior before implementation. Local fixtures do not substantiate live location or travel-time estimates.

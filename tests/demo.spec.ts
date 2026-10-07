@@ -68,23 +68,25 @@ test("customer request completes from offer to settlement", async ({ page }) => 
 
 test("provider trip accepts three customers independently", async ({ page }) => {
   await persona(page, "provider"); await page.goto("/listings/new");
-  await page.getByRole("combobox", { name: "Jenis listing", exact: true }).selectOption("trip");
-  await page.getByLabel("Judul listing").fill("Trip belanja sore demo");
-  await page.getByLabel("Toko / lokasi belanja").fill("AEON demo");
-  await page.getByLabel("Contoh item / kategori tersedia").fill("Teh susu");
-  await page.getByLabel("Ongkos minimal (Rp)").fill("7000");
+  await page.getByRole("button", { name: "Buka jasa titip", exact: false }).click();
+  await page.getByLabel("Judul listing").fill("Belanja sore");
+  await page.getByLabel("Toko / lokasi belanja").fill("AEON");
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
   await page.getByRole("button", { name: "Terbitkan listing" }).click();
   await expect(page).toHaveURL(/\/listings\/demo-/);
   const listingURL = page.url(); const orders: string[] = [];
   for (const customer of ["customer", "customer2", "customer3"]) {
     await persona(page, customer); await page.goto(listingURL);
+    await page.getByLabel("Nama barang 1").fill("Teh susu");
+    await page.getByLabel("Petunjuk serah terima (privat)").fill("Lobby kampus");
     await page.getByRole("button", { name: "Kirim / revisi penawaran" }).click();
     await persona(page, "provider"); await page.goto(listingURL);
     await page.getByRole("button", { name: "Terima penawaran" }).click();
     await expect(page).toHaveURL(/\/orders\/demo-/); orders.push(page.url());
   }
   await page.goto("/trips");
-  await page.getByRole("link", { name: "Buka dashboard trip" }).last().click();
+  await page.getByRole("link", { name: "Kelola jasa titip" }).last().click();
   await expect(page.locator(".order-card")).toHaveCount(3);
   await persona(page, "customer2"); await page.goto(orders[1]);
   await page.getByText("Pembatalan dan masalah pesanan", { exact: true }).click();
@@ -111,7 +113,7 @@ test("private routes, unverified persona, chat persistence and reset", async ({ 
 });
 
 test("corrupt storage requires reset and disabled storage remains usable", async ({ page }) => {
-  await page.goto("/"); await page.evaluate(() => localStorage.setItem("beetip-demo-v1", "broken")); await page.reload();
+  await page.goto("/"); await page.evaluate(() => localStorage.setItem("beetip-demo-v2", "broken")); await page.reload();
   await expect(page.locator(".storage-warning")).toContainText("rusak");
   await page.getByRole("button", { name: "Reset data lokal", exact: true }).click();
   await expect(page.locator(".storage-warning")).toHaveCount(0);
@@ -136,6 +138,16 @@ for (const width of [360, 390, 768, 1440]) {
     await page.keyboard.press("Enter");
     await expect(page.locator("#main-content")).toBeInViewport();
     expect(await page.locator(".button").first().evaluate(el => getComputedStyle(el).transitionDuration)).toBe("0s");
+    if (width < 768) { await expect(page.locator(".create-fab")).toBeInViewport(); expect(await page.locator(".create-fab").evaluate(el => el.getBoundingClientRect().bottom <= document.querySelector(".bottom-nav")!.getBoundingClientRect().top)).toBe(true); }
+    await page.screenshot({ path: `test-results/board-${width}.png`, fullPage: true });
+    await page.goto("/listings/new"); await page.getByRole("button", { name: "Minta dibelikan", exact: false }).click();
+    await page.getByLabel("Judul listing").fill("Titip kopi"); await page.getByLabel("Toko / lokasi belanja").fill("Kafe kampus"); await page.getByLabel("Nama barang 1").fill("Kopi");
+    for (let step = 0; step < 3; step++) {
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      if (step === 0) await page.screenshot({ path: `test-results/creation-${width}.png`, fullPage: true });
+      if (step === 1) await page.getByLabel("Petunjuk serah terima (privat)").fill("Lobby kampus");
+      if (step < 2) await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+    }
   });
 }
 

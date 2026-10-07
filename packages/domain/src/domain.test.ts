@@ -5,7 +5,7 @@ function setup() {
   let time = 1000000; let counter = 0;
   const state = createSeed(time);
   const service = (actor: string) => new DemoService(state, actor, () => time, () => "123456");
-  const run = (actor: string, command: Command, id = `op-${++counter}`) => service(actor).execute(command, id);
+  const run = (actor: string, command: Command, id = `op-${++counter}`) => service(actor).execute(command.type === "offer" ? { ...command, window: state.listings.find(l => l.id === command.listingId)!.window } : command, id);
   const must = (actor: string, command: Command) => { const result = run(actor, command); expect(result.ok, JSON.stringify(result)).toBe(true); if (!result.ok) throw new Error(result.message); return result.value; };
   return { state, service, run, must, advance: (ms: number) => { time += ms; } };
 }
@@ -28,7 +28,7 @@ describe("marketplace acceptance", () => {
     expect(h.service("customer").queryOffers("request-coffee")).toMatchObject({ ok: true, value: [{ id: offerId }] });
   });
   it("enforces fixed fees and bounds", () => {
-    const h = setup(); const base = { type: "offer" as const, budget: 30000, item: "Item demo", quantity: 1, destination: "Lobby", window: "14.30" };
+    const h = setup(); h.state.orders = []; const base = { type: "offer" as const, budget: 30000, item: "Item demo", quantity: 1, destination: "Lobby", window: "14.30" };
     expect(h.run("customer", { ...base, listingId: "trip-kfc", fee: 8000 })).toMatchObject({ code: "VALIDATION" });
     expect(h.run("customer", { ...base, listingId: "trip-aeon", fee: 6000 })).toMatchObject({ code: "VALIDATION" });
     expect(h.run("provider", { ...base, listingId: "request-coffee", item: "Es kopi susu, tanpa gula", fee: 16000 })).toMatchObject({ code: "VALIDATION" });
@@ -46,8 +46,8 @@ describe("marketplace acceptance", () => {
   });
   it("rejects the last slot and releases an expired reservation", () => {
     const h = setup(); const c = { type: "offer" as const, listingId: "trip-aeon", fee: 10000, budget: 30000, item: "Teh", quantity: 1, destination: "Lobby", window: "14.30" };
-    const id = h.must("customer", c); expect(h.run("provider", { type: "accept", offerId: id })).toMatchObject({ code: "CONFLICT" });
-    h.advance(900001); h.must("provider", { type: "accept", offerId: id });
+    expect(h.run("customer", c)).toMatchObject({ code: "CONFLICT" });
+    h.advance(900001); const id = h.must("customer", c); h.must("provider", { type: "accept", offerId: id });
     expect(h.state.orders.find(o => o.id === "BTP-003")!.state).toBe("cancelled");
     expect(h.state.audit.filter(a => a.type === "reservationExpired")).toHaveLength(1);
   });
@@ -159,7 +159,7 @@ describe("handover and settlement", () => {
 describe("three-customer provider journey", () => {
   it("accepts and settles each customer independently", () => {
     const h = setup();
-    const trip = h.must("provider", { type: "createListing", listing: { ...h.state.listings[0], title: "Trip baru", cutoff: 99999999 } });
+    const trip = h.must("provider", { type: "createListing", listing: { ...h.state.listings[0], title: "Trip baru" } });
     for (const customer of ["customer", "customer2", "customer3"]) {
       const offer = h.must(customer, { type: "offer", listingId: trip, fee: 10000, budget: 60000, item: "Teh", quantity: 1, destination: "Lobby demo", window: "14.30" });
       const order = h.must("provider", { type: "accept", offerId: offer });
