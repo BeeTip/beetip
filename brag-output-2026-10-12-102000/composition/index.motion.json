@@ -1,0 +1,9 @@
+{
+  "duration": 28,
+  "assertions": [
+    { "kind": "appearsBy", "selector": "#hook-copy", "bySec": 1 },
+    { "kind": "before", "a": "#detail-phone", "b": "#form-phone" },
+    { "kind": "appearsBy", "selector": ".brand-name", "bySec": 24.08 },
+    { "kind": "keepsMoving", "withinSelector": "#root", "maxStaticSec": 2 }
+  ]
+}

@@ -74,6 +74,8 @@ Domain tests exercise complete request and three-customer trip journeys, bounds,
 
 ## Backend integration boundary
 
+The connected pilot is planned in the [system design](docs/system-design.md), with [messaging contracts](docs/messaging.md), a [sequenced issue backlog](docs/implementation-plan.md), and a [Vercel deployment runbook](docs/vercel-deployment.md). These documents cover real accounts and chat with supervised manual payments. They do not represent a completed backend or deployment.
+
 `ApplicationService` is the typed boundary for queries and mutations. Operations return stable `VALIDATION`, `PERMISSION`, `CONFLICT`, `EXPIRED`, or `INVALID_STATE` failures. Successful mutations use operation identifiers and audit records. `DemoService` implements this interface in the browser.
 
 The entire local dataset is visible to the browser and can be edited through developer tools. Persona checks demonstrate behavior only. Before real use, replace the adapter with authenticated server endpoints, PostgreSQL transactions and constraints, row-level security, private file access, server-held token hashes, rate limits, durable idempotency, expiry jobs, verified SMTP delivery, and actual transfer reconciliation. Do not expose a service credential in the client.

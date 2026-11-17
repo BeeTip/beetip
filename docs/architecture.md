@@ -1,5 +1,7 @@
 # Proposed pilot architecture
 
+Historical proposal from October 2026. The [connected pilot system design](system-design.md), [messaging contracts](messaging.md), [implementation plan](implementation-plan.md), and [Vercel deployment runbook](vercel-deployment.md) are the current planning documents as of 17 November 2026. The browser-local implementation described below remains the current runtime.
+
 Decision date: 6 October 2026. Status: browser-local demo implemented; the connected pilot architecture below remains the next integration step.
 
 ## Implemented foundation

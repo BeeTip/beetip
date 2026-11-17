@@ -1,0 +1,408 @@
+{
+  "schemaVersion": 1,
+  "status": "planned",
+  "issues": [
+    {
+      "key": "BTP-01",
+      "title": "Approve pilot operations, account ownership, and release policies",
+      "deps": [],
+      "story": "Product owner and operators can name the actual rules and accounts used by the connected pilot.",
+      "criteria": [
+        "Record affiliation methods, service areas, handover points, service hours, escalation contacts, retention periods, cancellation rules, pilot limits, and named decision owners.",
+        "Record Vercel/Supabase/email/domain ownership, plan eligibility, cost budget and spending alerts without purchasing or provisioning unapproved services.",
+        "Document the collection account, permitted collection/payout arrangement, bank reconciliation, charges, and independent financial reviewers. Real funds remain blocked until resolved.",
+        "Accept or revise proposed load, notification latency, recovery, and retention targets. Software implementation may continue with synthetic data while financial approval is pending."
+      ],
+      "type": "Owner decision",
+      "refs": "docs/system-design.md; docs/vercel-deployment.md"
+    },
+    {
+      "key": "BTP-02",
+      "title": "Connect real sign-in and pending-member private support",
+      "deps": [],
+      "story": "A test user signs in with Supabase, sees pending membership, and opens a private support thread on a protected staging build.",
+      "criteria": [
+        "Create isolated nonproduction configuration, baseline migrations, generated types, RLS test harness, and request-scoped validated Auth sessions.",
+        "Deliver signup, confirmation, login, logout, recovery, session refresh, pending state, and private support creation through UI and server commands.",
+        "Bootstrap the first support operator through an audited procedure, allow only requester and assigned staff history, and deny unrelated/anonymous access.",
+        "Introduce async typed outcomes and payload-bound operation receipts for this slice. Prove duplicate support-open replay and changed-payload conflict.",
+        "Fail closed on missing connected configuration. No persona switch, reset authority, demo data import, production secret, or whole-dataset download."
+      ],
+      "type": "Implementation",
+      "refs": "docs/current-system.md; docs/system-design.md"
+    },
+    {
+      "key": "BTP-03",
+      "title": "Review affiliation and grant scoped staff access",
+      "deps": [
+        "BTP-02"
+      ],
+      "story": "A pending member submits affiliation evidence and an authorized reviewer approves or rejects it.",
+      "criteria": [
+        "Implement protected evidence upload, request/review UI, explicit approved/pending/suspended states, and sanitized audit.",
+        "Separate membership-review, support, finance-operation, finance-review, and platform roles. Require MFA for staff.",
+        "Enforce live role checks in SQL commands and RLS, including forged profile roles, stale sessions, suspension, and revoked grants.",
+        "Approved users can transact, pending users can use support, and suspended users lose protected access. No private evidence appears in public profile."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md"
+    },
+    {
+      "key": "BTP-04",
+      "title": "Publish and browse both real listing types",
+      "deps": [
+        "BTP-03"
+      ],
+      "story": "Verified members create request and offered-jastip listings and browse a paginated public-safe board.",
+      "criteria": [
+        "Migrate create/list/detail UI to async projections with loading, retry, empty, and validation states.",
+        "Persist structured items, integer IDR budgets and separate fee, fixed/negotiable mode, WIB schedule, cutoff, area, and capacity.",
+        "Use safe board projections and keyset pagination. Hide exact addresses, other bidders' terms, and private contact/evidence.",
+        "Prove owner-only edits and active/schedule filters with separate sessions. Preserve Indonesian mobile behavior."
+      ],
+      "type": "Implementation",
+      "refs": "docs/PRD.md; docs/system-design.md"
+    },
+    {
+      "key": "BTP-05",
+      "title": "Negotiate offers with versioned consent",
+      "deps": [
+        "BTP-04"
+      ],
+      "story": "A member proposes terms and the listing owner can select an offer based on the current schedule and fee.",
+      "criteria": [
+        "Persist authorized offers with a unique active offer per author/listing and revision-bound schedule consent.",
+        "Implement offer, update, withdraw, owner review, and renewed consent after rescheduling through UI and commands.",
+        "Enforce fee bounds and visibility for only offer author and owner. Replays with changed values conflict.",
+        "Test concurrent update/withdraw, stale versions, unrelated access, and both listing directions."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md"
+    },
+    {
+      "key": "BTP-06",
+      "title": "Accept offers atomically and reserve trip capacity",
+      "deps": [
+        "BTP-05"
+      ],
+      "story": "Fixed requests and approved offers create one order with immutable terms and correct shared capacity.",
+      "criteria": [
+        "Use one SQL owner for fixed acceptance and negotiated acceptance. Lock listing/trip in stable order and use database time.",
+        "Atomically commit operation receipt/hash/result, order, accepted snapshot, reservation, order conversation membership, audit, and notification intent.",
+        "Serialize final-slot, customer-count and spending-capacity races. Enforce request uniqueness without preventing multi-order offered trips.",
+        "Test same-key concurrent retries, changed payloads, expiry/moderation races, and schedule-consent conflicts. Connected UI must recover an unknown response using the original operation ID."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md; docs/messaging.md"
+    },
+    {
+      "key": "BTP-07",
+      "title": "Expire unpaid reservations without losing verified funding",
+      "deps": [
+        "BTP-06"
+      ],
+      "story": "Members see expired unpaid orders and released capacity even when no browser tab is open.",
+      "criteria": [
+        "Add idempotent bounded database expiry commands and Supabase Cron schedule with heartbeat and sanitized job audit.",
+        "Define and test the funding-verification versus deadline race under the order/capacity locks. Release each reservation once.",
+        "Make acceptance and other sensitive commands reject expired reservations even when the cleanup job is delayed.",
+        "Show server-derived expiry and retry state in UI. Test overlapping jobs and downtime catch-up."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md; docs/vercel-deployment.md"
+    },
+    {
+      "key": "BTP-08",
+      "title": "Deliver private order chat with durable retry and catch-up",
+      "deps": [
+        "BTP-06"
+      ],
+      "story": "Customer and provider exchange messages across devices and recover missed messages after disconnection.",
+      "criteria": [
+        "Create normalized conversations/messages/read cursors with stable IDs, unique client-ID/body binding, and transactionally committed per-conversation sequences.",
+        "Deliver text send/history/read UI, latest/older/catch-up pagination, monotonic read cursors, unread counts, pending/failed/sent states, and memory-only drafts.",
+        "Subscribe to authorized private per-member content-free hints before fetch, deduplicate events/messages, and perform reconnect/visibility/poll catch-up.",
+        "Prove concurrent late commits cannot be skipped, duplicate retry has one message, changed body conflicts, quotas throttle, unrelated and revoked members cannot read/send.",
+        "Close settled conversation sends according to the selected policy. Clear private caches on logout, account change, and revocation."
+      ],
+      "type": "Implementation",
+      "refs": "docs/messaging.md"
+    },
+    {
+      "key": "BTP-09",
+      "title": "Operate private support assignment and escalation",
+      "deps": [
+        "BTP-08"
+      ],
+      "story": "Members receive support replies and operators claim, reassign, resolve, and reopen cases.",
+      "criteria": [
+        "Migrate baseline support into the shared durable messaging model without another message store.",
+        "Provide minimal unassigned queue projections, atomic claim, assigned thread membership, audited reassignment, resolution/reopen, and escalation UI.",
+        "An order reference does not grant the counterparty support access. Staff read order chat only through audited case grants.",
+        "Test reassignment mid-session and notification recipient changes. Pending members retain support access and ordinary finance roles gain no chat privilege."
+      ],
+      "type": "Implementation",
+      "refs": "docs/messaging.md"
+    },
+    {
+      "key": "BTP-10",
+      "title": "Deliver reliable in-app event notifications",
+      "deps": [
+        "BTP-03"
+      ],
+      "story": "Members and assigned operators see relevant durable notifications and authorized deep links.",
+      "criteria": [
+        "Implement one exhaustive typed registry of event types, recipient rules, templates, and target rules, with generated/parity checks.",
+        "Commit event-specific in-app records and delivery intents inside each owning business transaction. Enforce event/recipient/channel uniqueness.",
+        "Provide paginated inbox, unread indicators, monotonic read actions, preferences, and current-permission checks on deep links.",
+        "Do not self-notify. Recheck recipient access after role or support assignment changes. Backfill relevant event mappings as feature slices land."
+      ],
+      "type": "Implementation",
+      "refs": "docs/messaging.md"
+    },
+    {
+      "key": "BTP-11",
+      "title": "Send recoverable transactional email and verify Auth delivery",
+      "deps": [
+        "BTP-08",
+        "BTP-09",
+        "BTP-10"
+      ],
+      "story": "Unread conversations and workflow actions reach the right email recipients without blocking orders.",
+      "criteria": [
+        "Configure verified-domain custom Auth SMTP and application provider, recipient allowlists in staging, and signup/recovery smoke evidence.",
+        "Implement unique unread grouping windows, notification preferences, current-access/read suppression, and generic authenticated links with no private content.",
+        "Implement authenticated bounded Vercel worker, Cron wakeups, skip-locked claims, lease tokens, capped retries, dead letters, suppression, and replay UI.",
+        "Verify signed duplicate delivery/bounce webhooks and provider idempotency lifetime. Handle timeout/post-acceptance crash and uncertain replay outside the provider key window.",
+        "Enforce server-only privileged job client imports and fixed allowlisted job RPC use. Test stale leases, worker overlap, missed scheduler, and alerts."
+      ],
+      "type": "Implementation",
+      "refs": "docs/messaging.md; docs/vercel-deployment.md"
+    },
+    {
+      "key": "BTP-12",
+      "title": "Submit and verify manual incoming funding",
+      "deps": [
+        "BTP-06",
+        "BTP-10"
+      ],
+      "story": "A customer submits evidence and a financial operator verifies actual incoming funds before shopping.",
+      "criteria": [
+        "Deliver protected evidence upload/finalization/download, funding submission and bank-check review UI, independent funding state, audit, and notifications.",
+        "Use integer IDR, account-scoped normalized reference uniqueness, operation receipts, and no direct client financial edits.",
+        "Purchase remains blocked until sufficient verified funds exist. Evidence upload alone never sets paid/verified.",
+        "Test duplicate references, wrong account/operator, conflicting expiry, revoked role, failed upload, and synthetic-only staging operations."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md; docs/messaging.md"
+    },
+    {
+      "key": "BTP-13",
+      "title": "Approve substitutions and extra purchase budgets",
+      "deps": [
+        "BTP-12"
+      ],
+      "story": "A provider proposes an item or cost change that requires explicit customer consent before spending.",
+      "criteria": [
+        "Implement versioned amendment propose/approve/reject UI and transaction commands while preserving original accepted terms.",
+        "Recheck aggregate trip spending capacity under the same capacity owner used by acceptance.",
+        "A raised approved budget remains blocked for spending until additional incoming funding is verified.",
+        "Test stale/concurrent approval, rejection, duplicate submission, insufficient funding, and notifications to the correct parties."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md"
+    },
+    {
+      "key": "BTP-14",
+      "title": "Allocate shared receipts across trip orders",
+      "deps": [
+        "BTP-13"
+      ],
+      "story": "A provider records approved shopping and allocates receipts without duplicate reimbursement.",
+      "criteria": [
+        "Implement receipt/header/line/discount/evidence records, structured per-order allocations, and purchase-progress UI.",
+        "Lock receipt lines and allocation totals, enforce approved order budgets and normalized reference rules, and reject over-allocation under concurrency.",
+        "Allocate shared discounts consistently and show the calculation to participants. Multiple lines can be allocated before shopping completes.",
+        "Test multi-customer trips, duplicate and split lines, unauthorized purchase, shared discounts, wrong order files, and partial unavailable items."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md; docs/PRD.md"
+    },
+    {
+      "key": "BTP-15",
+      "title": "Confirm delivery using secure expiring codes",
+      "deps": [
+        "BTP-14"
+      ],
+      "story": "A customer checks goods and the assigned provider confirms handover with a QR or backup code.",
+      "criteria": [
+        "Implement delivering status, customer-only code generation, provider-only consumption, and accessible manual entry.",
+        "Generate random codes server-side, persist only hashes, bind to order and parties, expire after 60 seconds, invalidate regeneration, and cap failed attempts at five.",
+        "Consume code and fulfillment transition atomically. Persist failed-attempt counters and sanitized rejection audit.",
+        "Prove replay, wrong member/order, expiry, regeneration, concurrent scans, and no secret leakage. Record Android/iOS camera validation separately."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md; docs/vercel-deployment.md"
+    },
+    {
+      "key": "BTP-16",
+      "title": "Resolve cancellations and amount-specific disputes",
+      "deps": [
+        "BTP-12",
+        "BTP-14"
+      ],
+      "story": "Members submit evidence and reviewers allocate purchased costs, fee, refund, and disputed amounts explicitly.",
+      "criteria": [
+        "Implement cancellation/dispute case UI, private evidence, structured proposed allocations, review decisions, audit and notifications.",
+        "Replace the demo fixed cancellation formula with policy-backed evidence-based resolution and approval records.",
+        "Freeze only the affected unsettled allocation. Preserve unrelated confirmed orders and unchallenged amounts.",
+        "Prove financial allocation conservation, insufficient entitlement refusal, unapproved purchases, partial goods problems, concurrent transfer/hold changes, and independent review."
+      ],
+      "type": "Implementation",
+      "refs": "docs/PRD.md; docs/system-design.md"
+    },
+    {
+      "key": "BTP-17",
+      "title": "Review manual payouts and refunds with ambiguous recovery",
+      "deps": [
+        "BTP-15",
+        "BTP-16"
+      ],
+      "story": "Operators prepare, independently review, and record real-world transfer outcomes without duplicate entitlements.",
+      "criteria": [
+        "Deliver payout/refund review UI and append-only facts with distinct initiator/reviewer enforcement for refunds and exceptional/disputed payouts.",
+        "Lock unsettled allocations and transfer requests. Enforce remaining entitlement and account-scoped external references.",
+        "Record completed, not-sent, and ambiguous outcomes. An ambiguous result blocks another transfer until account records resolve it.",
+        "Test double-clicks, two operators, stale review, role revocation, duplicate reference, cancellation/dispute races, and unknown-response operation lookup. Do not integrate a gateway."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md"
+    },
+    {
+      "key": "BTP-18",
+      "title": "Reconcile each order and export the financial ledger",
+      "deps": [
+        "BTP-17"
+      ],
+      "story": "Operators can explain every verified rupiah as payout, refund, disclosed charge, or outstanding amount.",
+      "criteria": [
+        "Provide per-order/trip reconciliation views and authorized CSV with safe spreadsheet-cell escaping and audit.",
+        "Keep item reimbursement separate from fee revenue and money status separate from fulfillment.",
+        "Reconcile the PRD example and multi-customer trip with independent confirmations, partial disputes, unused budgets and ambiguous transfers.",
+        "An order is fully settled only when required money movements reconcile. Test export permissions, exact totals, and snapshot consistency during concurrent updates."
+      ],
+      "type": "Implementation",
+      "refs": "docs/PRD.md; docs/system-design.md"
+    },
+    {
+      "key": "BTP-19",
+      "title": "Moderate listings and collect ratings after completion",
+      "deps": [
+        "BTP-06",
+        "BTP-18"
+      ],
+      "story": "Operators stop unsafe new activity while participants retain orders and can rate completed service.",
+      "criteria": [
+        "Implement active/paused/closed/removed moderation with reason, audit, future schedule checks for reopening and notification.",
+        "Moderation blocks new offers/acceptances while preserving current orders, messages, evidence and financial resolution.",
+        "Allow one authorized rating per eligible participant/order with bounded score and private feedback rules.",
+        "Test moderation/acceptance races, reopening capacity, unrelated ratings, duplicate ratings, and mobile error states."
+      ],
+      "type": "Implementation",
+      "refs": "docs/system-design.md; docs/PRD.md"
+    },
+    {
+      "key": "BTP-20",
+      "title": "Enforce private evidence retention and account data controls",
+      "deps": [
+        "BTP-09",
+        "BTP-12",
+        "BTP-16"
+      ],
+      "story": "Members' chat and uploaded evidence follow approved retention and access rules.",
+      "criteria": [
+        "Use shared file validation for MIME signatures, size, object ownership, generated names, metadata removal and private short-lived downloads.",
+        "Implement abandoned-upload cleanup, expiry, dispute/legal holds, message tombstones preserving sequences, and audited purge jobs.",
+        "Provide account data request/export/deletion operator flow with Auth-session revocation and financial-retention exceptions.",
+        "Prove unrelated access, expired links, reassigned staff, held cases, purge retries, and logs free of secrets or private bodies. Obtain approved policy before real-data collection."
+      ],
+      "type": "Implementation",
+      "refs": "docs/messaging.md; docs/vercel-deployment.md"
+    },
+    {
+      "key": "BTP-21",
+      "title": "Rehearse connected journeys and enforce release checks",
+      "deps": [
+        "BTP-07",
+        "BTP-11",
+        "BTP-18",
+        "BTP-19",
+        "BTP-20"
+      ],
+      "story": "A release candidate proves complete multi-user journeys and rejects unsafe cross-account access.",
+      "criteria": [
+        "Run lint, typecheck, unit, production build, generated-type drift, fresh migration/RLS/grant, SQL/TypeScript parity, and database concurrency checks in isolated CI.",
+        "Use separate authenticated customer/provider/unrelated/staff sessions, not persona switching, for every PRD acceptance journey.",
+        "Cover authorization and private caching, CSRF/origin checks, abuse limits, realtime reconnect, notification failures, partial allocations, camera fallback and storage failures.",
+        "Measure the proposed 50-member/20-session/10-active-order pilot load and latency targets. Record real Android/iOS validation and accessibility evidence.",
+        "Confirm production bundles/routes exclude demo authority and fail closed on missing config. Freeze exact candidate evidence and unresolved defects."
+      ],
+      "type": "Implementation",
+      "refs": "docs/vercel-deployment.md; docs/PRD.md"
+    },
+    {
+      "key": "BTP-22",
+      "title": "Deploy the isolated Vercel staging candidate",
+      "deps": [
+        "BTP-02"
+      ],
+      "story": "The team can open a protected stable staging URL backed only by nonproduction services.",
+      "criteria": [
+        "Configure authorized Vercel team/repo access, apps/web root, workspace inclusion, pinned pnpm, matching Node runtime and validated build commands.",
+        "Use isolated preview Supabase and allowlisted test email, exact stable Auth callbacks, scoped env variables and no secrets in untrusted fork previews.",
+        "Deploy a recorded commit, verify workspace package resolution, HTTPS, login/support smoke, and per-environment scheduler target.",
+        "Document ownership, current plan eligibility/cost and clean environment reproduction. Later feature slices continuously update this staging deployment."
+      ],
+      "type": "Implementation",
+      "refs": "docs/vercel-deployment.md"
+    },
+    {
+      "key": "BTP-23",
+      "title": "Rehearse backups, incidents, and compatible rollback",
+      "deps": [
+        "BTP-21",
+        "BTP-22"
+      ],
+      "story": "Operators can stop unsafe writes, recover data and restore a compatible application using a tested procedure.",
+      "criteria": [
+        "Configure sanitized logs, correlation IDs, oldest outbox age, dead-letter/job heartbeat/storage/financial anomaly alerts and named escalation.",
+        "Restore database and private objects to an isolated environment. Measure recovery point and time against owner-approved targets.",
+        "Exercise additive migrations, rollback to compatible Vercel release, forward schema repair, scheduler duplication prevention and secret rotation.",
+        "Prove incident pause preserves orders/audit and stops unsafe acceptances or transfers. Reconcile external email and bank effects rather than blindly replaying.",
+        "Record exact rehearsed candidate, operator instructions, backup evidence and unresolved failures."
+      ],
+      "type": "Implementation",
+      "refs": "docs/vercel-deployment.md"
+    },
+    {
+      "key": "BTP-24",
+      "title": "Promote production and open the capped manual-payment pilot",
+      "deps": [
+        "BTP-01",
+        "BTP-21",
+        "BTP-22",
+        "BTP-23"
+      ],
+      "story": "Approved participants can use the verified production system with staffed support and reconciled manual operations.",
+      "criteria": [
+        "Record owner approval of actual operations, budget, retention, affiliation, service area, cancellation terms and suitable collection/payout arrangement.",
+        "Apply reviewed additive migrations once through a protected job, deploy verified commit, configure production DNS/Auth/SMTP, and verify scoped secrets.",
+        "Run production login/chat/inbox/email/private-file smoke with designated accounts and verify exactly one active scheduler.",
+        "Open capped real-money activity only after financial readiness, named independent operators, backup/recovery and release evidence pass.",
+        "Capture first-day reconciliation/support review, rollback target and acceptance record. If funds readiness fails, keep release synthetic-money only and leave real-money acceptance blocked."
+      ],
+      "type": "Owner release",
+      "refs": "docs/vercel-deployment.md"
+    }
+  ]
+}

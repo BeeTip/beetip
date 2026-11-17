@@ -123,7 +123,7 @@ test("corrupt storage requires reset and disabled storage remains usable", async
   await expect(page.getByRole("heading", { name: "Rizky Pratama" })).toBeVisible();
 });
 
-for (const width of [360, 390, 768, 1440]) {
+for (const width of [360, 375, 390, 768, 1280, 1440]) {
   test(`layout, keyboard and reduced motion at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: "reduce" });

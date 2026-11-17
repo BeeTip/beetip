@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>BeeTip: Titip belanja, sekalian jalan</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: Geist;
+        src: url("assets/fonts/Geist.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; margin: 0; overflow: hidden; background: #F7F3E9; }
+      body { color: #2E3028; font-family: Geist, system-ui, sans-serif; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #F7F3E9; }
+      .ambient { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: #F3AE4E; opacity: .22; filter: blur(4px); right: -160px; top: 150px; }
+      .ambient-sage { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: #DDE9D9; opacity: .62; left: -250px; bottom: -200px; }
+      .grain { position: absolute; inset: 0; opacity: .16; pointer-events: none; background-image: radial-gradient(#706D62 0.65px, transparent .65px); background-size: 6px 6px; mask-image: linear-gradient(110deg, transparent 18%, black 100%); }
+      .scene { position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden; padding: 56px 132px; gap: 100px; background: radial-gradient(ellipse at 72% 42%, #FFFCF6 0, #F7F3E9 52%, #F3EBD9 100%); }
+      .scene:nth-of-type(even) { background: radial-gradient(ellipse at 24% 36%, #FFFCF6 0, #F7F3E9 55%, #F3EBD9 100%); }
+      .scene-content { position: relative; z-index: 2; flex: 1; min-width: 0; }
+      .scene-right { margin-left: auto; }
+      .phone { position: relative; z-index: 2; width: 460px; height: 996px; flex: 0 0 460px; overflow: hidden; border: 10px solid #FFFCF6; border-radius: 46px; background: #FFFCF6; box-shadow: 0 36px 90px rgba(46, 48, 40, .22), 0 0 0 2px #E5DED0; }
+      .phone img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+      .phone-wide { width: 490px; height: 1061px; flex-basis: 490px; }
+      .eyebrow { margin: 0 0 22px; color: #80501E; font-size: 23px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+      h1, h2, p { margin: 0; }
+      h1 { font-size: 116px; line-height: .98; letter-spacing: -.065em; font-weight: 780; }
+      h2 { font-size: 78px; line-height: 1.03; letter-spacing: -.055em; font-weight: 760; }
+      .title-medium { font-size: 60px; }
+      .subtitle { margin-top: 26px; color: #706D62; font-size: 32px; line-height: 1.32; font-weight: 470; }
+      .rule { width: 100%; height: 3px; margin: 34px 0 32px; background: #E5DED0; transform-origin: left center; }
+      .type-row { display: flex; align-items: center; gap: 16px; margin-top: 24px; color: #2E3028; font-size: 30px; font-weight: 670; }
+      .type-dot { width: 18px; height: 18px; border-radius: 50%; background: #F3AE4E; flex: 0 0 18px; }
+      .type-row.request .type-dot { background: #8BA47F; }
+      .detail-title { font-size: 54px; line-height: 1.06; letter-spacing: -.045em; font-weight: 770; }
+      .detail-meta { margin-top: 18px; color: #706D62; font-size: 27px; line-height: 1.3; font-weight: 510; }
+      .value-stack { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 34px; }
+      .value-box { min-height: 126px; padding: 20px 22px; border-radius: 22px; background: #FFFCF6; border: 2px solid #E5DED0; }
+      .value-box span { display: block; color: #706D62; font-size: 19px; font-weight: 560; }
+      .value-box strong { display: block; margin-top: 9px; font-size: 36px; font-weight: 760; letter-spacing: -.04em; }
+      .status { display: inline-flex; align-items: center; gap: 12px; margin-top: 24px; padding: 12px 18px; border-radius: 999px; background: #F7E4BD; color: #5B3A13; font-size: 22px; font-weight: 710; }
+      .check-mark { width: 12px; height: 12px; border-radius: 50%; background: #5B7A52; }
+      .order-state { display: inline-flex; padding: 14px 20px; border-radius: 999px; background: #DDE9D9; color: #2E3028; font-size: 28px; font-weight: 730; }
+      .brand-lockup { display: flex; align-items: center; gap: 30px; }
+      .brand-mark { width: 104px; height: 104px; flex: 0 0 104px; }
+      .brand-name { font-size: 100px; line-height: .95; font-weight: 820; letter-spacing: -.07em; }
+      .brand-dot { color: #C17A21; }
+      .tagline { margin-top: 34px; font-size: 50px; font-weight: 560; letter-spacing: -.035em; }
+      .outro .scene-content { max-width: 1400px; }
+      .detail-scene .phone, .request-scene .phone, .order-scene .phone, .chat-scene .phone { margin-left: 70px; }
+      .listing-scene .phone { margin-left: 45px; }
+      .chat-scene .phone { width: 440px; flex-basis: 440px; }
+      .phone-caption { position: absolute; z-index: 3; bottom: 72px; left: 132px; color: #706D62; font-size: 18px; letter-spacing: .08em; }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-at0g" id="root" data-composition-id="main" data-start="0" data-duration="28" data-width="1920" data-height="1080">
+      <div data-hf-id="hf-c212" class="ambient" data-layout-ignore="" aria-hidden="true"></div>
+      <div data-hf-id="hf-m19t" class="ambient-sage" data-layout-ignore="" aria-hidden="true"></div>
+      <div data-hf-id="hf-eozn" class="grain" data-layout-ignore="" aria-hidden="true"></div>
+
+      <section data-hf-id="hf-oib9" id="hook-scene" class="scene clip hook" data-start="0" data-duration="2.8" data-track-index="0">
+        <div data-hf-id="hf-g5z8" class="phone phone-wide" id="hook-phone"><img data-hf-id="hf-jftn" src="assets/screens/01-board-hook.png" alt="Tampilan listing AEON di marketplace BeeTip"></div>
+        <div data-hf-id="hf-faa8" class="scene-content scene-right" id="hook-copy">
+          <p data-hf-id="hf-npyd" class="eyebrow">Dari teman, untuk teman.</p>
+          <h1 data-hf-id="hf-yhd9">Lagi ke<br data-hf-id="hf-x5px">AEON?</h1>
+          <div data-hf-id="hf-a46i" class="rule"></div>
+          <p data-hf-id="hf-9aw1" class="subtitle">Jastip terasa lebih dekat.</p>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-b6ty" id="board-scene" class="scene clip listing-scene" data-start="2.8" data-duration="3.22" data-track-index="1">
+        <div data-hf-id="hf-s6ep" class="phone" id="board-phone"><img data-hf-id="hf-bsbl" src="assets/screens/01-board.png" alt="Papan marketplace BeeTip"></div>
+        <div data-hf-id="hf-frmp" class="scene-content scene-right" id="board-copy">
+          <p data-hf-id="hf-0kgd" class="eyebrow">Komunitas BINUS Alam Sutera</p>
+          <h2 data-hf-id="hf-9u5n" class="title-medium">Mau titip apa hari ini?</h2>
+          <div data-hf-id="hf-ya9a" class="rule"></div>
+          <div data-hf-id="hf-2qp9" class="type-row"><span data-hf-id="hf-iw87" class="type-dot"></span>Jasa titip tersedia</div>
+          <div data-hf-id="hf-413u" class="type-row request"><span data-hf-id="hf-7sqv" class="type-dot"></span>Minta dibelikan</div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-j3xu" id="detail-scene" class="scene clip detail-scene" data-start="6.02" data-duration="3.78" data-track-index="2">
+        <div data-hf-id="hf-07ja" class="phone phone-wide" id="detail-phone"><img data-hf-id="hf-c4wu" src="assets/screens/02-aeon-detail.png" alt="Detail listing Titip Chatime di AEON Mall BSD"></div>
+        <div data-hf-id="hf-arya" class="scene-content scene-right" id="detail-copy">
+          <p data-hf-id="hf-2ggh" class="eyebrow">Terverifikasi · AEON Mall BSD</p>
+          <h2 data-hf-id="hf-jumo" class="detail-title">Titip Chatime</h2>
+          <p data-hf-id="hf-p3tf" class="detail-meta">13 Okt, 18.35 - 19.05 WIB</p>
+          <div data-hf-id="hf-zb8k" class="value-stack">
+            <div data-hf-id="hf-les7" class="value-box"><span data-hf-id="hf-8r5t">Ongkos jasa</span><strong data-hf-id="hf-hevj">Rp 10.000</strong></div>
+            <div data-hf-id="hf-r0gn" class="value-box"><span data-hf-id="hf-83jr">Kapasitas belanja</span><strong data-hf-id="hf-bbd3">Rp 450.000</strong></div>
+          </div>
+          <div data-hf-id="hf-iga1" class="status">Kapasitas penuh</div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-zhmm" id="choice-scene" class="scene clip request-scene" data-start="9.8" data-duration="2.8" data-track-index="3">
+        <div data-hf-id="hf-zsl0" class="phone" id="choice-phone"><img data-hf-id="hf-zjq6" src="assets/screens/03-create-choices.png" alt="Pilihan listing BeeTip"></div>
+        <div data-hf-id="hf-kevo" class="scene-content scene-right" id="choice-copy">
+          <p data-hf-id="hf-thds" class="eyebrow">Buat listing</p>
+          <h2 data-hf-id="hf-3anv">Minta dibelikan</h2>
+          <div data-hf-id="hf-yokb" class="rule"></div>
+          <p data-hf-id="hf-rtef" class="subtitle">Sedang ke AEON? Buka titipan untuk teman yang ingin ikut belanja.</p>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-fv8d" id="form-scene" class="scene clip request-scene" data-start="12.6" data-duration="4.2" data-track-index="4">
+        <div data-hf-id="hf-wtij" class="phone phone-wide" id="form-phone"><img data-hf-id="hf-h06r" src="assets/screens/04-request-form.png" alt="Formulir permintaan titip belanja BeeTip"></div>
+        <div data-hf-id="hf-zsed" class="scene-content scene-right" id="form-copy">
+          <p data-hf-id="hf-qbau" class="eyebrow">Minta dibelikan</p>
+          <h2 data-hf-id="hf-ofuw" class="title-medium">Tulis barang dan batas belanja</h2>
+          <div data-hf-id="hf-z2vc" class="rule"></div>
+          <p data-hf-id="hf-oz4g" class="subtitle">Lalu teman membantu membelikan.</p>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-vw8g" id="order-scene" class="scene clip order-scene" data-start="16.8" data-duration="2.8" data-track-index="5">
+        <div data-hf-id="hf-extp" class="phone phone-wide" id="order-phone"><img data-hf-id="hf-egsb" src="assets/screens/05-order.png" alt="Detail pesanan BeeTip yang sedang dalam perjalanan"></div>
+        <div data-hf-id="hf-7us5" class="scene-content scene-right" id="order-copy">
+          <p data-hf-id="hf-8174" class="eyebrow">BTP-001</p>
+          <h2 data-hf-id="hf-fiod">Pesanan</h2>
+          <div data-hf-id="hf-waq5" class="rule"></div>
+          <span data-hf-id="hf-2v0c" class="order-state">Dalam perjalanan</span>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-zlgj" id="chat-scene" class="scene clip chat-scene" data-start="19.6" data-duration="2.8" data-track-index="6">
+        <div data-hf-id="hf-usfb" class="phone" id="chat-phone"><img data-hf-id="hf-paor" src="assets/screens/06-chat.png" alt="Chat pada pesanan BeeTip"></div>
+        <div data-hf-id="hf-w3ip" class="scene-content scene-right" id="chat-copy">
+          <p data-hf-id="hf-o2hq" class="eyebrow">Chat pesanan</p>
+          <h2 data-hf-id="hf-4z3p" class="title-medium">Percakapan terpisah untuk setiap titipan.</h2>
+          <div data-hf-id="hf-wp16" class="rule"></div>
+          <p data-hf-id="hf-cds8" class="subtitle">Percakapan pesanan tersimpan di perangkat ini.</p>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-5uw7" id="outro-scene" class="scene clip outro" data-start="22.4" data-duration="5.6" data-track-index="7">
+        <div data-hf-id="hf-rimp" class="scene-content" id="brand-copy">
+          <div data-hf-id="hf-umee" class="brand-lockup">
+            <svg data-hf-id="hf-2l9g" class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><path data-hf-id="hf-s5i9" d="M32 3 58 18v28L32 61 6 46V18L32 3Z" fill="#F3AE4E" /></svg>
+            <p data-hf-id="hf-bysb" class="brand-name">BEETIP<span data-hf-id="hf-khpk" class="brand-dot">.</span></p>
+          </div>
+          <div data-hf-id="hf-x3c7" class="rule"></div>
+          <p data-hf-id="hf-v4m2" class="tagline">Titip belanja, sekalian jalan.</p>
+        </div>
+      </section>
+
+      <audio data-hf-id="hf-phkc" id="bg-music" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3" data-start="0" data-duration="28" data-track-index="10" data-volume="0.26" data-fade-in="0.2" data-fade-out="0.7"></audio>
+      <audio data-hf-id="hf-alub" id="sfx-detail" src="assets/sfx/click2.ogg" data-start="6.83" data-duration="0.06" data-track-index="11" data-volume="0.48"></audio>
+      <audio data-hf-id="hf-2san" id="sfx-request" src="assets/sfx/click2.ogg" data-start="9.91" data-duration="0.06" data-track-index="12" data-volume="0.46"></audio>
+      <audio data-hf-id="hf-htq6" id="sfx-brand" src="assets/sfx/impactBell_heavy_004.ogg" data-start="24.43" data-duration="0.3" data-track-index="13" data-volume="0.38"></audio>
+    </div>
+    <script src="assets/music/audio-data.js"></script>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      tl.to(".ambient", { y: -30, scale: 1.08, duration: 28, ease: "sine.inOut" }, 0);
+      tl.to(".ambient-sage", { x: 24, y: -18, duration: 28, ease: "sine.inOut" }, 0);
+      for (let frameIndex = 0; frameIndex < window.BEETIP_AUDIO_DATA.totalFrames; frameIndex++) {
+        const frame = window.BEETIP_AUDIO_DATA.frames[frameIndex];
+        tl.call(() => gsap.set(".ambient-sage", { scale: 1 + frame.bands[0] * .035 }), [], frame.time);
+      }
+
+      tl.fromTo("#hook-phone", { x: -30, scale: .94, rotation: -1.1, opacity: 0 }, { x: 0, scale: 1, rotation: 0, opacity: 1, duration: .7, ease: "power3.out" }, .252);
+      tl.fromTo("#hook-copy", { x: 52, opacity: 0 }, { x: 0, opacity: 1, duration: .77, ease: "expo.out" }, .532);
+      tl.fromTo("#hook-copy .rule", { scaleX: 0 }, { scaleX: 1, duration: .532, ease: "power2.out" }, 1.148);
+
+      tl.fromTo("#board-phone", { x: -24, scale: .975, opacity: 0 }, { x: 0, scale: 1, opacity: 1, duration: .588, ease: "power3.out" }, 2.968);
+      tl.fromTo("#board-copy", { x: 36, opacity: 0 }, { x: 0, opacity: 1, duration: .532, ease: "expo.out" }, 3.332);
+      tl.fromTo("#board-copy .type-row", { x: 16, opacity: 0 }, { x: 0, opacity: 1, duration: .42, stagger: .308, ease: "power2.out" }, 3.92);
+
+      tl.fromTo("#detail-phone", { x: -18, scale: .97, opacity: 0 }, { x: 0, scale: 1, opacity: 1, duration: .588, ease: "power3.out" }, 6.874);
+      tl.fromTo("#detail-copy", { x: 34, opacity: 0 }, { x: 0, opacity: 1, duration: .56, ease: "expo.out" }, 7.084);
+      tl.fromTo("#detail-copy .value-box", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: .448, stagger: .238, ease: "power2.out" }, 7.588);
+      tl.fromTo("#detail-copy .status", { scale: .92, opacity: 0 }, { scale: 1, opacity: 1, duration: .42, ease: "back.out(1.2)" }, 8.512);
+
+      tl.fromTo("#choice-phone", { x: -28, scale: .97, opacity: 0 }, { x: 0, scale: 1, opacity: 1, duration: .588, ease: "power3.out" }, 9.968);
+      tl.fromTo("#choice-copy", { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: .63, ease: "expo.out" }, 10.29);
+
+      tl.fromTo("#form-phone", { x: -18, scale: .97, opacity: 0 }, { x: 0, scale: 1, opacity: 1, duration: .588, ease: "power3.out" }, 13.006);
+      tl.fromTo("#form-copy", { x: 34, opacity: 0 }, { x: 0, opacity: 1, duration: .588, ease: "expo.out" }, 13.202);
+      tl.fromTo("#form-copy .rule", { scaleX: 0 }, { scaleX: 1, duration: .476, ease: "power2.out" }, 13.664);
+      tl.to("#form-phone", { scale: 1.018, duration: 3.1, ease: "sine.inOut" }, 13.75);
+
+      tl.fromTo("#order-phone", { x: -20, scale: .97, opacity: 0 }, { x: 0, scale: 1, opacity: 1, duration: .56, ease: "power3.out" }, 17.024);
+      tl.fromTo("#order-copy", { x: 34, opacity: 0 }, { x: 0, opacity: 1, duration: .588, ease: "expo.out" }, 17.332);
+      tl.fromTo("#order-copy .order-state", { scale: .94, opacity: 0 }, { scale: 1, opacity: 1, duration: .448, ease: "back.out(1.2)" }, 17.99);
+
+      tl.fromTo("#chat-phone", { x: -18, scale: .98, opacity: 0 }, { x: 0, scale: 1, opacity: 1, duration: .532, ease: "power3.out" }, 19.768);
+      tl.fromTo("#chat-copy", { x: 36, opacity: 0 }, { x: 0, opacity: 1, duration: .56, ease: "expo.out" }, 20.09);
+
+      tl.fromTo("#brand-copy", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1.008, ease: "power3.out" }, 22.708);
+      tl.fromTo(".brand-mark", { rotation: -14, scale: .82 }, { rotation: 0, scale: 1, duration: .952, ease: "back.out(1.35)" }, 22.89);
+      tl.fromTo(".tagline", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: .672, ease: "expo.out" }, 24.458);
+      tl.to(".brand-mark", { scale: 1.035, duration: 3.08, ease: "sine.inOut" }, 24.458);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
