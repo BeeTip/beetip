@@ -4,7 +4,7 @@ A two-way community jastip marketplace for verified BINUS Alam Sutera students, 
 
 ## Repository status
 
-Runnable browser-local interactive demo. Both listing types, negotiation, accepted terms, funding review, purchases, amendments, chat, handover, disputes, payouts, refunds, ratings, and reconciliation are implemented using synthetic records. Real authentication, database migrations, payments, and deployment remain unimplemented.
+The browser-local demo covers both listing types, negotiation, funding, purchases, chat, handover, disputes, transfers, ratings, and reconciliation with synthetic records. The first connected slice adds Supabase email/password identity, pending membership, and private support creation. Its database migrations are applied to a dedicated development project. Connected marketplace operations, realtime replies, live email validation, payment operations, and Vercel deployment remain incomplete.
 
 The demo uses Next.js, React, TypeScript, Tailwind CSS, Radix/shadcn-style primitives, React Hook Form, Zod, and Lucide. The interface targets mobile browsers first, with responsive desktop layouts and a simulated administration area. Supabase PostgreSQL, Auth, Storage, and Realtime remain the proposed connected backend. Native applications remain deferred under the PRD.
 
@@ -20,7 +20,7 @@ The demo uses Next.js, React, TypeScript, Tailwind CSS, Radix/shadcn-style primi
 | `docs/PRD.md` | Product requirements and accepted UX decisions. |
 | `docs/architecture.md` | Proposed stack, PRD mapping, delivery sequence, and operational gates. |
 
-`packages/database` and `supabase/migrations` reserve ownership boundaries for the connected backend. Domain and validation packages already contain shared logic. Task orchestration is deferred.
+`packages/database` contains types generated from the migrated development schema. `supabase/migrations` and `supabase/tests` contain the identity/private-support schema and authorization checks. Domain and validation packages contain shared logic. Task orchestration is deferred.
 
 ## Local development
 
@@ -31,7 +31,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open http://127.0.0.1:3107. Port 3107 avoids the existing local service on port 3000. No environment variables or external accounts are required. Geist Sans and SVG illustrations are served locally.
+Open http://127.0.0.1:3107. Port 3107 avoids the existing local service on port 3000. Connected mode requires the settings in `apps/web/.env.example`. Follow [development setup](docs/development.md). To run the synthetic demo explicitly in PowerShell, set `$env:BEETIP_MODE = 'demo'` before `pnpm dev`. Geist Sans and SVG illustrations are served locally.
 
 ```powershell
 pnpm lint

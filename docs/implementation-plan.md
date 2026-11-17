@@ -4,6 +4,8 @@ Planned on 17 November 2026. The [roadmap issue](https://github.com/BeeTip/beeti
 
 ## Delivery contract
 
+Development has started on [BTP-02](https://github.com/BeeTip/beetip/issues/4). Its Auth/private-support implementation and hosted database checks are in progress. Email deliverability, real operator assignment, and protected staging acceptance remain open. See [development setup and evidence](development.md).
+
 Implement against the [system design](system-design.md), [messaging contracts](messaging.md), and [deployment runbook](vercel-deployment.md). [Current-system grounding](current-system.md) distinguishes demo behavior from real backend requirements. Candidate alternatives and review findings are retained in [design review](design-review.md).
 
 The machine-readable work breakdown is [implementation-issues.json](implementation-issues.json). [issue-links.json](issue-links.json) maps its stable keys to published issues. Keep the source catalog and tracker contract reconciled whenever scope changes. The order below is dependency order, not a promised schedule. Owners and estimates are assigned after team availability is known.

@@ -300,3 +300,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { border-color
   .navigation a, .listing-card, .order-card, .button { transition: none; }
   .navigation a:hover, .listing-card:hover, .order-card:hover { transform: none; }
 }
+.connected-shell .app-body { margin-left: 0; }
+.connected-shell .mobile-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; max-width: 760px; margin: auto; padding: 24px; }
+.connected-shell .mobile-header nav { display: flex; gap: 20px; }
+.connected-shell main { max-width: 760px; padding: 24px 24px 64px; }

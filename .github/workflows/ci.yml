@@ -6,6 +6,8 @@ permissions:
   contents: read
 jobs:
   checks:
+    env:
+      BEETIP_MODE: demo
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

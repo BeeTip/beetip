@@ -9,6 +9,7 @@ export default defineConfig({
   use: { baseURL: "http://127.0.0.1:3107", trace: "retain-on-failure", launchOptions: { executablePath: process.env.BEETIP_BROWSER_EXECUTABLE } },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
+    env: { BEETIP_MODE: "demo" },
     command: "pnpm --filter @beetip/web build && pnpm --filter @beetip/web start",
     url: "http://127.0.0.1:3107",
     reuseExistingServer: false,

@@ -196,7 +196,9 @@ Browser-to-Supabase RLS and RPCs remove a server hop but expose data protocol, e
 
 ## Implementation reconciliation
 
-No implementation deviations have been accepted. Update the usage, outcomes, SQL responsibilities, and associated issue when an accepted change alters the contract. Record its acceptance source here. Reopen design if two unrelated units need the same workaround or duplicate writers emerge. Cosmetic renaming does not require redesign.
+The first BTP-02 implementation uses the selected server-command/RPC boundaries for real Auth and private support creation. Explicit demo mode retains synthetic regression journeys, while connected routes gate unmigrated screens. It does not import browser data. Support replies, notification intent, and realtime are deferred to their owning issues. Email delivery and protected staging evidence remain incomplete, so BTP-02 is open. See [development setup](development.md) for actual verification and project state.
+
+No structural contract deviations have been accepted. Update the usage, outcomes, SQL responsibilities, and associated issue when an accepted change alters the contract. Record its acceptance source here. Reopen design if two unrelated units need the same workaround or duplicate writers emerge. Cosmetic renaming does not require redesign.
 
 ## Open decisions and launch dependencies
 

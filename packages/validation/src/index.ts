@@ -58,3 +58,4 @@ export const demoStorageSchema = z.object({
     operations: z.array(id),
   }),
 }).refine(data => data.state.members.some(m => m.id === data.actorId), "Persona tidak tersedia");
+export { acceptsMutation, applicationMode, authInputSchema, authRedirect, supportInputSchema, trustedOrigin } from "./identity";
