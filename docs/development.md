@@ -8,7 +8,7 @@ The owner approved `beetip-development` in organization `BurgerMcd`, Singapore, 
 
 Three migrations create pending members, scoped staff roles, private support, operation receipts, audit, bounded RPC input, and access-path indexes. Actual generated database types live in `packages/database/src/database.types.ts`. User-editable Auth metadata supplies display names only. Authenticated SQL commands derive identity from `auth.uid()` and require a current Auth session.
 
-Auth is configured for `http://127.0.0.1:3107`, callback/confirmation routes, email confirmation, 12-character minimum passwords, one-minute email throttling, and enabled TOTP MFA. Anonymous sign-in is disabled. The hosted config was pushed and read back as up to date. The `private` schema is not an exposed Data API schema. No operator identity has been assigned.
+Initial Auth configuration used `http://127.0.0.1:3107`, callback/confirmation routes, email confirmation, 12-character minimum passwords, one-minute email throttling, and enabled TOTP MFA. Anonymous sign-in is disabled. A later field-level Management API read confirmed those settings, while also showing that the CLI's up-to-date response alone did not establish a requested staging/SMTP change. See [the current staging record](staging.md). The `private` schema is not an exposed Data API schema. No operator identity has been assigned.
 
 The initial generated config push changed MFA/email defaults as well. A corrective push restored TOTP enrollment/verification, the existing email throttle and OTP length, and disabled unused vector storage. No paid service was provisioned.
 
@@ -49,7 +49,7 @@ $env:BEETIP_TEST_PROJECT_REF = 'rgiptdfjlmwldngapojq'
 node scripts/test-connected-identity.mjs
 ```
 
-The harness refuses any other project and nonlocal application URLs. It uses the authenticated Supabase CLI to retrieve the development administration key in memory. It creates two temporary, email-confirmed `example.invalid` test accounts without sending email. It deletes their public support fixtures and Auth users in `finally`. Minimal private audit and operation facts remain for reconciliation. It never prints keys, passwords, or sessions.
+The harness refuses any other database project. It accepts local application URLs and the exact protected staging origin documented in [staging](staging.md), with a required automation bypass file for staging. It uses the authenticated Supabase CLI to retrieve the development administration key in memory. It creates two temporary, email-confirmed `example.invalid` test accounts without sending email. It deletes their public support fixtures and Auth users in `finally`. Minimal private audit and operation facts remain for reconciliation. It never prints keys, passwords, or sessions.
 
 The test checks real password sign-in, pending membership, support persistence, two-session privacy, concurrent exact retries, changed-payload conflicts, CSRF and actor spoofing, mobile overflow, cross-tab logout, and connected route gating. A screenshot is written to ignored `test-results/connected-support.png`. Admin-created confirmed fixtures do not prove real signup confirmation or recovery email delivery.
 

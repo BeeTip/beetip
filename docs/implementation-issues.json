@@ -353,6 +353,7 @@
     },
     {
       "key": "BTP-22",
+      "status": "in_progress",
       "title": "Deploy the isolated Vercel staging candidate",
       "deps": [
         "BTP-02"

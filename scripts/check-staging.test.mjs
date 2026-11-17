@@ -30,6 +30,13 @@ test("checks public protection separately from the authenticated Vercel bypass",
   assert.equal(result.checks.length, 5);
 });
 
+test("recognizes Vercel's SSO redirect without following it or forwarding the bypass", async () => {
+  const result = await checkStaging({ origin, bypass, request: fixture((url, options) => {
+    if (!options.headers["x-vercel-protection-bypass"]) return new Response(null, { status: 302, headers: { Location: "https://vercel.com/sso-api?url=beetip-staging.example" } });
+  }) });
+  assert.equal(result.result, "PASS");
+});
+
 test("refuses unsafe origins or missing protection credentials before any request", async () => {
   for (const target of ["http://beetip.example", "https://user:password@beetip.example", `${origin}/path`, `${origin}?secret=value`]) {
     await assert.rejects(checkStaging({ origin: target, bypass, request: () => assert.fail("Unexpected request") }));

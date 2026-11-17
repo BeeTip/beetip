@@ -9,7 +9,10 @@ import { chromium, expect } from "@playwright/test";
 const project = process.env.BEETIP_TEST_PROJECT_REF;
 assert.equal(project, "rgiptdfjlmwldngapojq", "This destructive-fixture test is restricted to the dedicated BeeTip development project");
 const origin = process.env.BEETIP_TEST_URL ?? "http://127.0.0.1:3108";
-assert.match(origin, /^http:\/\/127\.0\.0\.1:\d+$/, "Use a local connected test server");
+const staging = origin === "https://beetip-campus.vercel.app";
+assert(staging || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin), "Use a local connected server or the exact protected BeeTip staging origin");
+const bypass = staging ? readFileSync(process.env.BEETIP_STAGING_BYPASS_FILE, "utf8").trim() : undefined;
+assert(!staging || bypass, "Protected staging requires its automation bypass file");
 const settings = Object.fromEntries(readFileSync(new URL("../apps/web/.env.local", import.meta.url), "utf8").split(/\r?\n/).filter(line => line.includes("=")).map(line => [line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)]));
 assert.equal(settings.NEXT_PUBLIC_SUPABASE_URL, `https://${project}.supabase.co`);
 const cli = execFileSync("rtk", ["proxy", "supabase", "projects", "api-keys", "--project-ref", project, "--reveal", "--output", "json"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
@@ -34,6 +37,13 @@ try {
   const owner = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const other = await browser.newContext();
   async function signIn(context, user) {
+    if (staging) {
+      const gate = await context.request.get(`${origin}/login`, {
+        headers: { "x-vercel-protection-bypass": bypass, "x-vercel-set-bypass-cookie": "true" }, maxRedirects: 0,
+      });
+      assert([200, 302, 307].includes(gate.status()), "Staging protection setup failed");
+      assert.equal((await context.request.get(`${origin}/login`, { maxRedirects: 0 })).status(), 200, "Staging bypass cookie was not established");
+    }
     const page = await context.newPage();
     await page.goto(`${origin}/login`);
     await page.getByLabel("Email", { exact: true }).fill(user.email);
@@ -73,7 +83,7 @@ try {
   await expect(page.getByText("Pertanyaan pribadi dari pemohon", { exact: true })).toBeVisible();
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
   mkdirSync(new URL("../test-results/", import.meta.url), { recursive: true });
-  await page.screenshot({ path: fileURLToPath(new URL("../test-results/connected-support.png", import.meta.url)), fullPage: true });
+  await page.screenshot({ path: fileURLToPath(new URL(`../test-results/${staging ? "connected-staging-support" : "connected-support"}.png`, import.meta.url)), fullPage: true });
   checked.push("durable reload and mobile layout");
   const secondTab = await owner.newPage();
   await secondTab.goto(`${origin}/account`);
@@ -86,7 +96,7 @@ try {
   await otherPage.waitForURL("**/account");
   await expect(otherPage.getByRole("button", { name: "Reset data lokal" })).toHaveCount(0);
   checked.push("unmigrated demo authority is gated");
-  console.log(JSON.stringify({ checks: checked, result: "PASS" }));
+  console.log(JSON.stringify({ checks: checked, result: "PASS", origin, accountSetup: "admin-confirmed fixtures; no email delivery evidence" }));
 } finally {
   await browser?.close();
   for (const user of users) {

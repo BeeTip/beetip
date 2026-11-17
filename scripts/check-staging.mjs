@@ -28,8 +28,11 @@ export async function checkStaging({ origin, bypass, allowLocal = false, request
   if (!local) {
     for (const path of ["/login", "/api/identity/support"]) {
       const response = await send(path, {}, false);
-      assert([401, 403].includes(response.status), "Deployment protection must deny unauthenticated access before the application");
-      assert(response.headers.get("content-type")?.includes("text/html") && (await response.text()).includes("Authentication Required"), "Expected the Vercel authentication gate, not the application's anonymous denial");
+      const location = response.headers.get("location");
+      const destination = location ? new URL(location, target) : null;
+      const sso = [302, 307].includes(response.status) && destination?.origin === "https://vercel.com" && destination.pathname === "/sso-api";
+      const challenge = [401, 403].includes(response.status) && response.headers.get("content-type")?.includes("text/html") && (await response.text()).includes("Authentication Required");
+      assert(sso || challenge, "Expected the Vercel authentication gate, not the application's anonymous denial");
     }
     checked.push("deployment protection denies public page and API access");
   }
