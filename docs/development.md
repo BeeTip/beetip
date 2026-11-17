@@ -61,4 +61,6 @@ The production build, lint, typecheck, 29 unit tests, 16 existing demo browser j
 
 ## Remaining acceptance evidence
 
-Configure and verify custom SMTP before inviting participants. The default Supabase mail service is restricted and does not establish onboarding deliverability. Test actual signup confirmation and password recovery using an approved mailbox and sender configuration. Record the protected Vercel staging URL and candidate commit under BTP-22. Keep BTP-02 open until those checks pass. No commit, push, or deployment was performed during this implementation pass.
+Configure and verify custom SMTP before inviting participants. The default Supabase mail service is restricted and does not establish onboarding deliverability. Test actual signup confirmation and password recovery using an approved mailbox and sender configuration. Record the protected Vercel staging URL and candidate commit under BTP-22. Keep BTP-02 open until those checks pass.
+
+The implementation was committed in `2069764`; dependency integration and the Next.js security patch are preserved through `7a7c665`. Continue from local `main`, which contains unpublished required commits. The earlier uncommitted-status wording is obsolete. See [staging progress and acceptance](staging.md) for the current environment and remaining evidence.

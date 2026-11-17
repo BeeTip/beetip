@@ -1,6 +1,6 @@
 # Deploy the connected BeeTip pilot
 
-This is a future deployment runbook, not a record of a completed deployment. Scope confirmed on 17 November 2026 includes real accounts, order and support chat, in-app and email notifications, and manual payments. Follow [the implementation plan](implementation-plan.md) before executing this runbook.
+This is the deployment runbook. Current staging work and evidence are recorded in [staging progress](staging.md); production has not been deployed. Scope confirmed on 17 November 2026 includes real accounts, order and support chat, in-app and email notifications, and manual payments. Follow [the implementation plan](implementation-plan.md) before executing this runbook.
 
 ## Establish ownership and cost
 
@@ -52,11 +52,13 @@ Use the appropriate supported Supabase key form when provisioning. Never expose 
 
 1. Connect the private `BeeTip/beetip` repository to the authorized Vercel team.
 2. Set the framework preset to Next.js and the Root Directory to `apps/web`. Include files outside the root so workspace packages and the root lockfile remain available. Vercel documents monorepo root selection and workspace detection in [Using monorepos](https://vercel.com/docs/monorepos).
-3. Use Node.js 22 to match current CI until a separately validated runtime upgrade. Use the root `packageManager` pin, currently `pnpm@10.18.3`.
+3. Use Node.js 24 to match current CI, which pins 24.22.1. Vercel manages the patch version within `24.x`; record the deployed build's actual runtime. Use the root `packageManager` pin, currently `pnpm@10.18.3`.
 4. Use `pnpm install --frozen-lockfile` for installation and `pnpm build` from the configured application root. The app's build script runs `next build`. Keep the framework's output directory default. Confirm the remote build includes both workspace packages.
 5. Set scoped Preview and Production variables independently. Verify the deploy log shows the expected package-manager and runtime versions without printing values.
 6. Keep production promotion manual until all checks and the release record pass. Configure deployment protection for nonproduction URLs.
 7. Select a function region near the chosen database region. Use request-scoped Supabase clients and HTTPS APIs for user queries. If a future task introduces direct SQL connections, explicitly configure the supported pooler and connection limits.
+
+The owner requires zero spending for current personal staging. Hobby does not support Git integration with this private organization repository. Keep the repository private and inspect the permitted local-source deployment route for personal, noncommercial testing. Do not enable a paid trial or upgrade. Production marketplace hosting eligibility remains unresolved. Use Vercel Authentication with All Deployments protection for the staging project, including any easy-to-remember alias. Password Protection is a separate paid feature and is not selected. [Git restrictions](https://vercel.com/docs/git#using-hobby-teams), [Hobby eligibility](https://vercel.com/docs/plans/hobby), [deployment protection](https://vercel.com/docs/deployment-protection).
 
 ## Validate the release candidate
 

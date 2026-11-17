@@ -1,6 +1,6 @@
 # Current system and migration constraints
 
-Inspected 17 November 2026. This document describes the existing code, before backend implementation.
+Inspected 17 November 2026. This document preserves the browser-local demo baseline used to design the backend migration. The connected identity/private-support slice has since been implemented and committed in `2069764`; its current setup and remaining gates are in [development](development.md) and [staging](staging.md).
 
 ## Overview
 
@@ -40,7 +40,7 @@ Order chat appends local message records after participant checks. Support threa
 
 ## Gotchas
 
-The browser can inspect and change every record and actor. Existing checks demonstrate rules without establishing a trusted authorization boundary. There are no database migrations, trusted sessions, private uploads, deployed jobs, or live email delivery in this code.
+The demo browser can inspect and change every synthetic record and actor. Its checks demonstrate rules without establishing a trusted authorization boundary. The connected identity slice now supplies migrations and trusted sessions independently of this demo. Private uploads, deployed jobs, and verified live email delivery remain unfinished.
 
 The current interface returns immediate values. Real server operations require promises, pagination, loading states, and recoverable failures. Replace callers by feature rather than pretending a network adapter can satisfy synchronous signatures.
 

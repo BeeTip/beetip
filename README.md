@@ -24,7 +24,7 @@ The demo uses Next.js, React, TypeScript, Tailwind CSS, Radix/shadcn-style primi
 
 ## Local development
 
-Use Node.js 22 and the pinned pnpm version from `package.json`:
+Use Node.js 24.22.1, matching CI, and the pinned pnpm version from `package.json`:
 
 ```powershell
 pnpm install --frozen-lockfile

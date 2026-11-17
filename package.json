@@ -11,7 +11,8 @@
     "lint": "eslint apps packages tests *.ts *.mjs",
     "typecheck": "pnpm --filter @beetip/web exec next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:staging": "node scripts/check-staging.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
