@@ -6,7 +6,13 @@ BTP-02 and BTP-22 remain open. This record covers the identity/private-support s
 
 The maker approved their existing personal Vercel account and a zero-cost limit. No paid plan, trial, domain purchase, or email subscription is authorized. The maker approved their personal Gmail identity as the first support operator. Approval alone does not grant database access: normal email confirmation, verified MFA, a separate requester's case, and the audited bootstrap remain required.
 
-A separate BeeTip Gmail account was created with the owner completing Google's personal-information and verification steps. Its SMTP app password and actual Auth mail delivery remain pending. Use that account for the authorized signup/recovery test mailbox. Credentials and personal operator addresses are kept outside the repository.
+A separate BeeTip Gmail account was created with the owner completing Google's personal-information and verification steps. The owner reports that Google app passwords are unavailable, so Gmail SMTP is not the selected route. Keep the mailbox as the authorized signup/recovery recipient. Credentials and personal operator addresses are kept outside the repository.
+
+Brevo's Free SMTP service is the alternative being configured. Its published free allowance is 300 email sends per day. It supplies its own SMTP credentials, so Google app passwords are unnecessary. A Gmail sender must be verified, and Brevo may rewrite its visible sender domain to `brevosend.com`; a custom domain is not being purchased. Account onboarding requires the owner's real contact postal address. Keep that address and provider credentials outside the repository. [Free plan](https://help.brevo.com/hc/en-us/articles/208589409-About-Brevo-s-pricing-plans), [sender verification](https://help.brevo.com/hc/en-us/articles/208836149-Create-a-new-sender-From-name-and-From-email), [sender-domain rewriting](https://help.brevo.com/hc/en-us/articles/16045394674066-Troubleshooting-Domain-authentication).
+
+Brevo registration through the BeeTip Google identity reached the required postal-address form. Address, postal code, city, and country await owner entry. The plan-selection step, sender verification, and SMTP credential generation have not been completed. No payment details, paid plan, or trial were selected. Hosted Supabase SMTP remains unchanged; this registration does not establish mail-delivery acceptance.
+
+After onboarding, select Free, verify the BeeTip sender, and use the account's SMTP login and a newly generated SMTP key with `smtp-relay.brevo.com:587`. The SMTP key is not the Google password or a Brevo API key. Preserve exact callback URLs, email confirmation, session rules, and TOTP settings. Start with the staging-only rate cap of six emails per hour, then read back the hosted fields without exposing credentials. Verify received signup and recovery emails, changed-password login, and operator enrollment before marking the mail gate complete.
 
 ## Verified environment
 
@@ -57,7 +63,7 @@ The CLI reported Auth configuration as up to date while a Management API read-ba
 | Exact deployment | Commit SHA, build/runtime log, workspace resolution, HTTPS URL and stable alias | Recorded above; Node major configured as 24.x, patch not printed in the build log |
 | Protection | Anonymous page/API denial and authorized owner access at the stable alias | Anonymous gate and authorized automation passed; owner's Vercel login access remains a manual check |
 | Auth configuration | Hosted site URL and exact stable callback/recovery allowlist read back; no broad wildcard | Passed via Management API read-back; localhost development callbacks retained explicitly |
-| Real mail | Custom SMTP read-back without credentials, received signup confirmation, received recovery link, password change and login | Pending app password |
+| Real mail | Custom SMTP read-back without credentials, received signup confirmation, received recovery link, password change and login | Brevo Free onboarding in progress; SMTP not yet configured |
 | Member journey | Confirmed pending account opens support, reloads it, logs out; second real identity cannot read it | Passed using admin-confirmed temporary accounts; actual signup/recovery pending |
 | Operator | Owner approval, verified MFA, audited non-self case assignment, requester/assigned staff access and unrelated/revoked staff denial | Approval recorded; enrollment and case tests pending |
 | Scheduler | No scheduler exists in this identity slice; no production job target configured | Later owning issues |
