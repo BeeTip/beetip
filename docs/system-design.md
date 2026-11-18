@@ -202,10 +202,12 @@ The first BTP-02 implementation uses the selected server-command/RPC boundaries 
 
 BTP-03 implements optional affiliation requests, private evidence and scoped staff grants under the revised public-access policy. Its user-scoped SQL commands, authenticated-only Storage operations, role/MFA checks, private projections, browser-state clearing and verification are recorded in [affiliation and staff evidence](affiliation-staff.md). No affiliation decision gates ordinary confirmed accounts. Notification delivery and evidence-retention automation remain in their owning later issues.
 
+BTP-04 implements real publishing and public-safe listing projections as recorded in [connected listings](connected-listings.md). BTP-05 adds private versioned offers, immutable proposal snapshots, author withdrawal and owner review as recorded in [connected offers](connected-offers.md). Any listing edit invalidates prior consent until the author explicitly agrees to the latest listing revision. BTP-06 must lock the listing and recheck this revision before order creation; neither publishing nor negotiation reserves capacity or money. Offer events are sanitized `offer_saved` and `offer_withdrawn` audit facts. Durable notification intents and delivery remain BTP-10/BTP-11, and retention automation remains BTP-20.
+
 ## Open decisions and launch dependencies
 
 The product owner must identify the approved affiliation evidence, service area and handover points, support hours, escalation contacts, financial operators, collection and payout arrangement, retention policy, and infrastructure budget. Proposed defaults in companion documents are engineering assumptions pending that decision issue. Real-money operation requires suitable collection and payout arrangements even after the software passes.
 
 ## Next implementation step
 
-Continue with BTP-04 real listing publishing and public-safe browsing under the confirmed-account policy. Deploy and verify each selected web candidate separately; local implementation and applied development migrations do not claim public deployment or production-release approval. Follow [the implementation plan](implementation-plan.md) and [Vercel runbook](vercel-deployment.md) through later release gates.
+Continue with BTP-06 atomic acceptance and trip capacity reservation under the confirmed-account policy. Deploy and verify each selected web candidate separately; local implementation and applied development migrations do not claim public deployment or production-release approval. Follow [the implementation plan](implementation-plan.md) and [Vercel runbook](vercel-deployment.md) through later release gates.
