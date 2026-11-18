@@ -4,7 +4,7 @@ Planned on 17 November 2026. The [roadmap issue](https://github.com/BeeTip/beeti
 
 ## Delivery contract
 
-Development has started on [BTP-02](https://github.com/BeeTip/beetip/issues/4). Its Auth/private-support implementation and hosted database checks are recorded in [development setup and evidence](development.md). [BTP-22 staging preparation](staging.md) has started on the owner's personal Hobby account under a zero-cost limit. Email deliverability, real operator enrollment and assignment, and protected staging acceptance remain open.
+[BTP-02](https://github.com/BeeTip/beetip/issues/4) and [BTP-22](https://github.com/BeeTip/beetip/issues/24) passed identity-slice acceptance on 18 November 2026. [Development evidence](development.md) and [protected staging acceptance](staging.md) record real email confirmation/recovery, verified operator MFA and assignment, recipient restrictions, deployment protection, failures and cleanup. Staging uses the owner's personal Hobby account and Brevo Free under a zero-cost limit. Later marketplace and release work remains open.
 
 Implement against the [system design](system-design.md), [messaging contracts](messaging.md), and [deployment runbook](vercel-deployment.md). [Current-system grounding](current-system.md) distinguishes demo behavior from real backend requirements. Candidate alternatives and review findings are retained in [design review](design-review.md).
 
@@ -26,7 +26,7 @@ Each feature slice includes its schema, policies, command, authorized projection
 | Key | Published issue | Blocked by | Work type |
 | --- | --- | --- | --- |
 | BTP-01 | [#3 Approve pilot operations, account ownership, and release policies](https://github.com/BeeTip/beetip/issues/3) | None | Owner decision |
-| BTP-02 | [#4 Connect real sign-in and pending-member private support](https://github.com/BeeTip/beetip/issues/4) | None | Implementation |
+| BTP-02 | [#4 Connect real sign-in and pending-member private support](https://github.com/BeeTip/beetip/issues/4) | None | Complete |
 | BTP-03 | [#5 Review affiliation and grant scoped staff access](https://github.com/BeeTip/beetip/issues/5) | [#4](https://github.com/BeeTip/beetip/issues/4) | Implementation |
 | BTP-04 | [#6 Publish and browse both real listing types](https://github.com/BeeTip/beetip/issues/6) | [#5](https://github.com/BeeTip/beetip/issues/5) | Implementation |
 | BTP-05 | [#7 Negotiate offers with versioned consent](https://github.com/BeeTip/beetip/issues/7) | [#6](https://github.com/BeeTip/beetip/issues/6) | Implementation |
@@ -46,7 +46,7 @@ Each feature slice includes its schema, policies, command, authorized projection
 | BTP-19 | [#21 Moderate listings and collect ratings after completion](https://github.com/BeeTip/beetip/issues/21) | [#8](https://github.com/BeeTip/beetip/issues/8), [#20](https://github.com/BeeTip/beetip/issues/20) | Implementation |
 | BTP-20 | [#22 Enforce private evidence retention and account data controls](https://github.com/BeeTip/beetip/issues/22) | [#11](https://github.com/BeeTip/beetip/issues/11), [#14](https://github.com/BeeTip/beetip/issues/14), [#18](https://github.com/BeeTip/beetip/issues/18) | Implementation |
 | BTP-21 | [#23 Rehearse connected journeys and enforce release checks](https://github.com/BeeTip/beetip/issues/23) | [#9](https://github.com/BeeTip/beetip/issues/9), [#13](https://github.com/BeeTip/beetip/issues/13), [#20](https://github.com/BeeTip/beetip/issues/20), [#21](https://github.com/BeeTip/beetip/issues/21), [#22](https://github.com/BeeTip/beetip/issues/22) | Implementation |
-| BTP-22 | [#24 Deploy the isolated Vercel staging candidate](https://github.com/BeeTip/beetip/issues/24) | [#4](https://github.com/BeeTip/beetip/issues/4) | Implementation |
+| BTP-22 | [#24 Deploy the isolated Vercel staging candidate](https://github.com/BeeTip/beetip/issues/24) | [#4](https://github.com/BeeTip/beetip/issues/4) | Complete |
 | BTP-23 | [#25 Rehearse backups, incidents, and compatible rollback](https://github.com/BeeTip/beetip/issues/25) | [#23](https://github.com/BeeTip/beetip/issues/23), [#24](https://github.com/BeeTip/beetip/issues/24) | Implementation |
 | BTP-24 | [#26 Promote production and open the capped manual-payment pilot](https://github.com/BeeTip/beetip/issues/26) | [#3](https://github.com/BeeTip/beetip/issues/3), [#23](https://github.com/BeeTip/beetip/issues/23), [#24](https://github.com/BeeTip/beetip/issues/24), [#25](https://github.com/BeeTip/beetip/issues/25) | Owner release |
 
@@ -104,5 +104,5 @@ For new improvements, create a linked follow-up with the failing user scenario, 
 
 ## Unresolved launch decisions
 
-BTP-01 owns actual affiliation evidence, service area, operating hours, support escalation, retention, financial operators, collection/payout suitability, infrastructure budget and recovery objectives. BTP-24 remains blocked on those decisions even if the software is complete. Development and staging use synthetic money until the real-funds gate passes. Vercel, Supabase, SMTP/email, and domain accounts have not been provisioned by this task.
+BTP-01 owns actual affiliation evidence, service area, operating hours, support escalation, retention, financial operators, collection/payout suitability, infrastructure budget and recovery objectives. BTP-24 remains blocked on those decisions even if the software is complete. Development and staging use synthetic money until the real-funds gate passes. The owner authorized the dedicated development Supabase project, personal Hobby staging and free email setup documented in [staging](staging.md); no paid service or custom domain was purchased.
 

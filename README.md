@@ -4,7 +4,7 @@ A two-way community jastip marketplace for verified BINUS Alam Sutera students, 
 
 ## Repository status
 
-The browser-local demo covers both listing types, negotiation, funding, purchases, chat, handover, disputes, transfers, ratings, and reconciliation with synthetic records. The first connected slice adds Supabase email/password identity, pending membership, and private support creation. Its database migrations are applied to a dedicated development project. Connected marketplace operations, realtime replies, live email validation, payment operations, and Vercel deployment remain incomplete.
+The browser-local demo covers both listing types, negotiation, funding, purchases, chat, handover, disputes, transfers, ratings, and reconciliation with synthetic records. The first connected slice adds Supabase email/password identity, pending membership, and private support creation. Its database migrations are applied to a dedicated development project. Real email confirmation/recovery, assigned support-operator MFA, and protected [BeeTip staging](https://beetip-campus.vercel.app) passed acceptance; [the evidence record](docs/staging.md) includes exact candidates and limitations. Connected marketplace operations, realtime replies, and payment operations remain incomplete.
 
 The demo uses Next.js, React, TypeScript, Tailwind CSS, Radix/shadcn-style primitives, React Hook Form, Zod, and Lucide. The interface targets mobile browsers first, with responsive desktop layouts and a simulated administration area. Supabase PostgreSQL, Auth, Storage, and Realtime remain the proposed connected backend. Native applications remain deferred under the PRD.
 

@@ -18,7 +18,7 @@
     },
     {
       "key": "BTP-02",
-      "status": "in_progress",
+      "status": "complete",
       "title": "Connect real sign-in and pending-member private support",
       "deps": [],
       "story": "A test user signs in with Supabase, sees pending membership, and opens a private support thread on a protected staging build.",
@@ -353,7 +353,7 @@
     },
     {
       "key": "BTP-22",
-      "status": "in_progress",
+      "status": "complete",
       "title": "Deploy the isolated Vercel staging candidate",
       "deps": [
         "BTP-02"

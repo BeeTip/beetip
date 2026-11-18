@@ -1,6 +1,6 @@
 # Develop the connected identity slice
 
-BTP-02 implements real Auth and private support creation. It remains open until email confirmation/recovery delivery and a protected Vercel staging candidate are validated. Support replies, realtime, notifications, affiliation review, and connected marketplace flows belong to later issues.
+BTP-02 implements real Auth and private support creation and passed acceptance on protected Vercel staging on 18 November 2026. Support replies, realtime, notifications, affiliation review, and connected marketplace flows belong to later issues.
 
 ## Development project
 
@@ -8,7 +8,7 @@ The owner approved `beetip-development` in organization `BurgerMcd`, Singapore, 
 
 Three migrations create pending members, scoped staff roles, private support, operation receipts, audit, bounded RPC input, and access-path indexes. Actual generated database types live in `packages/database/src/database.types.ts`. User-editable Auth metadata supplies display names only. Authenticated SQL commands derive identity from `auth.uid()` and require a current Auth session.
 
-Initial Auth configuration used `http://127.0.0.1:3107`, callback/confirmation routes, email confirmation, 12-character minimum passwords, one-minute email throttling, and enabled TOTP MFA. Anonymous sign-in is disabled. A later field-level Management API read confirmed those settings, while also showing that the CLI's up-to-date response alone did not establish a requested staging/SMTP change. See [the current staging record](staging.md). The `private` schema is not an exposed Data API schema. No operator identity has been assigned.
+Initial Auth configuration used `http://127.0.0.1:3107`, callback/confirmation routes, email confirmation, 12-character minimum passwords, one-minute email throttling, and enabled TOTP MFA. Anonymous sign-in is disabled. A later field-level Management API read confirmed those settings, while also showing that the CLI's up-to-date response alone did not establish a requested staging/SMTP change. See [the current staging record](staging.md) for exact hosted callbacks, Brevo Free, the signed recipient guard, and real mail acceptance. The `private` schema is not an exposed Data API schema. The maker-approved operator completed verified TOTP enrollment and the audited support-only, designated-case bootstrap; unrelated and revoked access were denied.
 
 The initial generated config push changed MFA/email defaults as well. A corrective push restored TOTP enrollment/verification, the existing email throttle and OTP length, and disabled unused vector storage. No paid service was provisioned.
 
@@ -59,8 +59,8 @@ The [database setup](../supabase/README.md) documents 33 rollback-only authoriza
 
 The production build, lint, typecheck, 29 unit tests, 16 existing demo browser journeys, and the connected real-session harness passed. The hosted SQL assertions passed all 33 checks. A fresh hosted query confirmed zero temporary users, conversations, and messages after cleanup. Security review found provider-outage reporting, stale cross-tab history, and an editable pending draft issue; all were corrected. Generated types were retrieved from the applied schema.
 
-## Remaining acceptance evidence
+## Staging acceptance completed on 18 November 2026
 
-Configure and verify custom SMTP before inviting participants. The default Supabase mail service is restricted and does not establish onboarding deliverability. Test actual signup confirmation and password recovery using an approved mailbox and sender configuration. Record the protected Vercel staging URL and candidate commit under BTP-22. Keep BTP-02 open until those checks pass.
+Real received signup and recovery links, password replacement, old-password rejection, new-password login, pending-member private support, and MFA-gated assigned operator reads passed. [Protected staging acceptance](staging.md) records exact deployment and hook revisions, recipient-denial checks, preserved failures, cleanup, and delivery limitations. The final email-hook suite totals 39 passing unit tests; lint, typecheck, eight smoke-helper tests, five anonymous staging groups and seven connected staging groups also passed. Signup is closed after approved enrollment, and the signed hook independently restricts Auth mail recipients. No paid service was selected.
 
-The implementation was committed in `2069764`; dependency integration and the Next.js security patch are preserved through `7a7c665`. Continue from local `main`, which contains unpublished required commits. The earlier uncommitted-status wording is obsolete. See [staging progress and acceptance](staging.md) for the current environment and remaining evidence.
+The implementation was committed in `2069764`; dependency integration and the Next.js security patch are preserved through `7a7c665`. The deployed web candidate is `ab612da`; the signed email guard and payload correction are `5837d23` and `0630a02`. Continue from local `main`, which contains unpublished required commits. Later slices must update staging evidence as they add capabilities.

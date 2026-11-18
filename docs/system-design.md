@@ -30,7 +30,7 @@ A timeout is not a business rejection. Retrying the same intended command retain
 
 ## Shape
 
-Choose a Next.js modular monolith on Vercel, with Supabase Auth, PostgreSQL, private Storage, and Realtime. Next.js is the sole application transport for protected reads and commands. Browser SDK access is limited to Auth, authorized upload intents, and private realtime subscriptions. PostgreSQL transaction functions own shared invariants. Supabase Cron triggers expiry and notification delivery work. A transactional email provider supplies custom Auth SMTP and application mail. Resend is the proposed default, subject to account and domain provisioning.
+Choose a Next.js modular monolith on Vercel, with Supabase Auth, PostgreSQL, private Storage, and Realtime. Next.js is the sole application transport for protected reads and commands. Browser SDK access is limited to Auth, authorized upload intents, and private realtime subscriptions. PostgreSQL transaction functions own shared invariants. Supabase Cron triggers expiry and notification delivery work. A transactional email provider supplies Auth and application mail. Staging uses Brevo Free: initial custom SMTP was validated, then a signed Auth email hook added exact recipient restrictions through Brevo's HTTPS API. Application notification delivery remains later work.
 
 ```mermaid
 flowchart TD
@@ -196,7 +196,7 @@ Browser-to-Supabase RLS and RPCs remove a server hop but expose data protocol, e
 
 ## Implementation reconciliation
 
-The first BTP-02 implementation uses the selected server-command/RPC boundaries for real Auth and private support creation. Explicit demo mode retains synthetic regression journeys, while connected routes gate unmigrated screens. It does not import browser data. Support replies, notification intent, and realtime are deferred to their owning issues. Email delivery and protected staging evidence remain incomplete, so BTP-02 is open. See [development setup](development.md) for actual verification and project state.
+The first BTP-02 implementation uses the selected server-command/RPC boundaries for real Auth and private support creation. Explicit demo mode retains synthetic regression journeys, while connected routes gate unmigrated screens. It does not import browser data. Support replies, notification intent, and realtime are deferred to their owning issues. BTP-02 and BTP-22 passed acceptance with actual email confirmation/recovery, a verified MFA support operator, assigned-case authorization, and protected staging. See [development setup](development.md) and [staging evidence](staging.md) for exact revisions, failure history, cleanup and delivery limitations.
 
 No structural contract deviations have been accepted. Update the usage, outcomes, SQL responsibilities, and associated issue when an accepted change alters the contract. Record its acceptance source here. Reopen design if two unrelated units need the same workaround or duplicate writers emerge. Cosmetic renaming does not require redesign.
 
