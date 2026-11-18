@@ -23,6 +23,8 @@ The machine-readable work breakdown is [implementation-issues.json](implementati
 
 Each feature slice includes its schema, policies, command, authorized projections, UI, tests, event mapping, and evidence. The baseline database harness in BTP-02 expands with each slice rather than becoming a separate unfinished backend phase.
 
+BTP-06 and BTP-10 passed integrated local and dedicated-development acceptance on 18 November 2026 at code candidate `64a865e`. [Atomic acceptance evidence](connected-orders.md) and [notification evidence](notifications.md) record hosted SQL, real separate Auth sessions, concurrency, rendered UI, retained-state verification and independent review. Web deployment remains pending. BTP-07 expiry and BTP-08 durable order chat are now the next independent implementation paths; BTP-01 and release gates remain open.
+
 ## Issue index
 
 | Key | Published issue | Blocked by | Work type |
@@ -32,11 +34,11 @@ Each feature slice includes its schema, policies, command, authorized projection
 | BTP-03 | [#5 Review affiliation and grant scoped staff access](https://github.com/BeeTip/beetip/issues/5) | [#4](https://github.com/BeeTip/beetip/issues/4) | Complete locally and development DB; web deployment pending |
 | BTP-04 | [#6 Publish and browse both real listing types](https://github.com/BeeTip/beetip/issues/6) | [#5](https://github.com/BeeTip/beetip/issues/5) | Complete locally and development DB; web deployment pending |
 | BTP-05 | [#7 Negotiate offers with versioned consent](https://github.com/BeeTip/beetip/issues/7) | [#6](https://github.com/BeeTip/beetip/issues/6) | Complete locally and development DB; web deployment pending |
-| BTP-06 | [#8 Accept offers atomically and reserve trip capacity](https://github.com/BeeTip/beetip/issues/8) | [#7](https://github.com/BeeTip/beetip/issues/7) | Implementation |
+| BTP-06 | [#8 Accept offers atomically and reserve trip capacity](https://github.com/BeeTip/beetip/issues/8) | [#7](https://github.com/BeeTip/beetip/issues/7) | Complete locally and development DB; web deployment pending |
 | BTP-07 | [#9 Expire unpaid reservations without losing verified funding](https://github.com/BeeTip/beetip/issues/9) | [#8](https://github.com/BeeTip/beetip/issues/8) | Implementation |
 | BTP-08 | [#10 Deliver private order chat with durable retry and catch-up](https://github.com/BeeTip/beetip/issues/10) | [#8](https://github.com/BeeTip/beetip/issues/8) | Implementation |
 | BTP-09 | [#11 Operate private support assignment and escalation](https://github.com/BeeTip/beetip/issues/11) | [#10](https://github.com/BeeTip/beetip/issues/10) | Implementation |
-| BTP-10 | [#12 Deliver reliable in-app event notifications](https://github.com/BeeTip/beetip/issues/12) | [#5](https://github.com/BeeTip/beetip/issues/5) | Implementation |
+| BTP-10 | [#12 Deliver reliable in-app event notifications](https://github.com/BeeTip/beetip/issues/12) | [#5](https://github.com/BeeTip/beetip/issues/5) | Complete locally and development DB; web deployment pending |
 | BTP-11 | [#13 Send recoverable transactional email and verify Auth delivery](https://github.com/BeeTip/beetip/issues/13) | [#10](https://github.com/BeeTip/beetip/issues/10), [#11](https://github.com/BeeTip/beetip/issues/11), [#12](https://github.com/BeeTip/beetip/issues/12) | Implementation |
 | BTP-12 | [#14 Submit and verify manual incoming funding](https://github.com/BeeTip/beetip/issues/14) | [#8](https://github.com/BeeTip/beetip/issues/8), [#12](https://github.com/BeeTip/beetip/issues/12) | Implementation |
 | BTP-13 | [#15 Approve substitutions and extra purchase budgets](https://github.com/BeeTip/beetip/issues/15) | [#14](https://github.com/BeeTip/beetip/issues/14) | Implementation |

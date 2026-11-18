@@ -1,6 +1,6 @@
 # Connected atomic acceptance
 
-BTP-06 adds fixed-request taking and listing-owner approval of versioned offers. Both paths call `public.accept_order`, an invoker wrapper over the single invariant owner `private.accept_order`. The actor always comes from the authenticated session. No hosted schema or existing hosted account was changed during implementation.
+BTP-06 adds fixed-request taking and listing-owner approval of versioned offers. Both paths call `public.accept_order`, an invoker wrapper over the single invariant owner `private.accept_order`. The actor always comes from the authenticated session. Initial implementation used an isolated local database; the parent-coordinated development acceptance below supersedes its hosted-verification limits.
 
 ## Transaction and lock contract
 
@@ -54,3 +54,25 @@ Local PostgreSQL 18 migration, SQL and true concurrent-session tests passed, inc
 Real Supabase Auth sessions, hosted migration/application read-back, PostgREST/RLS integration, connected browser flows and notification bridge delivery remain unverified. Docker was unavailable, so this run used plain PostgreSQL with explicit platform stubs. Parent must coordinate hosted acceptance evidence and advisors after integrating BTP-10. Hand-added RPC declarations in `database.types.ts` need regeneration from the integrated schema, including the new tables. No push, PR, merge, hosted deployment or paid provisioning belongs to this implementation.
 
 The SQL security shape follows [Supabase database function guidance](https://supabase.com/docs/guides/database/functions) and [PostgreSQL locking semantics](https://www.postgresql.org/docs/current/explicit-locking.html). The Supabase changelog was checked before implementation; no relevant server function breaking change was identified for this pinned client/CLI setup.
+
+## Integrated development acceptance, 18 November 2026
+
+Implementation `b1c3f5f748040d973c18ec2bca5a608ff1a8d6c1` was integrated with BTP-10 at candidate `64a865e`. The acceptance, notification inbox and follow-up foreign-key index migrations are applied only to dedicated development project `rgiptdfjlmwldngapojq`. Hosted migration history matches repository versions. Public database types were regenerated from that schema. The CLI could not cache its optional Docker migration catalog; hosted application and read-back succeeded.
+
+The hosted rollback-only suites passed 18 acceptance and 48 integrated notification assertions. `scripts/test-order-sessions.mjs` passed four real-session groups against the local connected production build: authentication/origin/account guards and private snapshots; simultaneous final-slot, spending-limit and request races with multiple trip orders; stale consent and pause rejection; and fixed-price UI acceptance with a deliberately lost committed response. The latter retried the exact original operation and payload and returned the existing order. The acceptance notification bridge produced one counterpart notification and an authorized order target. Rendered details passed 390/768/1440 widths, and the mobile capture was inspected.
+
+Repeat the connected harness with matching `APP_ORIGIN` and local production server:
+
+```powershell
+$env:BEETIP_TEST_PROJECT_REF = 'rgiptdfjlmwldngapojq'
+$env:BEETIP_TEST_URL = 'http://127.0.0.1:3108'
+rtk proxy node scripts/test-order-sessions.mjs
+```
+
+The guarded harness creates only its own synthetic confirmed users and listings. Cleanup locks and temporarily disables the immutable-terms trigger inside one transaction to remove only the generated listing/order IDs, reenables it before commit, then deletes its Auth users. Read-back confirmed the guard enabled, zero temporary orders/terms/reservations/listings/offers/notifications/intents, and the original three users, one support conversation/message, one active staff grant and one verified MFA factor preserved. Private audit/operation facts remain for reconciliation.
+
+The combined candidate passed lint, typecheck, 61 unit/component tests, 11 staging-helper tests, connected production build, registry parity and a clean production dependency audit. No web deployment, new email-delivery test, physical-device acceptance, verified funding or production release is claimed. BTP-07 owns expiry processing and BTP-08 owns durable order chat; owner operating and real-money gates remain open.
+
+Final integration verification reapplied every repository migration, including inbox and index follow-up, to a fresh isolated PostgreSQL 18 database and passed all 13 reported SQL/security/true-race groups. The temporary database was dropped and its loopback server stopped. All 16 production-demo browser journeys passed. Existing connected suites passed eight listing, six offer, seven identity/support and seven affiliation/staff groups. The first affiliation attempt exceeded its five-second UI expectation while the command was still pending; one unchanged rerun passed, including real TOTP and private Storage. This transient timeout is retained as a verification limitation rather than evidence of notification delivery latency.
+
+Independent read-only review of exact `64a865e` passed with no blocking SQL correctness, authorization, capacity, receipt, notification-bridge or browser-state findings. The documented unassigned-support notification target currently opens `/support`; actionable queue/claim navigation remains BTP-09 and was excluded from navigation acceptance. These checks establish local and dedicated-development implementation acceptance only.

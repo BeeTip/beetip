@@ -1,6 +1,6 @@
 # BTP-10 notification inbox
 
-Issue contract: [BeeTip/beetip #12](https://github.com/BeeTip/beetip/issues/12). This implementation was prepared from `29ee27e0b6856ca06272bd7576b0554a2956512c`, whose parent is `88262bfb9b3fe8f8b5954c386d241ee534df4ac2`. It has not been applied to shared hosted development or deployed.
+Issue contract: [BeeTip/beetip #12](https://github.com/BeeTip/beetip/issues/12). This implementation was prepared from `29ee27e0b6856ca06272bd7576b0554a2956512c`, whose parent is `88262bfb9b3fe8f8b5954c386d241ee534df4ac2`. Parent-coordinated development acceptance is recorded below. Web deployment remains pending.
 
 ## Registry and ownership
 
@@ -76,3 +76,23 @@ The script requires `BEETIP_NOTIFICATION_DATABASE_URL`. Non-loopback hosts also 
 Parent-reported shared baseline remains unverified and untouched here: 3 users, 3 members, 0 listings, 0 offers, 1 conversation, 1 message, 1 active staff grant and 1 verified MFA factor. No push, PR, merge or deployment was performed. Full issue acceptance remains pending the connected checks and later owning-slice integrations above.
 
 Security references checked for implementation: [Supabase changelog](https://supabase.com/changelog.md), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [database functions](https://supabase.com/docs/guides/database/functions). The current CLI guidance was read before generating the migration. No hosted schema mutation was used for iteration.
+
+## Integrated development acceptance, 18 November 2026
+
+Implementation `b110a91b2f014a7dd411da8545e25b576d014549` was integrated with BTP-06 at candidate `64a865e`. The parent added the account navigation link, connected-route allowlist and safe login destination, matched existing panel/checkbox styling and hid inactive future email preferences. The registry checker now preserves Windows line endings. The actual acceptance migration precedes the inbox migration and its transactional bridge/backfill. Follow-up `20261119000001_notification_access_indexes.sql` adds the three missing foreign-key indexes identified by hosted advisors. All three versions were read back on dedicated development project `rgiptdfjlmwldngapojq`, and database types were regenerated.
+
+Before retaining schema changes, a standalone hosted transaction passed 42 notification assertions and rolled back the feature schema. The integrated preflight initially combined the two fixture suites without isolation, producing an intent-count assertion failure. Separate savepoints fixed the test composition. The retained integrated schema then passed all 48 notification assertions and 18 acceptance assertions. Original business/identity fixtures were preserved.
+
+`scripts/test-notification-sessions.mjs` passed five groups against the connected local production build using three separate confirmed Auth sessions: login destination and guest/CSRF/actor/account guards; transactional offer events, concurrent exact replay deduplication, no self-notify, raw-table/internal-RPC/write and cross-account target denial; monotonic concurrent reads, persisted preferences, 24 real events paginated without missing or duplicate IDs and exact unread totals; account navigation, rendered pagination/read controls and authorized deep links at 390/768/1440 widths; live suspension and cross-tab logout clearing. The mobile render was inspected. The order harness independently verified one counterpart-only acceptance notification and its authorized order link after exact retry.
+
+```powershell
+$env:BEETIP_TEST_PROJECT_REF = 'rgiptdfjlmwldngapojq'
+$env:BEETIP_TEST_URL = 'http://127.0.0.1:3108'
+rtk proxy node scripts/test-notification-sessions.mjs
+```
+
+The combined candidate passed lint, typecheck, 61 unit/component tests, 11 staging-helper tests, connected production build, standalone registry parity and production dependency audit. Post-cleanup read-back found zero temporary notifications/preferences/deliveries/orders/listings/offers and preserved three users, one support conversation/message, one active staff grant and one verified MFA factor. New unindexed-foreign-key findings were resolved. Private tables intentionally have RLS with no member policies/grants. Existing [disabled leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) and staff-role policy findings remain; unused new indexes are expected before pilot traffic and the delivery worker.
+
+This completes the current in-app slice on development. Email sending, chat read/grouping rules, future event activation, public deployment and real-money release remain with their owning issues. The earlier isolated-only limits above describe the child implementation checkpoint.
+
+Final integrated regressions passed all 16 production-demo browser journeys and the existing connected listing/offer/identity/affiliation suites. A first affiliation UI assertion timed out while its request was pending; the single unchanged rerun passed all seven groups. The fresh isolated migration/concurrency run passed all 13 groups with notification hooks installed. Independent read-only review of `64a865e` found no blocking correctness or authorization issue. It confirmed that actionable unassigned-support queue navigation remains BTP-09; returning `/support` does not implement queue claim or assignment UI and was not claimed as tested actionability.
