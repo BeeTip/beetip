@@ -86,6 +86,7 @@
     },
     {
       "key": "BTP-06",
+      "status": "complete",
       "title": "Accept offers atomically and reserve trip capacity",
       "deps": [
         "BTP-05"
@@ -151,6 +152,7 @@
     },
     {
       "key": "BTP-10",
+      "status": "complete",
       "title": "Deliver reliable in-app event notifications",
       "deps": [
         "BTP-03"

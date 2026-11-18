@@ -279,6 +279,73 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          email_enabled: boolean
+          event_type: string
+          recipient_id: string
+        }
+        Insert: {
+          email_enabled: boolean
+          event_type: string
+          recipient_id: string
+        }
+        Update: {
+          email_enabled?: boolean
+          event_type?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          target_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_id: string
+          event_type: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          target_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_revisions: {
         Row: {
           created_at: string
@@ -375,6 +442,176 @@ export type Database = {
           },
         ]
       }
+      order_terms: {
+        Row: {
+          created_at: string
+          listing_version: number
+          offer_version: number | null
+          order_id: string
+          terms: Json
+        }
+        Insert: {
+          created_at?: string
+          listing_version: number
+          offer_version?: number | null
+          order_id: string
+          terms: Json
+        }
+        Update: {
+          created_at?: string
+          listing_version?: number
+          offer_version?: number | null
+          order_id?: string
+          terms?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_terms_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          listing_id: string
+          offer_id: string | null
+          provider_id: string
+          request_id: string | null
+          state: string
+          trip_id: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          listing_id: string
+          offer_id?: string | null
+          provider_id: string
+          request_id?: string | null
+          state?: string
+          trip_id?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          listing_id?: string
+          offer_id?: string | null
+          provider_id?: string
+          request_id?: string | null
+          state?: string
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: true
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservations: {
+        Row: {
+          amount: number
+          customer_id: string
+          expires_at: string
+          listing_id: string
+          order_id: string
+          released_at: string | null
+        }
+        Insert: {
+          amount: number
+          customer_id: string
+          expires_at: string
+          listing_id: string
+          order_id: string
+          released_at?: string | null
+        }
+        Update: {
+          amount?: number
+          customer_id?: string
+          expires_at?: string
+          listing_id?: string
+          order_id?: string
+          released_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_roles: {
         Row: {
           granted_at: string
@@ -419,6 +656,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_order: {
+        Args: {
+          p_listing_id: string
+          p_listing_version: number
+          p_offer_id?: string
+          p_offer_version?: number
+          p_operation_id: string
+        }
+        Returns: string
+      }
       affiliation_command: {
         Args: {
           p_action: string
@@ -444,11 +691,22 @@ export type Database = {
         Args: { p_before?: string; p_before_id?: string; p_listing_id?: string }
         Returns: Json
       }
+      browse_orders: {
+        Args: { p_before?: string; p_before_id?: string }
+        Returns: Json
+      }
+      notification_inbox: {
+        Args: { p_before?: string; p_before_id?: string }
+        Returns: Json
+      }
+      notification_target: { Args: { p_id: string }; Returns: string }
       offer_listing: { Args: { p_id: string }; Returns: Json }
       open_support: {
         Args: { p_body: string; p_operation_id: string }
         Returns: string
       }
+      read_notification: { Args: { p_id: string }; Returns: undefined }
+      read_order: { Args: { p_id: string }; Returns: Json }
       save_listing: {
         Args: {
           p_listing: Json
@@ -469,6 +727,10 @@ export type Database = {
           p_version: number
         }
         Returns: string
+      }
+      set_notification_preference: {
+        Args: { p_email: boolean; p_type: string }
+        Returns: undefined
       }
       set_staff_role: {
         Args: {

@@ -20,7 +20,7 @@ describe("connected identity boundaries", () => {
     expect(acceptsMutation(null, "https://beetip.test", "text/plain")).toBe(false);
   });
   it("preserves supported account intent without allowing external or privileged redirects", () => {
-    for (const target of ["/support", "/listings/new"]) expect(accountRedirect(target)).toBe(target);
+    for (const target of ["/support", "/listings/new", "/account/notifications"]) expect(accountRedirect(target)).toBe(target);
     for (const target of [undefined, "/admin", "//evil.test", "/\\evil.test", "/auth/password", "/support?user=other"]) expect(accountRedirect(target)).toBe("/account");
   });
   it("does not accept client roles or actors", () => {

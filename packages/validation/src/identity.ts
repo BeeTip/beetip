@@ -30,7 +30,7 @@ export function authRedirect(value: string | null) {
 }
 
 export function accountRedirect(value: string | null | undefined) {
-  return value === "/listings/new" || value === "/support" || value === "/account/offers" || (typeof value === "string" && /^\/account\/offers\?listing=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) ? value : "/account";
+  return value === "/listings/new" || value === "/support" || value === "/account/offers" || value === "/account/notifications" || (typeof value === "string" && /^\/account\/offers\?listing=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) ? value : "/account";
 }
 
 export function acceptsMutation(origin: string | null, expected: string, contentType: string | null) {
