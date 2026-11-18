@@ -1,0 +1,3 @@
+create index acceptance_notification_recipient on private.acceptance_notification_intents(recipient_id);
+create index notifications_event_type on public.notifications(event_type);
+create index notification_preferences_event_type on public.notification_preferences(event_type);
