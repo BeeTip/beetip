@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliation_requests: {
+        Row: {
+          created_at: string
+          decision_code: string | null
+          id: string
+          institution: string
+          member_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          decision_code?: string | null
+          id: string
+          institution: string
+          member_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          decision_code?: string | null
+          id?: string
+          institution?: string
+          member_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliation_requests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliation_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_members: {
         Row: {
           conversation_id: string
@@ -195,8 +243,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      affiliation_command: {
+        Args: {
+          p_action: string
+          p_operation_id: string
+          p_request_id: string
+          p_value: string
+        }
+        Returns: string
+      }
       open_support: {
         Args: { p_body: string; p_operation_id: string }
+        Returns: string
+      }
+      set_staff_role: {
+        Args: {
+          p_grant: boolean
+          p_member_id: string
+          p_operation_id: string
+          p_reason: string
+          p_role: string
+        }
         Returns: string
       }
     }
@@ -331,4 +398,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

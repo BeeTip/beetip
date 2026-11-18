@@ -19,6 +19,7 @@ export async function mutationBody(request: Request) {
 
 export function boundaryFailure(error: unknown) {
   const code = error instanceof Error ? error.message : "UNAVAILABLE";
+  if (code === "UNAUTHENTICATED") return reply({ ok: false, code, message: "Masuk dengan akun terkonfirmasi." }, 401);
   if (code === "PERMISSION") return reply({ ok: false, code, message: "Permintaan tidak diizinkan." }, 403);
   if (code === "VALIDATION") return reply({ ok: false, code, message: "Periksa data yang dikirim." }, 400);
   return reply({ ok: false, code: "UNAVAILABLE", message: "Layanan belum tersedia. Coba lagi nanti." }, 503);

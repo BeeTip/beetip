@@ -74,6 +74,8 @@ select pg_temp.assert_true(public.open_support('99999999-9999-4999-8999-99999999
 
 set local role postgres;
 insert into public.staff_roles(member_id, role) values ('33333333-3333-4333-8333-333333333333', 'support');
+insert into auth.mfa_factors(id, user_id, friendly_name, factor_type, status, secret, created_at, updated_at)
+values ('f3333333-3333-4333-8333-333333333333', '33333333-3333-4333-8333-333333333333', 'SQL fixture', 'totp', 'verified', 'fixture', now(), now());
 insert into public.conversation_members(conversation_id, member_id, role)
 select id, '33333333-3333-4333-8333-333333333333', 'support' from test_support_id;
 set local role authenticated;
