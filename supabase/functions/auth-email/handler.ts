@@ -65,7 +65,7 @@ export function createAuthEmailHandler(config: Config, verify: Verify, transport
     const action = data?.email_action_type;
     if (action !== "signup" && action !== "recovery") return reply(403, "Email action is not enabled for staging");
     if (typeof data?.token_hash !== "string" || !/^[a-zA-Z0-9_-]{16,512}$/.test(data.token_hash)) return reply(400, "Invalid Auth email payload");
-    if (data.site_url !== origin || typeof data.redirect_to !== "string") return reply(400, "Invalid Auth email origin");
+    if (typeof data.redirect_to !== "string") return reply(400, "Invalid Auth email redirect");
     let redirect: URL;
     try { redirect = new URL(data.redirect_to); } catch { return reply(400, "Invalid Auth email redirect"); }
     const next = redirect.searchParams.get("next");

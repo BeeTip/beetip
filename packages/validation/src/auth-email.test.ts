@@ -45,6 +45,18 @@ describe("staging Auth email hook", () => {
     expect(body.htmlContent).toContain("&amp;");
   });
 
+  it("constructs links from the fixed project without trusting the hook site_url", async () => {
+    for (const site_url of ["https://rgiptdfjlmwldngapojq.supabase.co/auth/v1", "https://unrelated.example.test/?token=untrusted"]) {
+      const { handler, transport } = setup();
+      expect((await handler(signed({ ...payload, email_data: { ...payload.email_data, site_url } }))).status).toBe(200);
+      const body = JSON.parse(String(transport.mock.calls[0][1]?.body));
+      const link = new URL(body.textContent.split("\n\n")[1]);
+      expect(link.origin).toBe("https://rgiptdfjlmwldngapojq.supabase.co");
+      expect(link.pathname).toBe("/auth/v1/verify");
+      expect(body.textContent).not.toContain("untrusted");
+    }
+  });
+
   it("normalizes recipient case and sends recovery to the password callback", async () => {
     const { handler, transport } = setup();
     const input = { user: { email: "APPROVED@EXAMPLE.TEST" }, email_data: { ...payload.email_data, email_action_type: "recovery", redirect_to: "https://beetip-campus.vercel.app/auth/callback?next=/auth/password" } };
@@ -82,7 +94,6 @@ describe("staging Auth email hook", () => {
   it("rejects arbitrary origins, callback paths, duplicate parameters, and token injection", async () => {
     const { handler, transport } = setup();
     const variants = [
-      { site_url: "https://unrelated.example.test" },
       { redirect_to: "https://unrelated.example.test/auth/callback" },
       { redirect_to: "https://beetip-campus.vercel.app/admin" },
       { redirect_to: "https://user:password@beetip-campus.vercel.app/auth/callback" },
