@@ -105,6 +105,8 @@ try {
     assert.ifError(listError);
     const ids = conversations.map(row => row.id);
     if (ids.length) {
+      const { error: notificationError } = await admin.from("notifications").delete().in("target_id", ids);
+      assert.ifError(notificationError);
       const { error: messageError } = await admin.from("messages").delete().in("conversation_id", ids);
       assert.ifError(messageError);
       const { error: conversationError } = await admin.from("conversations").delete().in("id", ids);
