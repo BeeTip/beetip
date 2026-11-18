@@ -65,3 +65,5 @@ export { boardQuerySchema, connectedListingSchema, listingCommandSchema, ownList
 export type { ConnectedListingInput, OwnListing, PublicListing } from "./connected-listings";
 export { offerCommandSchema, offerQuerySchema } from "./connected-offers";
 export type { OfferCommand, ConnectedOffer, OfferListing } from "./connected-offers";
+export { acceptanceCommandSchema, orderQuerySchema, ordersPageSchema } from "./connected-orders";
+export type { AcceptanceCommand, ConnectedOrder } from "./connected-orders";

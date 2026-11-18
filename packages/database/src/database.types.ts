@@ -435,6 +435,18 @@ export type Database = {
         Args: { p_id: string }
         Returns: string
       }
+      accept_order: {
+        Args: { p_operation_id: string; p_listing_id: string; p_listing_version: number; p_offer_id?: string; p_offer_version?: number }
+        Returns: string
+      }
+      read_order: {
+        Args: { p_id: string }
+        Returns: Json
+      }
+      browse_orders: {
+        Args: { p_before?: string; p_before_id?: string }
+        Returns: Json
+      }
       affiliation_command: {
         Args: {
           p_action: string

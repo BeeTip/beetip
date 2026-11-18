@@ -2,6 +2,8 @@
 
 BTP-05 implements private offers for both request and trip listings. Confirmed, non-suspended accounts can create, revise, and withdraw offers. Listing owners review offers from Listing saya; authors return through Penawaran saya. Order acceptance and capacity reservation belong to BTP-06.
 
+BTP-06 now implements [atomic acceptance and reservation](connected-orders.md). Accepted offers are terminal for save/withdraw, while original offer revisions remain unchanged. Hosted BTP-06 acceptance evidence and notification delivery require parent-coordinated integration.
+
 ## Command and privacy contract
 
 `POST /api/identity/offers` validates an exact command with operation, offer and listing UUIDs, expected offer revision, consented listing revision, integer IDR fee and save/withdraw action. Identity comes from the authenticated session, with the existing same-origin and expected-account guards. A PostgreSQL command locks its operation receipt, then listing, then existing offer. A partial unique index permits one active offer per author/listing. Concurrent updates or withdrawals using the same offer revision produce one winner and one conflict.
