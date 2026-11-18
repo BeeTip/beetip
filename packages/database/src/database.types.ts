@@ -101,6 +101,42 @@ export type Database = {
           },
         ]
       }
+      conversation_reads: {
+        Row: {
+          conversation_id: string
+          last_sequence: number
+          member_id: string
+          updated_at: string
+        }
+        Insert: {
+          conversation_id: string
+          last_sequence?: number
+          member_id: string
+          updated_at?: string
+        }
+        Update: {
+          conversation_id?: string
+          last_sequence?: number
+          member_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_reads_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_reads_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
@@ -240,6 +276,7 @@ export type Database = {
       messages: {
         Row: {
           body: string
+          client_message_id: string | null
           conversation_id: string
           created_at: string
           id: string
@@ -248,6 +285,7 @@ export type Database = {
         }
         Insert: {
           body: string
+          client_message_id?: string | null
           conversation_id: string
           created_at?: string
           id?: string
@@ -256,6 +294,7 @@ export type Database = {
         }
         Update: {
           body?: string
+          client_message_id?: string | null
           conversation_id?: string
           created_at?: string
           id?: string
@@ -568,6 +607,7 @@ export type Database = {
           amount: number
           customer_id: string
           expires_at: string
+          funding_verified_at: string | null
           listing_id: string
           order_id: string
           released_at: string | null
@@ -576,6 +616,7 @@ export type Database = {
           amount: number
           customer_id: string
           expires_at: string
+          funding_verified_at?: string | null
           listing_id: string
           order_id: string
           released_at?: string | null
@@ -584,6 +625,7 @@ export type Database = {
           amount?: number
           customer_id?: string
           expires_at?: string
+          funding_verified_at?: string | null
           listing_id?: string
           order_id?: string
           released_at?: string | null
@@ -693,6 +735,18 @@ export type Database = {
       }
       browse_orders: {
         Args: { p_before?: string; p_before_id?: string }
+        Returns: Json
+      }
+      btp08_history: {
+        Args: { p_after?: number; p_before?: number; p_order: string }
+        Returns: Json
+      }
+      btp08_read: {
+        Args: { p_order: string; p_sequence: number }
+        Returns: undefined
+      }
+      btp08_send: {
+        Args: { p_body: string; p_client: string; p_order: string }
         Returns: Json
       }
       notification_inbox: {

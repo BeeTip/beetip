@@ -26,6 +26,7 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
     let after: number | null = null;
     let older: number | null = null;
     let displayed = 0;
+    const sending = new Set<string>();
     const controllers = new Set<AbortController>();
     const client = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
     const channel = client.channel(`member:${memberId}`, { config: { private: true } });
@@ -92,7 +93,8 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
       finally { busy = false; if (!disposed && !blocked) { setLoading(false); if (dirty) void refresh(); } }
     }
     async function send(attempt: Attempt) {
-      if (disposed || blocked) return;
+      if (disposed || blocked || sending.has(attempt.id)) return;
+      sending.add(attempt.id);
       setAttempts(previous => [...previous.filter(row => row.id !== attempt.id), { ...attempt, status: "sending" }]);
       try {
         const data = await request(undefined, { action: "send", clientId: attempt.id, body: attempt.body });
@@ -104,7 +106,7 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
         void refresh();
       } catch (cause) {
         if (!disposed && !blocked) setAttempts(previous => previous.map(row => row.id === attempt.id ? { ...row, status: "failed", error: cause instanceof Error ? cause.message : "Hasil belum diketahui. Coba lagi." } : row));
-      }
+      } finally { sending.delete(attempt.id); }
     }
     async function read() {
       if (disposed || blocked || document.visibilityState !== "visible" || !displayed) return;
@@ -124,15 +126,17 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
     function changed(event: StorageEvent) { if (event.key === "beetip-auth-change") clear(); }
     function visible() { void refresh(); }
     window.addEventListener("storage", changed); window.addEventListener("online", visible);
+    window.addEventListener("focus", visible);
     document.addEventListener("visibilitychange", visible);
     return () => {
       disposed = true; runtime.current = null; controllers.forEach(controller => controller.abort());
       clearTimeout(fallback); clearInterval(poll); auth.data.subscription.unsubscribe(); void client.removeChannel(channel);
       window.removeEventListener("storage", changed); window.removeEventListener("online", visible); document.removeEventListener("visibilitychange", visible);
+      window.removeEventListener("focus", visible);
     };
   }, [orderId, memberId]);
   if (denied) return <section className="panel stack"><h1>Percakapan tidak tersedia</h1><p>Sesi atau akses akun berubah. Isi percakapan telah dibersihkan.</p><Link href="/account">Kembali ke akun</Link></section>;
-  return <section className="panel stack"><Link href={`/orders/${orderId}`}>Kembali ke pesanan</Link><h1>Pesan pesanan</h1><p>Pesan tersimpan setelah server mengonfirmasi. Penanda baca tidak membuktikan pesan dipahami.</p>{loading && <p role="status">Memuat pesan...</p>}{error && <div role="alert"><p>{error}</p><Button onClick={() => runtime.current?.refresh()}>Coba muat lagi</Button></div>}{page && <p>{page.unread} pesan belum ditandai dibaca</p>}{page?.older && <Button variant="secondary" disabled={loading} onClick={() => runtime.current?.older()}>Muat pesan sebelumnya</Button>}<ol className="stack" aria-label="Pesan tersimpan">{messages.map(row => <li key={row.id} className="info-box" style={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>{row.senderId === memberId ? "Anda" : "Lawan bicara"}</strong><p>{row.body}</p><small>{new Date(row.createdAt).toLocaleString("id-ID")} | Tersimpan</small></li>)}</ol>{messages.length > 0 && <Button variant="secondary" onClick={() => runtime.current?.read()}>Tandai pesan yang tampil dibaca</Button>}{attempts.map(attempt => <div key={attempt.id} className="info-box" style={{ overflowWrap: "anywhere" }}><p>{attempt.body}</p><p role="status">{attempt.status === "sending" ? "Mengirim..." : "Belum terkonfirmasi. Pesan dapat sudah tersimpan."}</p>{attempt.error && <p role="alert">{attempt.error}</p>}{attempt.status === "failed" && <Button onClick={() => runtime.current?.send(attempt)}>Coba kirim pesan ini lagi</Button>}</div>)}{page?.closed ? <p>Percakapan ditutup. Riwayat tetap dapat dibaca.</p> : <form className="stack" onSubmit={event => {
+  return <section className="panel stack"><Link href={`/orders/${orderId}`}>Kembali ke pesanan</Link><h1>Pesan pesanan</h1><p>Percakapan pribadi untuk mengatur titipanmu.</p>{loading && !page && <p role="status">Memuat pesan...</p>}{error && <div role="alert"><p>{error}</p><Button onClick={() => runtime.current?.refresh()}>Coba muat lagi</Button></div>}{page && <p>{page.unread} pesan belum ditandai dibaca</p>}{page?.older && <Button variant="secondary" disabled={loading} onClick={() => runtime.current?.older()}>Muat pesan sebelumnya</Button>}{page && !loading && messages.length === 0 && <p>Belum ada pesan. Mulai percakapan untuk mengatur titipanmu.</p>}<ol className="stack" aria-label="Pesan tersimpan">{messages.map(row => <li key={row.id} className="info-box" style={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>{row.senderId === memberId ? "Anda" : "Lawan bicara"}</strong><p>{row.body}</p><small>{new Date(row.createdAt).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) + " WIB"} | Tersimpan</small></li>)}</ol>{messages.length > 0 && <Button variant="secondary" onClick={() => runtime.current?.read()}>Tandai pesan yang tampil dibaca</Button>}{attempts.map(attempt => <div key={attempt.id} className="info-box" style={{ overflowWrap: "anywhere" }}><p>{attempt.body}</p><p role="status">{attempt.status === "sending" ? "Mengirim..." : "Belum terkonfirmasi. Pesan dapat sudah tersimpan."}</p>{attempt.error && <p role="alert">{attempt.error}</p>}{attempt.status === "failed" && <Button onClick={() => runtime.current?.send(attempt)}>Coba kirim pesan ini lagi</Button>}</div>)}{page?.closed ? <p>Percakapan ditutup. Riwayat tetap dapat dibaca.</p> : <form className="stack" onSubmit={event => {
     event.preventDefault();
     const body = draft.trim();
     if (!body) return;

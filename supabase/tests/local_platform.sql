@@ -14,3 +14,12 @@ create table storage.objects(id uuid primary key,bucket_id text,name text,owner_
 alter table storage.objects enable row level security;
 create function storage.allow_any_operation(text[]) returns boolean language sql as $$ select true; $$;
 create function storage.allow_only_operation(text) returns boolean language sql as $$ select true; $$;
+
+create schema realtime;
+create table realtime.messages(topic text,extension text,payload jsonb,event text,private boolean);
+alter table realtime.messages enable row level security;
+grant usage on schema realtime to authenticated;
+grant select on realtime.messages to authenticated;
+create function realtime.topic() returns text language sql stable as $$ select current_setting('test.topic',true) $$;
+create function realtime.send(payload jsonb,event text,topic text,private boolean) returns void language sql as $$
+  insert into realtime.messages values(topic,'broadcast',case when payload ? 'id' then payload else payload || jsonb_build_object('id',gen_random_uuid()) end,event,private) $$;

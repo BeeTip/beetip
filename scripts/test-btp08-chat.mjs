@@ -24,19 +24,11 @@ const history = (client, order, before = null, after = null) => client.query("se
 const denied = (promise, pattern = /PERMISSION:/) => assert.rejects(promise, pattern);
 try {
   await admin.connect();
+  for (const role of ["anon", "authenticated"]) await admin.query(`do $$ begin if not exists(select 1 from pg_roles where rolname='${role}') then create role ${role}; end if; end $$`);
   await admin.query(`create database ${name} encoding 'UTF8' template template0`);
   const target = new URL(url); target.pathname = `/${name}`; database = target.href;
   const owner = await connect();
   await owner.query(readFileSync(new URL("../supabase/tests/local_platform.sql", import.meta.url), "utf8"));
-  await owner.query("alter table auth.mfa_factors add column factor_type text, add column friendly_name text, add column secret text, add column created_at timestamptz, add column updated_at timestamptz");
-  await owner.query(`create schema realtime;
-    create table realtime.messages(topic text,extension text,payload jsonb,event text,private boolean);
-    alter table realtime.messages enable row level security;
-    grant usage on schema realtime to authenticated;
-    grant select on realtime.messages to authenticated;
-    create function realtime.topic() returns text language sql stable as $$ select current_setting('test.topic',true) $$;
-    create function realtime.send(payload jsonb,event text,topic text,private boolean) returns void language sql as $$
-      insert into realtime.messages values(topic,'broadcast',payload,event,private) $$;`);
   for (const file of readdirSync(new URL("../supabase/migrations/", import.meta.url)).filter(file => file.endsWith(".sql")).sort()) {
     await owner.query(readFileSync(new URL(`../supabase/migrations/${file}`, import.meta.url), "utf8"));
   }
@@ -104,7 +96,7 @@ try {
   assert.equal((await a.query("select * from realtime.messages")).rowCount, 0);
   await denied(a.query("insert into realtime.messages values('bad','broadcast','{}','refresh',true)"), /permission denied/);
   const hints = (await owner.query("select * from realtime.messages")).rows;
-  assert(hints.every(row => row.private && row.event === "refresh" && JSON.stringify(row.payload) === "{}"));
+  assert(hints.every(row => row.private && row.event === "refresh" && Object.keys(row.payload).join() === "id" && /^[0-9a-f-]{36}$/.test(row.payload.id)));
   checks.push("private per-member SELECT policy, no client publication, content-free hints (SQL stand-ins only)");
   await owner.query("update public.messages set created_at=clock_timestamp()-interval '2 hours' where conversation_id=$1", [conversation]);
   for (let i = 0; i < 125; i++) {
@@ -155,6 +147,13 @@ try {
   assert.equal((await history(a, order)).closed, true);
   await denied(send(a, order), /CONFLICT: Conversation closed/);
   assert.equal((await send(a, order, id, "Pesan pertama")).id, first.id);
+  await owner.query("update public.reservations set expires_at=clock_timestamp()+interval '1 hour' where order_id=$1", [order]);
+  await owner.query("select private.btp07_preserve_verified_funding($1)", [order]);
+  await owner.query("update public.reservations set expires_at=clock_timestamp()-interval '1 second' where order_id=$1", [order]);
+  assert.equal((await history(a, order)).closed, false);
+  await owner.query("update public.messages set created_at=clock_timestamp()-interval '2 hours' where conversation_id=$1", [conversation]);
+  assert((await send(a, order, randomUUID(), "Verified reservation remains open")).id);
+  checks.push("verified funding keeps chat open beyond the original unpaid deadline under shared reservation locks");
   await owner.query("update public.orders set state='cancelled' where id=$1", [order]);
   assert((await history(a, order)).messages.length > 0);
   checks.push("expired unpaid and cancelled orders retain history, deny new sends, resolve committed retries");

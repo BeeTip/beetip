@@ -55,3 +55,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: node scripts/test-atomic-acceptance.mjs
+      - run: node scripts/test-btp07-expiry.mjs
+      - run: node scripts/test-btp08-chat.mjs

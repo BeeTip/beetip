@@ -45,12 +45,16 @@ $$;
 
 create function private.btp08_send(p_order uuid,p_client uuid,p_body text) returns jsonb
 language plpgsql security definer set search_path='' as $$
-declare v_id uuid; v_row public.messages%rowtype; v_next bigint; v_recipient uuid; v_notification uuid; v_now timestamptz;
+declare v_id uuid; v_listing uuid; v_row public.messages%rowtype; v_next bigint; v_recipient uuid; v_notification uuid; v_now timestamptz;
 begin
   v_id:=private.btp08_order_conversation(p_order);
   if p_client is null or p_body is null or char_length(p_body)>1000 or char_length(btrim(p_body))<1 then raise exception 'VALIDATION: Invalid text'; end if;
   insert into private.btp08_send_locks values(auth.uid()) on conflict do nothing;
   perform 1 from private.btp08_send_locks where member_id=auth.uid() for update;
+  select listing_id into v_listing from public.orders where id=p_order;
+  perform 1 from public.listings where id=v_listing for update;
+  perform 1 from public.orders where id=p_order for update;
+  perform 1 from public.reservations where order_id=p_order for update;
   perform 1 from public.conversations where id=v_id for update;
   perform 1 from public.conversation_members where conversation_id=v_id and member_id=auth.uid() for share;
   perform 1 from public.members where id=auth.uid() for share;
@@ -62,7 +66,7 @@ begin
   end if;
   if exists(select 1 from public.conversations where id=v_id and status<>'open')
     or exists(select 1 from public.orders o join public.reservations r on r.order_id=o.id where o.id=p_order and
-      (o.state in('cancelled','expired') or (o.state='awaiting_payment' and r.expires_at<=clock_timestamp()))) then raise exception 'CONFLICT: Conversation closed'; end if;
+      (o.state in('cancelled','expired') or r.released_at is not null or (o.state='awaiting_payment' and r.funding_verified_at is null and r.expires_at<=clock_timestamp()))) then raise exception 'CONFLICT: Conversation closed'; end if;
   v_now:=clock_timestamp();
   if (select count(*) from public.messages where sender_id=auth.uid() and client_message_id is not null and created_at>v_now-interval '1 minute')>=10
     or (select count(*) from public.messages where sender_id=auth.uid() and client_message_id is not null and created_at>v_now-interval '1 hour')>=100 then
@@ -111,7 +115,7 @@ begin
     'after',coalesce(v_max,p_after,0),'hasMore',p_after is not null and coalesce(v_max,p_after)<v_high,
     'unread',(select count(*) from public.messages where conversation_id=v_id and sender_id<>auth.uid() and sequence>v_read),
     'closed',exists(select 1 from public.conversations where id=v_id and status<>'open') or exists(select 1 from public.orders o join public.reservations r on r.order_id=o.id where o.id=p_order and
-      (o.state in('cancelled','expired') or (o.state='awaiting_payment' and r.expires_at<=clock_timestamp()))));
+      (o.state in('cancelled','expired') or r.released_at is not null or (o.state='awaiting_payment' and r.funding_verified_at is null and r.expires_at<=clock_timestamp()))));
 end; $$;
 
 create function private.btp08_read(p_order uuid,p_sequence bigint) returns void
