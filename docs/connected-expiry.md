@@ -2,6 +2,8 @@
 
 BTP-07 adds `20261119000709_btp07_reservation_expiry.sql` after the integrated notification migrations. Baseline is merge `930f22f714a3537d9c4b7f0b4fe63d4800ea9f32`, containing required `acc4f9920b6cf33e033ad19503426218758a8d7d`. This document extends the acceptance contract in [connected-orders.md](connected-orders.md), specifically its earlier statement that no expiry worker exists.
 
+Parent integration subsequently passed dedicated-development Cron and real-session acceptance. [The integration record](expiry-chat-acceptance.md) supersedes the implementation-only hosted gates below; web deployment and future evidence-backed funding remain pending.
+
 ## Deadline and capacity
 
 An unpaid reservation is unusable at `expires_at <= clock_timestamp()`. `read_order` and `browse_orders` derive `expired` even if cleanup has never run. Both public wrappers are volatile because time can advance within a transaction. A browser timestamp never decides expiry. The detail screen refreshes the server projection every 30 seconds, offers a manual refresh, times out a stalled request after 15 seconds and offers a read-only retry on failure. An order/account change remounts its private state. Unknown states have an explicit unavailable label.

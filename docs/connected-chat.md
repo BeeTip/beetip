@@ -36,6 +36,8 @@ Each new message creates one counterpart-only in-app notification and durable ch
 
 ## Repeat verification
 
+[The integration record](expiry-chat-acceptance.md) records the accepted source, dedicated-development migrations, real separate sessions, actual Cron and remaining release gates.
+
 Use Node 24.22.1 and an isolated loopback PostgreSQL 18 instance:
 
 ```powershell

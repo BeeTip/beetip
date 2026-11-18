@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import pg from "pg";
 
 const url = new URL(process.env.BEETIP_LOCAL_DATABASE_URL ?? "postgres://postgres@127.0.0.1:55486/postgres");
-assert(["localhost", "127.0.0.1", "[::1]"].includes(url.hostname), "Isolated local databases only");
+assert(["postgres:", "postgresql:"].includes(url.protocol) && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) && !url.search && !url.hash, "Isolated local databases without connection overrides only");
 const name = `btp08_${randomUUID().replaceAll("-", "")}`;
 const admin = new pg.Client({ connectionString: url.href });
 const clients = [];

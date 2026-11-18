@@ -1,6 +1,6 @@
 # Messaging and notification contracts
 
-This reference specifies the connected pilot. All tables, endpoints, and jobs below are proposed. The existing chat remains browser-local until its implementation issues pass acceptance.
+This reference specifies the connected pilot. [Private order chat](connected-chat.md) and [in-app notifications](notifications.md) now have local and dedicated-development acceptance. Their implementation records describe the actual RPCs and tables. Support assignment, grouped application email and retention jobs below remain proposed under their owning issues; the synthetic demo still uses browser-local records.
 
 ## Conversation ownership
 

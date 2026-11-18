@@ -3,7 +3,7 @@ import { boundaryFailure, mutationBody, reply } from "../../../../server/identit
 import { commandFailure, protectedClient } from "../../../../server/identity/protected";
 
 function failure(error: { message: string }) {
-  if (error.message.startsWith("THROTTLED:")) return reply({ ok: false, code: "THROTTLED", retryAfter: 60, message: "Batas pesan tercapai. Tunggu 60 detik lalu coba lagi." }, 429);
+  if (error.message.startsWith("THROTTLED:")) return reply({ ok: false, code: "THROTTLED", message: "Batas pesan per menit atau jam tercapai. Tunggu sebelum mencoba lagi; pesanmu belum terkirim." }, 429);
   return commandFailure(error);
 }
 
