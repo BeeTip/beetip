@@ -36,3 +36,21 @@ The guarded connected harness creates only synthetic, temporary confirmed/unconf
 The public harness now defaults to the real board. Use `--samples` only to recheck the historical deployed sample UI. Likewise, staging smoke defaults to the connected projection; `BEETIP_STAGING_CATALOG=samples` explicitly selects the historical deployment contract. These modes prevent future acceptance checks from requiring obsolete sample listings.
 
 Web deployment and owner operating/release decisions remain separate from this implementation. The previously accepted public deployment is not evidence that the new listing UI has been deployed.
+
+## Acceptance, 18 November 2026
+
+Implementation candidate: `016565462204d96e12d4aeff1a564a3887974c5d`. All four BTP-04 criteria passed locally and against the dedicated development database. BTP-05 is the next implementation issue; BTP-01 owner decisions remain open. This acceptance does not authorize pilot release or real funds.
+
+| Check | Result |
+| --- | --- |
+| Repository | Lint, typecheck, 48 unit tests, 11 smoke-helper tests, connected production build and production dependency audit passed; no known production dependency vulnerabilities |
+| SQL | 29 rollback-only listing assertions passed, including separate owner/unrelated sessions, guest/unconfirmed/anonymous rejection, revoked session, suspension, direct-write denial, invalid totals/types/schedules, replay, version conflict and atomic audit |
+| Real listing sessions | Eight groups passed against both Next development and the final connected production build on local port 3109; actual password sessions, UI create/edit, public projections, owner-only destination, CSRF/actor guards, concurrency, tied-timestamp pagination, WIB/category/kind filters, cutoff/paused/suspended filtering, outage retry and cross-tab clearing |
+| UI | Public board and details checked at 390/768/1440 widths; mobile edit checked with a 100-character unbroken public field; edit screenshot inspected visually; no horizontal overflow or public client runtime errors |
+| Existing flows | Seven identity/support groups and seven affiliation/staff groups passed; all 16 demo browser journeys passed with their production build; standalone public listing harness and five connected smoke groups passed |
+| Existing deployment | Five anonymous smoke groups passed on the unchanged public sample deployment, using explicit historical sample mode |
+| Development read-back | Hosted migration version/name matched; three retained users, one conversation/message, one active staff grant and one verified MFA factor preserved; zero temporary BTP-03/BTP-04 users and zero listings after fixture cleanup |
+
+Security advisors reported the existing [disabled leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) warning and two intentional [private-table RLS-without-policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) informational findings, with no new finding. No Auth setting, mail delivery route, paid service, retained-account role or Vercel deployment changed.
+
+Initial harness runs stopped on overly exact select-label matching and the Next.js route announcer sharing `role=alert`. Both test locators were narrowed to their intended controls, without weakening application assertions. A concurrent update test was also made independent of which operation wins. Subsequent development and final production harness runs passed, and every run removed its own fixtures. Generated Next environment-path churn was excluded from the source change.
