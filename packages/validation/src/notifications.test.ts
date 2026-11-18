@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { notificationCommandSchema, notificationEventTypes, notificationQuerySchema, notificationRegistry } from "./notifications";
+import { notificationCommandSchema, notificationEventTypes, notificationQuerySchema, notificationRegistry, notificationRegistrySeed } from "./notifications";
 
 describe("notification boundary and registry", () => {
   it("keeps every event, recipient rule, template, target and rollout flag in SQL parity", () => {
@@ -8,9 +8,13 @@ describe("notification boundary and registry", () => {
     const region = migration.split("-- registry:start")[1].split("-- registry:end")[0];
     expect(Object.keys(notificationRegistry).sort()).toEqual([...notificationEventTypes].sort());
     expect(region.match(/^  \('/gm)).toHaveLength(notificationEventTypes.length);
-    for (const [event, rule] of Object.entries(notificationRegistry)) {
+    for (const [event, rule] of Object.entries(notificationRegistrySeed)) {
       expect(region).toContain(`('${event}','${rule.recipients}','${rule.target}','${rule.template}','${rule.title}','${rule.email}',${rule.implemented})`);
     }
+  });
+  it("offers email preferences for support replies, with queue alerts delivered in app", () => {
+    expect(notificationRegistry.support_opened.email).toBe("in_app_only");
+    expect(notificationRegistry.support_message).toMatchObject({ implemented: true, email: "unread_window" });
   });
   it("rejects actor spoofing and read reversal", () => {
     const read = { action: "read", id: "00000000-0000-4000-8000-000000000001" };

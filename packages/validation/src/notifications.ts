@@ -12,10 +12,10 @@ type Rule = {
   target: "affiliation" | "offer" | "listing" | "support_queue" | "conversation" | "account" | "order";
   template: string;
   title: string;
-  email: "summary" | "unread_window";
+  email: "summary" | "unread_window" | "in_app_only";
   implemented: boolean;
 };
-export const notificationRegistry = {
+export const notificationRegistrySeed = {
   affiliation_decided: { recipients: "applicant", target: "affiliation", template: "affiliation_decided.v1", title: "Hasil pemeriksaan afiliasi tersedia", email: "summary", implemented: true },
   offer_received: { recipients: "listing_owner", target: "offer", template: "offer_received.v1", title: "Penawaran baru diterima", email: "summary", implemented: true },
   offer_changed: { recipients: "listing_owner", target: "offer", template: "offer_changed.v1", title: "Penawaran diperbarui", email: "summary", implemented: true },
@@ -36,6 +36,12 @@ export const notificationRegistry = {
   dispute_resolved: { recipients: "parties_and_assignees", target: "order", template: "dispute_resolved.v1", title: "Sengketa diselesaikan", email: "summary", implemented: false },
   transfer_review: { recipients: "parties_and_assignees", target: "order", template: "transfer_review.v1", title: "Transfer perlu diperiksa", email: "summary", implemented: false },
   transfer_outcome: { recipients: "parties_and_assignees", target: "order", template: "transfer_outcome.v1", title: "Status transfer diperbarui", email: "summary", implemented: false },
+} as const satisfies Record<NotificationEventType, Rule>;
+
+export const notificationRegistry = {
+  ...notificationRegistrySeed,
+  support_opened: { ...notificationRegistrySeed.support_opened, email: "in_app_only" },
+  support_message: { ...notificationRegistrySeed.support_message, implemented: true },
 } as const satisfies Record<NotificationEventType, Rule>;
 
 export const notificationQuerySchema = z.object({ before: z.iso.datetime({ offset: true }).optional(), beforeId: z.uuid().optional() }).strict()

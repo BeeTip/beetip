@@ -145,6 +145,11 @@ export type Database = {
           next_sequence: number
           requester_id: string
           status: string
+          support_category: string | null
+          support_escalated: boolean
+          support_order_id: string | null
+          support_updated_at: string | null
+          support_version: number
         }
         Insert: {
           created_at?: string
@@ -153,6 +158,11 @@ export type Database = {
           next_sequence?: number
           requester_id: string
           status?: string
+          support_category?: string | null
+          support_escalated?: boolean
+          support_order_id?: string | null
+          support_updated_at?: string | null
+          support_version?: number
         }
         Update: {
           created_at?: string
@@ -161,6 +171,11 @@ export type Database = {
           next_sequence?: number
           requester_id?: string
           status?: string
+          support_category?: string | null
+          support_escalated?: boolean
+          support_order_id?: string | null
+          support_updated_at?: string | null
+          support_version?: number
         }
         Relationships: [
           {
@@ -168,6 +183,13 @@ export type Database = {
             columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_support_order_id_fkey"
+            columns: ["support_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -747,6 +769,30 @@ export type Database = {
       }
       btp08_send: {
         Args: { p_body: string; p_client: string; p_order: string }
+        Returns: Json
+      }
+      btp09_act: {
+        Args: { p_action: string; p_assignee?: string; p_case: string; p_reason?: string; p_version: number }
+        Returns: undefined
+      }
+      btp09_cases: {
+        Args: { p_before?: string; p_before_id?: string }
+        Returns: Json
+      }
+      btp09_history: {
+        Args: { p_before?: number; p_case: string; p_order_history?: boolean }
+        Returns: Json
+      }
+      btp09_open: {
+        Args: { p_body: string; p_category: string; p_operation: string; p_order?: string }
+        Returns: string
+      }
+      btp09_read: {
+        Args: { p_case: string; p_sequence: number }
+        Returns: undefined
+      }
+      btp09_send: {
+        Args: { p_body: string; p_case: string; p_client: string }
         Returns: Json
       }
       notification_inbox: {

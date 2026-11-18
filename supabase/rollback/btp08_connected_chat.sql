@@ -1,4 +1,9 @@
 begin;
+do $$ begin
+  if to_regprocedure('public.btp09_send(uuid,uuid,text)') is not null then
+    raise exception 'DEPENDENCY: Private support uses the BTP-08 messaging schema';
+  end if;
+end; $$;
 drop policy if exists btp08_member_hint on realtime.messages;
 drop function public.btp08_send(uuid,uuid,text),public.btp08_history(uuid,bigint,bigint),public.btp08_read(uuid,bigint);
 drop function private.btp08_send(uuid,uuid,text),private.btp08_history(uuid,bigint,bigint),private.btp08_read(uuid,bigint);
