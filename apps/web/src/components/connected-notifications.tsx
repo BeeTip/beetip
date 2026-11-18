@@ -61,13 +61,13 @@ export function ConnectedNotifications({ memberId }: { memberId: string }) {
       window.location.assign(result.target);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Tujuan tidak tersedia."); }
   }
-  return <section className="page-stack">
+  return <section className="stack">
     <h1>Notifikasi</h1>
     <p role="status">{unread} belum dibaca</p>
     {error && <p role="alert">{error}</p>}
     <Button variant="secondary" onClick={() => void load()}>Muat ulang</Button>
     {items.length === 0 && <p>Belum ada notifikasi yang tersedia.</p>}
-    <ul>{items.map(item => <li key={item.id}>
+    <ul className="stack">{items.map(item => <li className="panel stack" key={item.id}>
       <p>{notificationRegistry[item.event_type].title} {item.read_at ? "(Dibaca)" : "(Baru)"}</p>
       <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB</time>
       <Button variant="secondary" onClick={() => void open(item.id)}>Buka</Button>
@@ -76,7 +76,7 @@ export function ConnectedNotifications({ memberId }: { memberId: string }) {
     {next && <Button disabled={busy} onClick={() => void load(next)}>Muat lebih banyak</Button>}
     <h2>Preferensi email</h2>
     <p>Notifikasi di aplikasi tetap tersedia. Pengiriman email mengikuti kesiapan layanan.</p>
-    {preferences.map(preference => <label key={preference.event_type}>
+    {preferences.filter(preference => notificationRegistry[preference.event_type].implemented).map(preference => <label className="check-field" key={preference.event_type}>
       <input type="checkbox" checked={preference.email_enabled} disabled={busy} onChange={event => void command({ action: "preference", eventType: preference.event_type, email: event.target.checked })} />
       {notificationRegistry[preference.event_type].title}
     </label>)}

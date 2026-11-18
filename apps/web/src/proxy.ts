@@ -6,7 +6,7 @@ export async function proxy(request: NextRequest) {
   if (mode() === "demo") return NextResponse.next();
   const path = request.nextUrl.pathname;
   const connected = path === "/" || ["/drink.svg", "/food.svg", "/bag.svg"].includes(path) || /^\/listings\/[^/]+$/.test(path) || path === "/account" || path === "/account/affiliation" || path === "/support" || path === "/login"
-    || path === "/account/listings" || path === "/account/offers" || path === "/api/listings" || path.startsWith("/auth/") || path.startsWith("/api/identity/");
+    || path === "/account/listings" || path === "/account/offers" || path === "/account/notifications" || path === "/api/listings" || path.startsWith("/auth/") || path.startsWith("/api/identity/");
   if (!connected) return NextResponse.redirect(new URL("/account", request.url));
   let response = NextResponse.next({ request });
   if (identityConfigured()) {
