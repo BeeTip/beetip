@@ -59,6 +59,17 @@ rtk proxy node scripts/test-chat-sessions.mjs
 
 It refuses other projects and nonlocal web candidates, uses synthetic confirmed accounts without sending email, checks live private subscription access, API guards, concurrent retry/read state, rendered response-loss recovery, reconnect catch-up, expiration and logout, and deletes only its own fixtures. It preserves retained accounts, support, staff/MFA and audit facts. Screenshots are ignored verification artifacts.
 
+The same harness can use a disposable local Supabase stack. Apply the current migrations and start the connected production build against the stack's API URL and publishable key. Keep the application origin identical in both terminals. In the harness terminal, supply the absolute directory passed to `supabase start --workdir` and the application's loopback URL:
+
+```powershell
+Remove-Item Env:BEETIP_TEST_PROJECT_REF -ErrorAction SilentlyContinue
+$env:BEETIP_TEST_LOCAL_STACK = 'C:/path/to/disposable-stack'
+$env:BEETIP_TEST_URL = 'http://127.0.0.1:3108'
+rtk proxy node scripts/test-chat-sessions.mjs
+```
+
+This exercises Auth, Realtime and Cron on the actual local services, and saves artifacts under `test-results/btp08-local`.
+
 ## Rollback and release
 
 `supabase/rollback/btp08_connected_chat.sql` is a destructive feature rollback for isolated verification. It removes this feature's notification/read/retry metadata and functions while preserving message history and restoring the prior target helper. Back up feature records before considering it on a shared environment; an application rollback alone does not reverse schema or external effects. Prefer a compatible forward repair after real conversations exist.
