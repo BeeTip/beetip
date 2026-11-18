@@ -10,9 +10,10 @@ const project = process.env.BEETIP_TEST_PROJECT_REF;
 assert.equal(project, "rgiptdfjlmwldngapojq", "This destructive-fixture test is restricted to the dedicated BeeTip development project");
 const origin = process.env.BEETIP_TEST_URL ?? "http://127.0.0.1:3108";
 const staging = origin === "https://beetip-campus.vercel.app";
+const publicStaging = staging && process.env.BEETIP_STAGING_EXPOSURE === "public";
 assert(staging || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin), "Use a local connected server or the exact protected BeeTip staging origin");
-const bypass = staging ? readFileSync(process.env.BEETIP_STAGING_BYPASS_FILE, "utf8").trim() : undefined;
-assert(!staging || bypass, "Protected staging requires its automation bypass file");
+const bypass = staging && !publicStaging ? readFileSync(process.env.BEETIP_STAGING_BYPASS_FILE, "utf8").trim() : undefined;
+assert(!staging || publicStaging || bypass, "Protected staging requires its automation bypass file");
 const settings = Object.fromEntries(readFileSync(new URL("../apps/web/.env.local", import.meta.url), "utf8").split(/\r?\n/).filter(line => line.includes("=")).map(line => [line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)]));
 assert.equal(settings.NEXT_PUBLIC_SUPABASE_URL, `https://${project}.supabase.co`);
 const cli = execFileSync("rtk", ["proxy", "supabase", "projects", "api-keys", "--project-ref", project, "--reveal", "--output", "json"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
@@ -37,7 +38,7 @@ try {
   const owner = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const other = await browser.newContext();
   async function signIn(context, user) {
-    if (staging) {
+    if (staging && !publicStaging) {
       const gate = await context.request.get(`${origin}/login`, {
         headers: { "x-vercel-protection-bypass": bypass, "x-vercel-set-bypass-cookie": "true" }, maxRedirects: 0,
       });

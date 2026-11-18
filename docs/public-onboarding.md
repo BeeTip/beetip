@@ -22,4 +22,18 @@ Run `pnpm test`, `pnpm lint`, `pnpm typecheck`, and `node --test scripts/check-s
 
 Set `BEETIP_STAGING_EXPOSURE=public` and `BEETIP_STAGING_URL=https://beetip-campus.vercel.app` before `pnpm test:staging`. No bypass is needed in public mode. Protected mode remains the explicit default for isolated candidates.
 
-The hosted migration and 33 rollback-only authorization assertions passed. Local public browsing and connected support checks, 41 unit tests and 10 smoke-helper regressions passed. Final deployed revisions and actual received-email acceptance follow after deployment. These checks do not establish readiness for real transactions, funds or unrestricted production volume.
+The hosted migration and 33 rollback-only authorization assertions passed. Local and hosted public browsing and connected support checks, 41 unit tests, 10 smoke-helper regressions, lint, typecheck, the production build and all 16 demo browser regressions passed. These checks do not establish readiness for real transactions, funds or unrestricted production volume.
+
+## Deployed acceptance, 18 November 2026
+
+Web source `872bf9371ff14f6e57f91047eb657377f83d03ca` is READY as Vercel deployment `dpl_HsnHMobNQTC4vWfmiEB867GGKJG1` at [beetip-campus.vercel.app](https://beetip-campus.vercel.app). The same source's signed Auth email function is ACTIVE version 6, artifact SHA-256 `2a584ee4b4792c996cbc1589c891ffc3fa67394607d7eaf84d60a5e3b0c43528`. Public project access, enabled signup, retained confirmation/signing requirements and exact callbacks were read back. Provider and web plans remain free; no Git push occurred.
+
+A normal signup using a new plus-address delivered to the approved test mailbox sent the personalized greeting `Halo, Demo Alex!`. Password login before confirmation was denied. Opening the actual received confirmation link in a fresh browser context signed the user directly into the named dashboard with active access. Reload retained the session; private support returned 200. Logout returned to public browsing and private support returned 401. No administrator confirmed or approved that user.
+
+The actual received recovery link also worked in a fresh context: password replacement reached the dashboard, the previous password was rejected and the new password signed in. The temporary onboarding account was removed after acceptance; retained owner/requester accounts were not replaced. Supabase's advisor still reports leaked-password protection disabled; the private audit/receipt tables deliberately have no client policies. No paid upgrade was selected.
+
+The hosted anonymous smoke passed all five groups without a bypass. The public catalog browser harness passed search, categories, details, signup intent and layout checks at three widths. The connected session harness passed all seven groups against the public candidate and removed its temporary users and cases. Existing requester/operator identities, support case, staff grant and MFA were preserved.
+
+Final cleanup read-back confirmed three retained users, zero temporary users, one conversation/message, one active staff grant and one verified MFA factor. The BTP-03/BTP-04 source contracts now distinguish optional affiliation badges from email-confirmed account access and public browsing.
+
+The demo regression runner cleared earlier local artifacts because its default output directory was the entire ignored `test-results` folder. Prior written acceptance remains historical evidence, but those local artifacts are no longer available. Playwright now writes only to `test-results/playwright`; fresh hosted catalog, support and onboarding captures were generated afterward.

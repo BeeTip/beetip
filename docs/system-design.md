@@ -1,5 +1,7 @@
 # Connected pilot system design
 
+Current access policy, 18 November 2026: [public sample browsing and open onboarding](public-onboarding.md) supersede mandatory campus approval and the closed staging cohort. Confirmed email enables normal account access; staff roles, MFA, private-data isolation and suspension remain separate authorization rules.
+
 Proposed design, 17 November 2026. Product scope was confirmed in this planning session. Implementation and deployment have not started. This document supersedes the connected-backend proposal in [the October architecture](architecture.md), which remains historical context.
 
 ## Problem

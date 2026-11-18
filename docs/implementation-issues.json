@@ -38,12 +38,12 @@
       "deps": [
         "BTP-02"
       ],
-      "story": "A pending member submits affiliation evidence and an authorized reviewer approves or rejects it.",
+      "story": "An account holder optionally submits affiliation evidence for a badge; authorized reviewers and staff use separately scoped access.",
       "criteria": [
-        "Implement protected evidence upload, request/review UI, explicit approved/pending/suspended states, and sanitized audit.",
+        "Implement optional protected affiliation evidence upload, request/review UI and separate affiliation states with sanitized audit. Affiliation review must not gate ordinary account access.",
         "Separate membership-review, support, finance-operation, finance-review, and platform roles. Require MFA for staff.",
         "Enforce live role checks in SQL commands and RLS, including forged profile roles, stale sessions, suspension, and revoked grants.",
-        "Approved users can transact, pending users can use support, and suspended users lose protected access. No private evidence appears in public profile."
+        "Email-confirmed active accounts can use account actions without affiliation approval; suspended accounts lose protected access. No private evidence appears in public profile."
       ],
       "type": "Implementation",
       "refs": "docs/system-design.md"
@@ -54,7 +54,7 @@
       "deps": [
         "BTP-03"
       ],
-      "story": "Verified members create request and offered-jastip listings and browse a paginated public-safe board.",
+      "story": "Email-confirmed active accounts create request and offered-jastip listings; anyone can browse a paginated public-safe board without an account.",
       "criteria": [
         "Migrate create/list/detail UI to async projections with loading, retry, empty, and validation states.",
         "Persist structured items, integer IDR budgets and separate fee, fixed/negotiable mode, WIB schedule, cutoff, area, and capacity.",
