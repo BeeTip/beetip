@@ -1,8 +1,10 @@
 # BeeTip
 
-A two-way community jastip marketplace for verified BINUS Alam Sutera students, staff, and employees. One member account can request purchases and fulfill orders.
+A two-way community jastip marketplace centered on Alam Sutera. Anyone can browse; an email-confirmed account can access its dashboard without manual membership approval.
 
 ## Repository status
+
+The current access policy is [public sample browsing and open onboarding](docs/public-onboarding.md). Visitors can explore without an account, and personalized email confirmation signs new users into their dashboard. Real listing publishing and marketplace transactions remain later work.
 
 The browser-local demo covers both listing types, negotiation, funding, purchases, chat, handover, disputes, transfers, ratings, and reconciliation with synthetic records. The first connected slice adds Supabase email/password identity, pending membership, and private support creation. Its database migrations are applied to a dedicated development project. Real email confirmation/recovery, assigned support-operator MFA, and protected [BeeTip staging](https://beetip-campus.vercel.app) passed acceptance; [the evidence record](docs/staging.md) includes exact candidates and limitations. Connected marketplace operations, realtime replies, and payment operations remain incomplete.
 

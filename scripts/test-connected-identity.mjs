@@ -50,12 +50,12 @@ try {
     await page.getByLabel("Kata sandi", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Masuk", exact: true }).click();
     await page.waitForURL("**/account");
-    await expect(page.getByText("Verifikasi keanggotaan belum selesai.", { exact: false })).toBeVisible();
+    await expect(page.getByText("Email terkonfirmasi. Akunmu siap digunakan", { exact: false })).toBeVisible();
     return page;
   }
   const page = await signIn(owner, users[0]);
   const otherPage = await signIn(other, users[1]);
-  checked.push("real Auth sessions and pending membership");
+  checked.push("real Auth sessions and automatically active accounts");
   await page.goto(`${origin}/support`);
   await page.getByLabel("Pesan bantuan").fill("Pertanyaan pribadi dari pemohon");
   await page.getByRole("button", { name: "Kirim ke bantuan" }).click();
@@ -88,7 +88,7 @@ try {
   const secondTab = await owner.newPage();
   await secondTab.goto(`${origin}/account`);
   await secondTab.getByRole("button", { name: "Keluar", exact: true }).click();
-  await secondTab.waitForURL("**/login");
+  await secondTab.waitForURL(`${origin}/`);
   await expect(page.getByText("Pertanyaan pribadi dari pemohon", { exact: true })).toHaveCount(0);
   assert.equal((await owner.request.get(`${origin}/api/identity/support`)).status(), 401);
   checked.push("logout clears another tab and denies subsequent history");

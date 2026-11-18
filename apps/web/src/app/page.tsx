@@ -1,2 +1,6 @@
 import { Board } from "../components/marketplace";
-export default function Page() { return <Board />; }
+import { PublicCatalog } from "../components/public-catalog";
+import { sampleListings } from "../server/catalog";
+import { mode } from "../server/identity/config";
+
+export default function Page() { return mode() === "demo" ? <Board /> : <PublicCatalog listings={sampleListings} />; }

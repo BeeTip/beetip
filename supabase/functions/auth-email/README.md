@@ -1,6 +1,6 @@
 # Staging Auth email recipient guard
 
-This function is restricted to BeeTip's development project and protected staging origin. It replaces Auth's direct SMTP send when enabled. It sends only signup and recovery email to the exact recipients in `BEETIP_AUTH_EMAIL_RECIPIENTS`. Other recipients and other email actions are rejected before contacting Brevo.
+This function uses BeeTip's dedicated project and fixed application origin. It replaces Auth's direct SMTP send when enabled. It sends only signup and recovery email. `BEETIP_AUTH_EMAIL_AUDIENCE=allowlist` (the default) restricts recipients to `BEETIP_AUTH_EMAIL_RECIPIENTS`; explicit `public` permits open onboarding with validated recipient addresses. Other email actions are rejected before contacting Brevo. The owner's [public onboarding policy](../../../docs/public-onboarding.md) supersedes the earlier closed staging cohort.
 
 The gateway JWT check is disabled because the function validates Standard Webhooks signatures over the raw body, including the SDK's timestamp tolerance. Unsigned, changed, stale, oversized, and unsupported requests fail closed. Provider requests use a fixed HTTPS endpoint, reject redirects, have a 3.5-second timeout, and never log bodies, tokens, addresses, or keys. A successful response means Brevo accepted the send; mailbox delivery must be verified separately.
 
@@ -10,9 +10,9 @@ Store the four settings from `.env.example` in the dedicated project's Edge Func
 
 Set the hosted hook URI to `https://rgiptdfjlmwldngapojq.supabase.co/functions/v1/auth-email`. Enable it only after deploying the exact reviewed source, verifying unsigned and signed-but-unapproved requests are denied, and confirming the secret names exist. Read back the Auth hook fields without exposing their values. Verify a real approved recovery email and complete its password-change flow after activation.
 
-The function uses the fixed development project's `/auth/v1/verify` endpoint so the existing PKCE callback flow remains intact. It ignores the hook payload's `site_url`, which the hosted service supplied as its own origin; that field never determines the email link. Recovery redirects only to `/auth/callback?next=/auth/password`; signup redirects only to `/auth/callback`. Local email callbacks, email-change mail, invitations, magic links, and Auth notifications are not enabled by this staging function. Extending those flows requires their own validated contracts.
+The function sends a single-use token-hash link to the fixed application's `/auth/confirm` endpoint. That route validates the token with Supabase and creates a session even in a fresh browser context, then opens the dashboard or an explicitly supported signup return destination. It ignores payload `site_url`; that field never determines the email link. Hook input callbacks must match `/auth/callback`, with signup `next` limited to `/account`, `/support`, or `/listings/new`; recovery requires `next=/auth/password`. Local email callbacks, email changes, invitations, magic links and notifications remain unsupported.
 
-The public signup gate can remain closed after acceptance, limiting registration to the existing approved cohort. That gate alone is not a recipient filter; this signed send hook enforces the recipient restriction even for existing-account email paths. Do not disable the hook as a mail-outage workaround. Stop mail operations and repair the function or its configuration while preserving the recipient restriction.
+Public signup is enabled under the maker's current policy. Isolated test environments can close signup and select the default allowlist audience. Do not disable the signed hook as a mail-outage workaround. Stop mail operations and repair its configuration while preserving signature, recipient and callback validation.
 
 ## Validation and reproduction
 

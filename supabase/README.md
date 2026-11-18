@@ -1,6 +1,6 @@
 # Identity and private support database
 
-The first migration creates pending member profiles, scoped staff grants, private support conversations, immutable initial messages, durable operation receipts, and audit records. Normal clients have read-only table grants constrained by RLS. `public.open_support` is the only mutation endpoint in this slice.
+The first migration creates member profiles, scoped staff grants, private support conversations, immutable initial messages, durable operation receipts, and audit records. Migration `20261118003457_open_account_access` changes the profile default from pending to approved account access and audits existing pending-account activation, preserving suspensions and staff grants. Confirmed email is still required for private operations; this status does not claim campus affiliation. Normal clients have read-only table grants constrained by RLS. `public.open_support` is the only mutation endpoint in this slice.
 
 ## Local development
 
@@ -19,7 +19,7 @@ Inspect the target project's tables before applying the migration. Use an isolat
 
 Run `tests/identity_private_support.sql` through an owner SQL connection or a trusted SQL execution tool. The script creates synthetic users and sessions inside a transaction and rolls back all fixtures. Any failed assertion aborts the test. With `psql`, use `-v ON_ERROR_STOP=1 -f supabase/tests/identity_private_support.sql` and an externally supplied connection string. Do not commit credentials.
 
-The assertions cover confirmed pending membership, ignored user metadata authority, owner-only reads, unrelated users, staff MFA and assignment, revoked roles, revoked sessions, suspension, anonymous and unconfirmed identity, direct-write denial, exact replay, changed payload, and atomic operation/audit outcomes. The connected application harness also passed concurrent exact-retry requests through two real Auth sessions. See [development setup](../docs/development.md) for the guarded fixture lifecycle and command.
+The assertions cover automatically active confirmed accounts, ignored user metadata authority, owner-only reads, unrelated users, staff MFA and assignment, revoked roles, revoked sessions, suspension, anonymous and unconfirmed identity, direct-write denial, exact replay, changed payload, and atomic operation/audit outcomes. The connected application harness also passed concurrent exact-retry requests through two real Auth sessions. See [development setup](../docs/development.md) for the guarded fixture lifecycle and command.
 
 The hosted run on the dedicated development project passed all 33 assertion calls and confirmed no synthetic test users, conversations, or operation receipts remained after rollback. Security advisors reported only informational RLS-without-policy notices for the private receipt and audit tables. Those tables deliberately deny direct client access. Keep those policies absent rather than adding access to silence an informational notice. Fresh-project unused-index notices are expected until real query traffic exists.
 

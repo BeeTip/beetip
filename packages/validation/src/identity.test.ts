@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { acceptsMutation, applicationMode, authInputSchema, authRedirect, supportInputSchema, trustedOrigin } from "./identity";
+import { acceptsMutation, accountRedirect, applicationMode, authInputSchema, authRedirect, supportInputSchema, trustedOrigin } from "./identity";
 
 describe("connected identity boundaries", () => {
   it("fails closed instead of defaulting to demo personas", () => {
@@ -18,6 +18,10 @@ describe("connected identity boundaries", () => {
     expect(acceptsMutation("https://beetip.test", "https://beetip.test", "application/json; charset=utf-8")).toBe(true);
     expect(acceptsMutation("https://evil.test", "https://beetip.test", "application/json")).toBe(false);
     expect(acceptsMutation(null, "https://beetip.test", "text/plain")).toBe(false);
+  });
+  it("preserves supported account intent without allowing external or privileged redirects", () => {
+    for (const target of ["/support", "/listings/new"]) expect(accountRedirect(target)).toBe(target);
+    for (const target of [undefined, "/admin", "//evil.test", "/\\evil.test", "/auth/password", "/support?user=other"]) expect(accountRedirect(target)).toBe("/account");
   });
   it("does not accept client roles or actors", () => {
     expect(authInputSchema.safeParse({ action: "signup", email: "member@example.com", password: "long-password-123", name: "Member", admin: true }).success).toBe(false);

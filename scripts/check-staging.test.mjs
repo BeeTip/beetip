@@ -30,6 +30,23 @@ test("checks public protection separately from the authenticated Vercel bypass",
   assert.equal(result.checks.length, 5);
 });
 
+test("public mode permits catalog access while preserving private API denial", async () => {
+  const request = fixture();
+  const result = await checkStaging({ origin, exposure: "public", request: (url, options) => {
+    assert.equal(options.headers["x-vercel-protection-bypass"], undefined);
+    if (url.pathname === "/" || url.pathname.startsWith("/listings/")) return new Response("Contoh listing");
+    return request(url, { ...options, headers: { ...options.headers, "x-vercel-protection-bypass": bypass } });
+  } });
+  assert.equal(result.result, "PASS");
+  assert.equal(result.scope, "public staging anonymous smoke");
+});
+
+test("public mode rejects a gated catalog or missing sample labels", async () => {
+  for (const response of [new Response(null, { status: 302 }), new Response("real listings")]) {
+    await assert.rejects(checkStaging({ origin, exposure: "public", request: () => response }));
+  }
+});
+
 test("recognizes Vercel's SSO redirect without following it or forwarding the bypass", async () => {
   const result = await checkStaging({ origin, bypass, request: fixture((url, options) => {
     if (!options.headers["x-vercel-protection-bypass"]) return new Response(null, { status: 302, headers: { Location: "https://vercel.com/sso-api?url=beetip-staging.example" } });

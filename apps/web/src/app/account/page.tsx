@@ -9,5 +9,5 @@ export default async function Page() {
   if (!identityConfigured()) return <section className="panel"><h1>Layanan akun belum tersedia</h1><p>Konfigurasi layanan belum selesai. Coba kembali nanti.</p></section>;
   const member = await currentMember();
   if (!member) redirect("/login");
-  return <section className="stack"><h1>Akun BeeTip</h1><div className="panel stack"><h2>{member.name}</h2><p>{member.status === "approved" ? "Keanggotaan terverifikasi." : member.status === "suspended" ? "Akses akun dibatasi. Hubungi pengelola BeeTip." : "Verifikasi keanggotaan belum selesai. Kamu sudah dapat menghubungi bantuan."}</p>{member.status !== "suspended" && <Link className="button button-primary" href="/support">Hubungi bantuan</Link>}<SignOut /></div></section>;
+  return <section className="stack"><h1>Dashboard BeeTip</h1><div className="panel stack"><h2>Halo, {member.name}</h2><p>{member.status === "suspended" ? "Akses akun dibatasi. Hubungi pengelola BeeTip." : "Email terkonfirmasi. Akunmu siap digunakan tanpa persetujuan keanggotaan."}</p><Link className="button button-primary" href="/">Jelajahi listing</Link>{member.status !== "suspended" && <Link className="button button-secondary" href="/support">Hubungi bantuan</Link>}<SignOut /></div></section>;
 }

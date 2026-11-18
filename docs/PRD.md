@@ -7,6 +7,8 @@ Launch community: BINUS Alam Sutera students, staff, and employees
 
 ## 1. Product definition
 
+Owner access-policy update, 18 November 2026: public browsing and self-service email-confirmed accounts replace mandatory membership approval. Account actions require confirmed email, and staff privileges remain separately scoped. Campus affiliation may later be an optional badge. This decision supersedes mandatory verified-campus access assumptions below. The current scope is sample browsing and open onboarding; see [the access policy](public-onboarding.md).
+
 BEETIP is a two-way community jastip marketplace centered on BINUS Alam Sutera. Members request purchases from nearby shops, restaurants, or malls, or offer to buy and deliver items while already visiting those places. One account can act as customer and provider.
 
 Customers pay the agreed purchase budget and jastip fee before the provider purchases the goods. The provider uses their own money at the shop and receives reimbursement plus their earnings after confirmed delivery. The first real-customer pilot uses supervised manual payment operations, subject to verifying a suitable collection and payout arrangement.

@@ -1,4 +1,4 @@
-import { authInputSchema } from "@beetip/validation";
+import { accountRedirect, authInputSchema } from "@beetip/validation";
 import { identityClient } from "../../../../server/identity/client";
 import { identityConfig } from "../../../../server/identity/config";
 import { boundaryFailure, mutationBody, reply } from "../../../../server/identity/http";
@@ -12,7 +12,9 @@ export async function POST(request: Request) {
     const { origin } = identityConfig();
     let error;
     if (input.action === "signup") {
-      ({ error } = await client.auth.signUp({ email: input.email, password: input.password, options: { data: { display_name: input.name }, emailRedirectTo: `${origin}/auth/callback` } }));
+      const callback = new URL("/auth/callback", origin);
+      callback.searchParams.set("next", accountRedirect(input.next));
+      ({ error } = await client.auth.signUp({ email: input.email, password: input.password, options: { data: { display_name: input.name }, emailRedirectTo: callback.href } }));
     } else if (input.action === "login") {
       ({ error } = await client.auth.signInWithPassword({ email: input.email, password: input.password }));
     } else if (input.action === "recover") {
@@ -29,6 +31,6 @@ export async function POST(request: Request) {
       if (!error.status || error.status >= 500) return reply({ ok: false, message: "Layanan akun belum tersedia. Coba lagi nanti." }, 503);
       if (input.action !== "recover" && input.action !== "signup") return reply({ ok: false, message: "Permintaan gagal. Periksa akun atau coba lagi." }, 400);
     }
-    return reply({ ok: true, message: input.action === "signup" || input.action === "recover" ? "Jika alamat dapat digunakan, tautan konfirmasi akan dikirim. Periksa kotak masuk email." : "Perubahan tersimpan." });
+    return reply({ ok: true, destination: input.action === "login" ? accountRedirect(input.next) : "/account", message: input.action === "signup" || input.action === "recover" ? "Jika alamat dapat digunakan, tautan konfirmasi akan dikirim. Periksa kotak masuk email. Setelah konfirmasi, kamu langsung masuk ke BeeTip." : "Perubahan tersimpan." });
   } catch (error) { return boundaryFailure(error); }
 }

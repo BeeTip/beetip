@@ -8,7 +8,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
   if (mode() === "demo") { const { orderId } = await searchParams; return <Support orderId={orderId} />; }
   if (!identityConfigured()) redirect("/account");
   const member = await currentMember();
-  if (!member) redirect("/login");
+  if (!member) redirect("/login?next=%2Fsupport");
   if (member.status === "suspended") redirect("/account");
   return <ConnectedSupport />;
 }

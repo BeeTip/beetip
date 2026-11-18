@@ -4,6 +4,8 @@ Planned on 17 November 2026. The [roadmap issue](https://github.com/BeeTip/beeti
 
 ## Delivery contract
 
+The owner's 18 November [public onboarding policy](public-onboarding.md) supersedes mandatory campus membership approval and the closed staging cohort. Public sample browsing and email-confirmed self-service accounts are the current slice; affiliation review must become optional, and real marketplace transactions remain in later issues.
+
 [BTP-02](https://github.com/BeeTip/beetip/issues/4) and [BTP-22](https://github.com/BeeTip/beetip/issues/24) passed identity-slice acceptance on 18 November 2026. [Development evidence](development.md) and [protected staging acceptance](staging.md) record real email confirmation/recovery, verified operator MFA and assignment, recipient restrictions, deployment protection, failures and cleanup. Staging uses the owner's personal Hobby account and Brevo Free under a zero-cost limit. Later marketplace and release work remains open.
 
 Implement against the [system design](system-design.md), [messaging contracts](messaging.md), and [deployment runbook](vercel-deployment.md). [Current-system grounding](current-system.md) distinguishes demo behavior from real backend requirements. Candidate alternatives and review findings are retained in [design review](design-review.md).

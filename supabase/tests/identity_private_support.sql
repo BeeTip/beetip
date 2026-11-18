@@ -28,7 +28,7 @@ $$;
 
 insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data, raw_app_meta_data, is_anonymous)
 values
-  ('11111111-1111-4111-8111-111111111111', 'btp02-owner@example.invalid', now(), '{"display_name":"Owner","admin":true,"status":"approved"}', '{}', false),
+  ('11111111-1111-4111-8111-111111111111', 'btp02-owner@example.invalid', now(), '{"display_name":"Owner","admin":true,"status":"suspended"}', '{}', false),
   ('22222222-2222-4222-8222-222222222222', 'btp02-other@example.invalid', now(), '{"display_name":"Other"}', '{}', false),
   ('33333333-3333-4333-8333-333333333333', 'btp02-support@example.invalid', now(), '{"display_name":"Support"}', '{}', false),
   ('44444444-4444-4444-8444-444444444444', 'btp02-unconfirmed@example.invalid', null, '{}', '{}', false),
@@ -51,7 +51,7 @@ select pg_temp.assert_raises('select * from public.messages', '42501', 'permissi
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","session_id":"a1111111-1111-4111-8111-111111111111","aal":"aal1"}';
-select pg_temp.assert_true((select status = 'pending' from public.members), 'User metadata cannot approve membership');
+select pg_temp.assert_true((select status = 'approved' from public.members), 'Account access follows the server default, not editable user metadata');
 select pg_temp.assert_true((select count(*) = 1 from public.members), 'Member can read only their profile');
 select pg_temp.assert_raises($q$update public.members set status = 'approved'$q$, '42501', 'permission denied');
 select pg_temp.assert_raises($q$insert into public.staff_roles (member_id, role) values ('11111111-1111-4111-8111-111111111111', 'support')$q$, '42501', 'permission denied');

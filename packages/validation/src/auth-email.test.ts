@@ -40,19 +40,19 @@ describe("staging Auth email hook", () => {
     expect(options?.redirect).toBe("error");
     const body = JSON.parse(String(options?.body));
     expect(body.to).toEqual([{ email: "approved@example.test" }]);
-    expect(body.textContent).toContain("https://rgiptdfjlmwldngapojq.supabase.co/auth/v1/verify?");
+    expect(body.textContent).toContain("https://beetip-campus.vercel.app/auth/confirm?token_hash=");
     expect(body.textContent).toContain("type=signup");
     expect(body.htmlContent).toContain("&amp;");
   });
 
-  it("constructs links from the fixed project without trusting the hook site_url", async () => {
+  it("constructs cross-browser confirmation links without trusting the hook site_url", async () => {
     for (const site_url of ["https://rgiptdfjlmwldngapojq.supabase.co/auth/v1", "https://unrelated.example.test/?token=untrusted"]) {
       const { handler, transport } = setup();
       expect((await handler(signed({ ...payload, email_data: { ...payload.email_data, site_url } }))).status).toBe(200);
       const body = JSON.parse(String(transport.mock.calls[0][1]?.body));
-      const link = new URL(body.textContent.split("\n\n")[1]);
-      expect(link.origin).toBe("https://rgiptdfjlmwldngapojq.supabase.co");
-      expect(link.pathname).toBe("/auth/v1/verify");
+      const link = new URL(body.textContent.split("\n\n")[2]);
+      expect(link.origin).toBe("https://beetip-campus.vercel.app");
+      expect(link.pathname).toBe("/auth/confirm");
       expect(body.textContent).not.toContain("untrusted");
     }
   });
@@ -63,9 +63,29 @@ describe("staging Auth email hook", () => {
     expect((await handler(signed(input))).status).toBe(200);
     const body = JSON.parse(String(transport.mock.calls[0][1]?.body));
     expect(body.to[0].email).toBe("approved@example.test");
-    expect(body.subject).toBe("Reset your password");
-    const link = new URL(body.textContent.split("\n\n")[1]);
-    expect(new URL(link.searchParams.get("redirect_to")!).searchParams.get("next")).toBe("/auth/password");
+    expect(body.subject).toBe("Pulihkan kata sandi BeeTip");
+    const link = new URL(body.textContent.split("\n\n")[2]);
+    expect(link.pathname).toBe("/auth/confirm");
+    expect(link.searchParams.get("type")).toBe("recovery");
+    expect(link.searchParams.get("next")).toBeNull();
+  });
+
+  it("allows open onboarding only with explicit public configuration and a valid signature", async () => {
+    const publicConfig = authEmailConfig(name => ({ ...env, BEETIP_AUTH_EMAIL_AUDIENCE: "public", BEETIP_AUTH_EMAIL_RECIPIENTS: "[]" })[name]);
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}", { status: 201 }));
+    const handler = createAuthEmailHandler(publicConfig, (text, headers) => webhook.verify(text, headers), transport);
+    const input = { ...payload, user: { email: "new-account@example.test", user_metadata: { display_name: '<img src=x onerror="alert(1)">\nAlex' } }, email_data: { ...payload.email_data, redirect_to: "https://beetip-campus.vercel.app/auth/callback?next=/listings/new" } };
+    expect((await handler(signed(input))).status).toBe(200);
+    const body = JSON.parse(String(transport.mock.calls[0][1]?.body));
+    expect(body.to).toEqual([{ email: "new-account@example.test" }]);
+    expect(body.htmlContent).toContain("&lt;img");
+    expect(body.htmlContent).not.toContain("<img");
+    const link = new URL(body.textContent.split("\n\n")[2]);
+    expect(link.searchParams.get("next")).toBe("/listings/new");
+    expect((await handler(new Request("https://hook.example.test", { method: "POST", body: JSON.stringify(input) }))).status).toBe(401);
+    expect((await handler(signed({ ...input, user: { email: "bad\nrecipient@example.test" } }))).status).toBe(400);
+    expect(transport).toHaveBeenCalledTimes(1);
+    expect(() => authEmailConfig(name => ({ ...env, BEETIP_AUTH_EMAIL_AUDIENCE: "typo" })[name])).toThrow();
   });
 
   it("rejects an unapproved recipient before contacting Brevo", async () => {

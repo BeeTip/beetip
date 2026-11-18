@@ -1,5 +1,7 @@
 # Protected identity staging
 
+Historical acceptance record. The maker subsequently requested [public browsing and open onboarding](public-onboarding.md), replacing the deployment authentication gate, recipient cohort and manual membership gate at this origin. Consult the newer record for the live policy and revisions.
+
 BTP-02 and BTP-22 passed acceptance on 18 November 2026. This record covers the identity/private-support slice only. Connected marketplace, financial operations, jobs, and production release remain later work.
 
 ## Owner decisions, 17 November 2026

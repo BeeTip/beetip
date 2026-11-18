@@ -3,8 +3,8 @@ import { z } from "zod";
 const email = z.string().trim().email().max(254);
 const password = z.string().min(12).max(128);
 export const authInputSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("signup"), email, password, name: z.string().trim().min(1).max(80) }).strict(),
-  z.object({ action: z.literal("login"), email, password: z.string().min(1).max(128) }).strict(),
+  z.object({ action: z.literal("signup"), email, password, name: z.string().trim().min(1).max(80), next: z.string().max(100).optional() }).strict(),
+  z.object({ action: z.literal("login"), email, password: z.string().min(1).max(128), next: z.string().max(100).optional() }).strict(),
   z.object({ action: z.literal("recover"), email }).strict(),
   z.object({ action: z.literal("password"), password }).strict(),
   z.object({ action: z.literal("signout") }).strict(),
@@ -27,6 +27,10 @@ export function trustedOrigin(value: string) {
 
 export function authRedirect(value: string | null) {
   return value === "/auth/password" ? value : "/account";
+}
+
+export function accountRedirect(value: string | null | undefined) {
+  return value === "/listings/new" || value === "/support" ? value : "/account";
 }
 
 export function acceptsMutation(origin: string | null, expected: string, contentType: string | null) {
