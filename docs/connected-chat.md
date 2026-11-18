@@ -1,6 +1,6 @@
 # Private connected order chat
 
-BTP-08 adds private text conversations to the orders created by atomic acceptance. Both participants can open **Pesan pesanan** from their order. The synthetic demo keeps its existing local chat adapter. Support replies and queue assignment remain BTP-09.
+BTP-08 adds private text conversations to the orders created by atomic acceptance. Both participants can open **Pesan pesanan** from their order. The synthetic demo keeps its existing local chat adapter. Use **Minta bantuan untuk pesanan ini** to open a separate private support case with a reference to the order. Operator access through that case requires an explicit grant. [Private support operations](connected-support.md).
 
 ## Durable messages and access
 

@@ -69,3 +69,4 @@ export { acceptanceCommandSchema, orderQuerySchema, ordersPageSchema } from "./c
 export type { AcceptanceCommand, ConnectedOrder } from "./connected-orders";
 export { chatCommandSchema, chatQuerySchema, mergeChat } from "./connected-chat";
 export type { ChatMessage, ChatPage } from "./connected-chat";
+export { supportCaseActions, supportCategories, supportCommandSchema, supportQuerySchema, supportReferenceSchema } from "./connected-support";

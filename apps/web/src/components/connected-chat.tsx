@@ -143,5 +143,5 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
     const existing = attempts.find(row => row.body === body);
     if (existing?.status === "sending") return;
     runtime.current?.send(existing ?? { id: crypto.randomUUID(), body, status: "sending" });
-  }}><label className="field">Pesan<textarea value={draft} maxLength={1000} rows={4} onChange={event => setDraft(event.target.value)} /></label><p>Draf hanya disimpan selama halaman ini terbuka. Pesan tidak mengubah kesepakatan atau pembayaran.</p><Button type="submit" disabled={!page || !draft.trim() || attempts.some(row => row.status === "sending" && row.body === draft.trim())}>Kirim pesan</Button></form>}</section>;
+  }}><label className="field">Pesan<textarea value={draft} maxLength={1000} rows={4} onChange={event => setDraft(event.target.value)} /></label><p>Draf hanya disimpan selama halaman ini terbuka. Pesan tidak mengubah kesepakatan atau pembayaran.</p><Button type="submit" disabled={!page || !draft.trim() || attempts.some(row => row.status === "sending" && row.body === draft.trim())}>Kirim pesan</Button></form>}{page && <Link className="button button-secondary" href={`/support?orderId=${orderId}`}>Minta bantuan untuk pesanan ini</Link>}</section>;
 }

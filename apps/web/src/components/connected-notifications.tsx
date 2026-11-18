@@ -76,7 +76,10 @@ export function ConnectedNotifications({ memberId }: { memberId: string }) {
     {next && <Button disabled={busy} onClick={() => void load(next)}>Muat lebih banyak</Button>}
     <h2>Preferensi email</h2>
     <p>Notifikasi di aplikasi tetap tersedia. Pengiriman email mengikuti kesiapan layanan.</p>
-    {preferences.filter(preference => notificationRegistry[preference.event_type].implemented).map(preference => <label className="check-field" key={preference.event_type}>
+    {preferences.filter(preference => {
+      const rule = notificationRegistry[preference.event_type];
+      return rule.implemented && rule.email !== "in_app_only";
+    }).map(preference => <label className="check-field" key={preference.event_type}>
       <input type="checkbox" checked={preference.email_enabled} disabled={busy} onChange={event => void command({ action: "preference", eventType: preference.event_type, email: event.target.checked })} />
       {notificationRegistry[preference.event_type].title}
     </label>)}

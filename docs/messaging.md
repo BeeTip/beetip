@@ -1,6 +1,6 @@
 # Messaging and notification contracts
 
-This reference specifies the connected pilot. [Private order chat](connected-chat.md) and [in-app notifications](notifications.md) now have local and dedicated-development acceptance. Their implementation records describe the actual RPCs and tables. Support assignment, grouped application email and retention jobs below remain proposed under their owning issues; the synthetic demo still uses browser-local records.
+This reference specifies the connected pilot. The implementation records describe the actual contracts for [private order chat](connected-chat.md), [private support operations](connected-support.md), and [in-app notifications](notifications.md). Grouped application email and retention jobs remain proposed under their owning issues. The synthetic demo uses browser-local records.
 
 ## Conversation ownership
 
@@ -8,9 +8,9 @@ An accepted order creates exactly one order conversation in the acceptance trans
 
 Order conversations become read-only after final financial settlement or final cancellation resolution. Support closure makes its thread read-only until the requester or an authorized operator reopens it. Disputes allow continued communication unless an operator restricts a participant for abuse. Preserve evidence and audit the restriction.
 
-Support operators gain order-history access only through an explicit audited case assignment. Financial roles do not automatically receive private chat access. Membership suspension denies new protected reads and writes. Existing downloaded content cannot be remotely erased, so minimize browser retention.
+An assigned support operator with MFA can escalate a case. A platform administrator with MFA can explicitly grant the assigned operator read access to the referenced order chat. Each view is audited. Reassignment and resolution clear that case grant. Membership suspension denies new protected reads and writes. Existing downloaded content cannot be remotely erased, so minimize browser retention.
 
-New support threads enter a queue visible only as a minimal subject/category projection to active support operators. The first operator claims the thread atomically, creating its membership and audit entry. A support lead can reassign it, revoking the previous assignment. Before assignment, the queue receives an in-app alert without message text. After assignment, only the requester and currently assigned operators receive thread-message notifications. Recipient rows record the event-time assignment, and dispatch rechecks current access to suppress mail to a replaced operator.
+New support threads enter an MFA-protected queue with a fixed category label, case ID, timestamp and version. The first operator claims the thread atomically, creating its membership and audit entry. A platform administrator with MFA can inspect assignment metadata and reassign the case, revoking the previous assignment. Before assignment, the queue receives an in-app alert without message text. After assignment, thread-message notifications go to the requester or the current operator. Recipient rows record the event-time assignment. Reassignment suppresses pending mail for the replaced operator, and dispatch must recheck current access.
 
 ## Durable representation
 
@@ -63,6 +63,7 @@ Use private buckets and server-authorized upload intents. Limit evidence to vali
 | Acceptance, expiry, cancellation | Affected customer and provider | Immediately | Transactional summary |
 | Funding review, amendment action, delivery confirmation | Affected parties and assigned operators | Immediately | Action-required summary |
 | New order message | Other active participant | Immediately | After 60 seconds if still unread, grouped per recipient/conversation window |
+| New unassigned support case | Support queue | Immediately | None |
 | New support message | Requester or assigned support operator | Immediately | After 60 seconds if still unread |
 | Dispute opened or resolved | Affected parties and assigned reviewer | Immediately | Transactional summary |
 | Transfer review or outcome | Affected member and assigned financial operators | Immediately | Transactional summary |

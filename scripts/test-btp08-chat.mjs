@@ -157,9 +157,17 @@ try {
   await owner.query("update public.orders set state='cancelled' where id=$1", [order]);
   assert((await history(a, order)).messages.length > 0);
   checks.push("expired unpaid and cancelled orders retain history, deny new sends, resolve committed retries");
-  await owner.query(readFileSync(new URL("../supabase/rollback/btp08_connected_chat.sql", import.meta.url), "utf8"));
-  assert.equal((await owner.query("select to_regprocedure('public.btp08_send(uuid,uuid,text)') result")).rows[0].result, null);
-  checks.push("owned rollback removes feature while retaining existing order/support message history");
+  const rollback = readFileSync(new URL("../supabase/rollback/btp08_connected_chat.sql", import.meta.url), "utf8");
+  if ((await owner.query("select to_regprocedure('public.btp09_send(uuid,uuid,text)') result")).rows[0].result) {
+    await denied(owner.query(rollback), /DEPENDENCY:/);
+    await owner.query("rollback");
+    assert((await history(a, order)).messages.length > 0);
+    checks.push("BTP-08 rollback refuses to remove shared messaging used by BTP-09");
+  } else {
+    await owner.query(rollback);
+    assert.equal((await owner.query("select to_regprocedure('public.btp08_send(uuid,uuid,text)') result")).rows[0].result, null);
+    checks.push("owned rollback removes feature while retaining existing order/support message history");
+  }
   checks.forEach(check => console.log(`PASS ${check}`));
 } finally {
   await Promise.all(clients.map(client => client.end()));
