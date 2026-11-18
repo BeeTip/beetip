@@ -279,6 +279,102 @@ export type Database = {
           },
         ]
       }
+      offer_revisions: {
+        Row: {
+          created_at: string
+          fee: number
+          listing_version: number
+          offer_id: string
+          status: string
+          terms: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          fee: number
+          listing_version: number
+          offer_id: string
+          status: string
+          terms: Json
+          version: number
+        }
+        Update: {
+          created_at?: string
+          fee?: number
+          listing_version?: number
+          offer_id?: string
+          status?: string
+          terms?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_revisions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          author_id: string
+          created_at: string
+          fee: number
+          id: string
+          listing_id: string
+          listing_version: number
+          owner_id: string
+          status: string
+          version: number
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          fee: number
+          id: string
+          listing_id: string
+          listing_version: number
+          owner_id: string
+          status: string
+          version: number
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          fee?: number
+          id?: string
+          listing_id?: string
+          listing_version?: number
+          owner_id?: string
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_roles: {
         Row: {
           granted_at: string
@@ -344,6 +440,11 @@ export type Database = {
         }
         Returns: Json
       }
+      browse_offers: {
+        Args: { p_before?: string; p_before_id?: string; p_listing_id?: string }
+        Returns: Json
+      }
+      offer_listing: { Args: { p_id: string }; Returns: Json }
       open_support: {
         Args: { p_body: string; p_operation_id: string }
         Returns: string
@@ -352,6 +453,18 @@ export type Database = {
         Args: {
           p_listing: Json
           p_listing_id: string
+          p_operation_id: string
+          p_version: number
+        }
+        Returns: string
+      }
+      save_offer: {
+        Args: {
+          p_action: string
+          p_fee: number
+          p_listing_id: string
+          p_listing_version: number
+          p_offer_id: string
           p_operation_id: string
           p_version: number
         }

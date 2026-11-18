@@ -31,7 +31,7 @@ Each feature slice includes its schema, policies, command, authorized projection
 | BTP-02 | [#4 Connect real sign-in and pending-member private support](https://github.com/BeeTip/beetip/issues/4) | None | Complete |
 | BTP-03 | [#5 Review affiliation and grant scoped staff access](https://github.com/BeeTip/beetip/issues/5) | [#4](https://github.com/BeeTip/beetip/issues/4) | Complete locally and development DB; web deployment pending |
 | BTP-04 | [#6 Publish and browse both real listing types](https://github.com/BeeTip/beetip/issues/6) | [#5](https://github.com/BeeTip/beetip/issues/5) | Complete locally and development DB; web deployment pending |
-| BTP-05 | [#7 Negotiate offers with versioned consent](https://github.com/BeeTip/beetip/issues/7) | [#6](https://github.com/BeeTip/beetip/issues/6) | Implementation |
+| BTP-05 | [#7 Negotiate offers with versioned consent](https://github.com/BeeTip/beetip/issues/7) | [#6](https://github.com/BeeTip/beetip/issues/6) | Complete locally and development DB; web deployment pending |
 | BTP-06 | [#8 Accept offers atomically and reserve trip capacity](https://github.com/BeeTip/beetip/issues/8) | [#7](https://github.com/BeeTip/beetip/issues/7) | Implementation |
 | BTP-07 | [#9 Expire unpaid reservations without losing verified funding](https://github.com/BeeTip/beetip/issues/9) | [#8](https://github.com/BeeTip/beetip/issues/8) | Implementation |
 | BTP-08 | [#10 Deliver private order chat with durable retry and catch-up](https://github.com/BeeTip/beetip/issues/10) | [#8](https://github.com/BeeTip/beetip/issues/8) | Implementation |

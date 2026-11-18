@@ -4,7 +4,7 @@ A two-way community jastip marketplace centered on Alam Sutera. Anyone can brows
 
 ## Repository status
 
-The current access policy is [public browsing and open onboarding](docs/public-onboarding.md). Visitors can explore without an account, and personalized email confirmation signs new users into their dashboard. BTP-04 adds [real listing publishing and browsing](docs/connected-listings.md), verified locally against the dedicated development database; web deployment is pending. Offers, orders and payments remain later work.
+The current access policy is [public browsing and open onboarding](docs/public-onboarding.md). Visitors can explore without an account, and personalized email confirmation signs new users into their dashboard. BTP-04 adds [real listing publishing and browsing](docs/connected-listings.md), and BTP-05 adds [private versioned offers and owner review](docs/connected-offers.md), verified locally against the dedicated development database; web deployment is pending. Orders and payments remain later work.
 
 The browser-local demo covers both listing types, negotiation, funding, purchases, chat, handover, disputes, transfers, ratings, and reconciliation with synthetic records. Connected identity provides Supabase email/password access and private support. BTP-03 adds [optional affiliation and scoped staff access](docs/affiliation-staff.md), verified locally against the dedicated development database; its web deployment is pending. Real email confirmation/recovery and assigned support-operator MFA passed acceptance on the existing [public BeeTip deployment](https://beetip-campus.vercel.app). Connected marketplace operations, realtime replies, and payment operations remain incomplete.
 

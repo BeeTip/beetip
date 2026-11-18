@@ -62,3 +62,5 @@ export { acceptsMutation, accountRedirect, applicationMode, authInputSchema, aut
 export { affiliationIdSchema, affiliationInputSchema, evidenceType, mfaInputSchema, staffInputSchema, staffRoles } from "./affiliation";
 export { boardQuerySchema, connectedListingSchema, listingCommandSchema, ownListingQuerySchema, wibInput, wibTimestamp } from "./connected-listings";
 export type { ConnectedListingInput, OwnListing, PublicListing } from "./connected-listings";
+export { offerCommandSchema, offerQuerySchema } from "./connected-offers";
+export type { OfferCommand, ConnectedOffer, OfferListing } from "./connected-offers";
