@@ -172,7 +172,7 @@ Do not preserve a synchronous `ApplicationService` contract over network I/O. In
 
 Keep demo fixtures and persona tools isolated under test/demo-only entry points. Connected production routes must fail closed if configuration is missing. They must never silently fall back to synthetic state. Do not import localStorage data into real records. Preserve current dirty UI changes and evaluate them separately when implementing their feature.
 
-The first integration slice signs in a real test member, shows its pending affiliation state, and opens its private support thread. The next slices approve membership, publish a listing, negotiate, and accept atomically. Each slice covers schema, authorization, server operation, UI, and connected tests. Keep existing synthetic tests as rule examples while adding real-session and database tests.
+The first integration slice signs in a real test member and opens its private support thread. Email confirmation now enables ordinary account access automatically. BTP-03 adds optional affiliation badges and independently scoped staff grants with MFA; later slices publish real listings, negotiate, and accept atomically. Each slice covers schema, authorization, server operation, UI, and connected tests. Keep existing synthetic tests as rule examples while adding real-session and database tests.
 
 ## Synthesis decision
 
@@ -200,7 +200,7 @@ Browser-to-Supabase RLS and RPCs remove a server hop but expose data protocol, e
 
 The first BTP-02 implementation uses the selected server-command/RPC boundaries for real Auth and private support creation. Explicit demo mode retains synthetic regression journeys, while connected routes gate unmigrated screens. It does not import browser data. Support replies, notification intent, and realtime are deferred to their owning issues. BTP-02 and BTP-22 passed acceptance with actual email confirmation/recovery, a verified MFA support operator, assigned-case authorization, and protected staging. See [development setup](development.md) and [staging evidence](staging.md) for exact revisions, failure history, cleanup and delivery limitations.
 
-No structural contract deviations have been accepted. Update the usage, outcomes, SQL responsibilities, and associated issue when an accepted change alters the contract. Record its acceptance source here. Reopen design if two unrelated units need the same workaround or duplicate writers emerge. Cosmetic renaming does not require redesign.
+BTP-03 implements optional affiliation requests, private evidence and scoped staff grants under the revised public-access policy. Its user-scoped SQL commands, authenticated-only Storage operations, role/MFA checks, private projections, browser-state clearing and verification are recorded in [affiliation and staff evidence](affiliation-staff.md). No affiliation decision gates ordinary confirmed accounts. Notification delivery and evidence-retention automation remain in their owning later issues.
 
 ## Open decisions and launch dependencies
 
@@ -208,4 +208,4 @@ The product owner must identify the approved affiliation evidence, service area 
 
 ## Next implementation step
 
-Begin the identity and private-support integration slice after recording account ownership and nonproduction environment settings in the issue backlog. Follow [the implementation plan](implementation-plan.md) and [Vercel runbook](vercel-deployment.md) through staging verification, recovery rehearsal, and capped pilot release.
+Continue with BTP-04 real listing publishing and public-safe browsing under the confirmed-account policy. Deploy and verify each selected web candidate separately; local implementation and applied development migrations do not claim public deployment or production-release approval. Follow [the implementation plan](implementation-plan.md) and [Vercel runbook](vercel-deployment.md) through later release gates.

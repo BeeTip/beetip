@@ -34,6 +34,8 @@
     },
     {
       "key": "BTP-03",
+      "status": "complete",
+      "evidence": "docs/affiliation-staff.md; verified local connected candidate and dedicated development DB; web deployment pending",
       "title": "Review affiliation and grant scoped staff access",
       "deps": [
         "BTP-02"

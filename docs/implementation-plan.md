@@ -15,7 +15,7 @@ The machine-readable work breakdown is [implementation-issues.json](implementati
 ## Release stages
 
 1. Establish the first connected path with real test identity and private support in BTP-02. BTP-01 records operating decisions concurrently. BTP-22 establishes protected staging early.
-2. Extend approved membership through listings, offers, atomic acceptance and database-driven expiry in BTP-03 through BTP-07.
+2. Add optional affiliation and scoped staff access, then extend active confirmed accounts through listings, offers, atomic acceptance and database-driven expiry in BTP-03 through BTP-07.
 3. Add durable order/support conversation recovery, inbox notifications and transactional email in BTP-08 through BTP-11. BTP-10 can begin after identity and staff scopes exist.
 4. Extend verified funding through amendments, shared receipts, secure handover, partial resolution, transfers and reconciliation in BTP-12 through BTP-18.
 5. Complete moderation, ratings, retention and account data controls in BTP-19 and BTP-20.
@@ -29,7 +29,7 @@ Each feature slice includes its schema, policies, command, authorized projection
 | --- | --- | --- | --- |
 | BTP-01 | [#3 Approve pilot operations, account ownership, and release policies](https://github.com/BeeTip/beetip/issues/3) | None | Owner decision |
 | BTP-02 | [#4 Connect real sign-in and pending-member private support](https://github.com/BeeTip/beetip/issues/4) | None | Complete |
-| BTP-03 | [#5 Review affiliation and grant scoped staff access](https://github.com/BeeTip/beetip/issues/5) | [#4](https://github.com/BeeTip/beetip/issues/4) | Implementation |
+| BTP-03 | [#5 Review affiliation and grant scoped staff access](https://github.com/BeeTip/beetip/issues/5) | [#4](https://github.com/BeeTip/beetip/issues/4) | Complete locally and development DB; web deployment pending |
 | BTP-04 | [#6 Publish and browse both real listing types](https://github.com/BeeTip/beetip/issues/6) | [#5](https://github.com/BeeTip/beetip/issues/5) | Implementation |
 | BTP-05 | [#7 Negotiate offers with versioned consent](https://github.com/BeeTip/beetip/issues/7) | [#6](https://github.com/BeeTip/beetip/issues/6) | Implementation |
 | BTP-06 | [#8 Accept offers atomically and reserve trip capacity](https://github.com/BeeTip/beetip/issues/8) | [#7](https://github.com/BeeTip/beetip/issues/7) | Implementation |

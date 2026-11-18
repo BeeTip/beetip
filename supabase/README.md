@@ -1,6 +1,6 @@
 # Identity and private support database
 
-The first migration creates member profiles, scoped staff grants, private support conversations, immutable initial messages, durable operation receipts, and audit records. Migration `20261118003457_open_account_access` changes the profile default from pending to approved account access and audits existing pending-account activation, preserving suspensions and staff grants. Confirmed email is still required for private operations; this status does not claim campus affiliation. Normal clients have read-only table grants constrained by RLS. `public.open_support` is the only mutation endpoint in this slice.
+The first migration creates member profiles, scoped staff grants, private support conversations, immutable initial messages, durable operation receipts, and audit records. Migration `20261118003457_open_account_access` changes the profile default from pending to approved account access and audits existing pending-account activation, preserving suspensions and staff grants. Confirmed email is still required for private operations; this status does not claim campus affiliation. Normal clients have read-only application table grants constrained by RLS. BTP-03 adds `affiliation_command` and `set_staff_role` alongside `open_support`, plus private draft-bound evidence uploads. See [the affiliation/staff contract and evidence](../docs/affiliation-staff.md).
 
 ## Local development
 

@@ -2,7 +2,7 @@
 
 Current owner policy: [public sample browsing and open onboarding](public-onboarding.md) supersede the earlier pending-member and protected-cohort defaults described in this historical setup record.
 
-BTP-02 implements real Auth and private support creation and passed acceptance on protected Vercel staging on 18 November 2026. Support replies, realtime, notifications, affiliation review, and connected marketplace flows belong to later issues.
+BTP-02 implements real Auth and private support creation and passed acceptance on protected Vercel staging on 18 November 2026. BTP-03 now implements [optional affiliation and scoped staff access](affiliation-staff.md), verified locally against the dedicated development database. Support replies, realtime, notifications and connected marketplace flows remain later work. The older setup and acceptance sections below retain their historical policy context.
 
 ## Development project
 
