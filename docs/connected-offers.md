@@ -34,6 +34,8 @@ The guarded harness creates temporary synthetic confirmed and unconfirmed accoun
 
 ## Verification, 18 November 2026
 
+Implementation candidate: `fd247f7daed367ba5f3c34b9398b9dca018ac107`. The subsequent acceptance-record commit changes documentation only. BTP-06 is the next implementation issue; public web deployment and BTP-01 operating decisions remain separate.
+
 - The rollback-only database suite passed 30 assertions, including direct-write denial, private offer/history reads, revoked sessions, exact retry, changed-payload conflicts, terminal withdrawal, original-term preservation and tied-timestamp pagination without missing or duplicate rows.
 - Six connected groups passed against both Next development and the final connected production build on local port 3109: authentication/CSRF/actor guards, concurrent retry and uniqueness, rescheduling with explicit renewed consent, concurrent update/withdraw, both listing directions and fee bounds, mobile owner review and cross-tab logout. Trip offer creation, request revision, paused withdrawal and owner review use the real UI.
 - Lint, typecheck, 52 unit tests, 11 staging-helper tests, the connected production build, production dependency audit and all 16 existing demo browser journeys passed. All eight connected listing regression groups passed against the final production build. No production dependency vulnerabilities were reported.
