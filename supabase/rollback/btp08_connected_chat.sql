@@ -1,0 +1,13 @@
+begin;
+drop policy if exists btp08_member_hint on realtime.messages;
+drop function public.btp08_send(uuid,uuid,text),public.btp08_history(uuid,bigint,bigint),public.btp08_read(uuid,bigint);
+drop function private.btp08_send(uuid,uuid,text),private.btp08_history(uuid,bigint,bigint),private.btp08_read(uuid,bigint);
+drop function private.btp08_order_conversation(uuid),private.btp08_message_json(public.messages);
+drop function private.notification_target_allowed(uuid,text,uuid);
+alter function private.btp08_previous_target_allowed(uuid,text,uuid) rename to notification_target_allowed;
+delete from public.notifications where event_type='order_message';
+drop table private.btp08_email_sources,private.btp08_send_locks,public.conversation_reads;
+drop index public.btp08_message_sender_time;
+drop index public.btp08_message_retry;
+alter table public.messages drop column client_message_id;
+commit;

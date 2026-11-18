@@ -1,6 +1,6 @@
 # Deploy the connected BeeTip pilot
 
-This is the deployment runbook. Current staging work and evidence are recorded in [staging progress](staging.md); production has not been deployed. Scope confirmed on 17 November 2026 includes real accounts, order and support chat, in-app and email notifications, and manual payments. Follow [the implementation plan](implementation-plan.md) before executing this runbook.
+This is the deployment runbook. The existing public sample deployment and accepted account flows are recorded in [public onboarding](public-onboarding.md); [staging progress](staging.md) retains the earlier protected identity candidate. Later connected marketplace slices have separate local and development-database evidence and are not deployed merely by merging their source. The complete production marketplace has not been released. Follow [the implementation plan](implementation-plan.md) and [runnable walkthrough](running-beetip.md) before executing this runbook.
 
 ## Establish ownership and cost
 
@@ -73,7 +73,7 @@ pnpm build
 pnpm test:e2e
 ```
 
-Run the database reset, migration, authorization, concurrency, and generated-type checks added by the implementation work. These commands are not present yet and must be documented by their owning issues. Existing browser tests are synthetic persona tests and cannot satisfy connected-pilot acceptance.
+Run the migration, authorization, concurrency and real-session checks documented by the implemented slices. `scripts/test-atomic-acceptance.mjs` creates a fresh isolated plain PostgreSQL database, applies repository migrations and verifies real lock races using test platform stubs; CI runs it against PostgreSQL 18. It cannot establish hosted Auth, Storage, Cron or Realtime acceptance. The guarded session harnesses and hosted read-back in the feature records supply that separate evidence. Generate types from the actual migrated target and inspect their diff. Existing demo browser tests are synthetic persona tests and cannot satisfy connected-pilot acceptance.
 
 On staging, use separate authenticated browser sessions for customer, provider, unrelated member, support operator, and two financial operators. Exercise both listing types, final-slot races, funding, amendments, shared receipts, delivery confirmation, cancellation, partial disputes, ambiguous transfers, and reconciled export. Test chat during network loss, tab duplication, session expiry, retries, and membership suspension. Inspect private downloads with an unrelated account.
 

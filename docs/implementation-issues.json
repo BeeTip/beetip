@@ -103,6 +103,7 @@
     },
     {
       "key": "BTP-07",
+      "status": "complete",
       "title": "Expire unpaid reservations without losing verified funding",
       "deps": [
         "BTP-06"
@@ -119,6 +120,7 @@
     },
     {
       "key": "BTP-08",
+      "status": "complete",
       "title": "Deliver private order chat with durable retry and catch-up",
       "deps": [
         "BTP-06"
