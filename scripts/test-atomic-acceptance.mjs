@@ -39,11 +39,11 @@ try {
     assert.equal((await owner.query("select has_function_privilege('anon',$1,'execute') allowed", [signature])).rows[0].allowed, false);
   }
   checks.push("new public tables enforce RLS and acceptance/order RPCs deny anon execution");
-  for (const file of ["connected_listings.sql", "versioned_offers.sql", "atomic_acceptance.sql"]) {
+  for (const file of ["connected_listings.sql", "versioned_offers.sql", "atomic_acceptance.sql", "notification_inbox.sql"]) {
     const path = new URL(`../supabase/tests/${file}`, import.meta.url);
     await owner.query(readFileSync(path, "utf8"));
   }
-  checks.push("existing rollback-only listing/offer SQL suites and 18 acceptance assertions");
+  checks.push("rollback-only listing, offer, acceptance and notification authorization suites");
   const actors = [];
   for (let i = 0; i < 5; i++) {
     const actor = { id: randomUUID(), session: randomUUID() };
