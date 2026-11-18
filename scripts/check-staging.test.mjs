@@ -32,7 +32,7 @@ test("checks public protection separately from the authenticated Vercel bypass",
 
 test("public mode permits catalog access while preserving private API denial", async () => {
   const request = fixture();
-  const result = await checkStaging({ origin, exposure: "public", request: (url, options) => {
+  const result = await checkStaging({ origin, exposure: "public", catalog: "samples", request: (url, options) => {
     assert.equal(options.headers["x-vercel-protection-bypass"], undefined);
     if (url.pathname === "/" || url.pathname.startsWith("/listings/")) return new Response("Contoh listing");
     return request(url, { ...options, headers: { ...options.headers, "x-vercel-protection-bypass": bypass } });
@@ -43,7 +43,19 @@ test("public mode permits catalog access while preserving private API denial", a
 
 test("public mode rejects a gated catalog or missing sample labels", async () => {
   for (const response of [new Response(null, { status: 302 }), new Response("real listings")]) {
-    await assert.rejects(checkStaging({ origin, exposure: "public", request: () => response }));
+    await assert.rejects(checkStaging({ origin, exposure: "public", catalog: "samples", request: () => response }));
+  }
+});
+
+test("public connected mode checks board availability and private-field exclusion", async () => {
+  const request = fixture();
+  for (const destination of [undefined, "private address"]) {
+    const run = checkStaging({ origin, exposure: "public", request: (url, options) => {
+      if (url.pathname === "/") return new Response("Mau titip apa hari ini?");
+      if (url.pathname === "/api/listings") return Response.json({ ok: true, listings: destination ? [{ destination }] : [] }, { headers: privateHeaders });
+      return request(url, { ...options, headers: { ...options.headers, "x-vercel-protection-bypass": bypass } });
+    } });
+    if (destination) await assert.rejects(run); else assert.equal((await run).result, "PASS");
   }
 });
 

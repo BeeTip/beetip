@@ -136,6 +136,86 @@ export type Database = {
           },
         ]
       }
+      listings: {
+        Row: {
+          area: string
+          bound: number
+          budget: number
+          capacity: number
+          category: string
+          created_at: string
+          cutoff_at: string
+          destination: string
+          end_at: string
+          fee: number
+          id: string
+          items: Json
+          negotiable: boolean
+          owner_id: string
+          shop: string
+          spending_capacity: number
+          start_at: string
+          status: string
+          title: string
+          type: string
+          version: number
+        }
+        Insert: {
+          area: string
+          bound: number
+          budget: number
+          capacity: number
+          category: string
+          created_at?: string
+          cutoff_at: string
+          destination: string
+          end_at: string
+          fee: number
+          id: string
+          items: Json
+          negotiable: boolean
+          owner_id: string
+          shop: string
+          spending_capacity: number
+          start_at: string
+          status: string
+          title: string
+          type: string
+          version?: number
+        }
+        Update: {
+          area?: string
+          bound?: number
+          budget?: number
+          capacity?: number
+          category?: string
+          created_at?: string
+          cutoff_at?: string
+          destination?: string
+          end_at?: string
+          fee?: number
+          id?: string
+          items?: Json
+          negotiable?: boolean
+          owner_id?: string
+          shop?: string
+          spending_capacity?: number
+          start_at?: string
+          status?: string
+          title?: string
+          type?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           created_at: string
@@ -252,8 +332,29 @@ export type Database = {
         }
         Returns: string
       }
+      browse_listings: {
+        Args: {
+          p_before?: string
+          p_before_id?: string
+          p_category?: string
+          p_day?: string
+          p_id?: string
+          p_search?: string
+          p_type?: string
+        }
+        Returns: Json
+      }
       open_support: {
         Args: { p_body: string; p_operation_id: string }
+        Returns: string
+      }
+      save_listing: {
+        Args: {
+          p_listing: Json
+          p_listing_id: string
+          p_operation_id: string
+          p_version: number
+        }
         Returns: string
       }
       set_staff_role: {

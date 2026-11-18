@@ -1,6 +1,6 @@
 # Develop the connected identity slice
 
-Current owner policy: [public sample browsing and open onboarding](public-onboarding.md) supersede the earlier pending-member and protected-cohort defaults described in this historical setup record.
+Current owner policy: [public browsing and open onboarding](public-onboarding.md) supersede the earlier pending-member and protected-cohort defaults described in this historical setup record. BTP-04 adds [connected listing publishing, owner edits and safe public pagination](connected-listings.md); use its verification commands for the current board. The setup and acceptance details below retain their historical slice context.
 
 BTP-02 implements real Auth and private support creation and passed acceptance on protected Vercel staging on 18 November 2026. BTP-03 now implements [optional affiliation and scoped staff access](affiliation-staff.md), verified locally against the dedicated development database. Support replies, realtime, notifications and connected marketplace flows remain later work. The older setup and acceptance sections below retain their historical policy context.
 

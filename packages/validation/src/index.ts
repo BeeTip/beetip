@@ -60,3 +60,5 @@ export const demoStorageSchema = z.object({
 }).refine(data => data.state.members.some(m => m.id === data.actorId), "Persona tidak tersedia");
 export { acceptsMutation, accountRedirect, applicationMode, authInputSchema, authRedirect, supportInputSchema, trustedOrigin } from "./identity";
 export { affiliationIdSchema, affiliationInputSchema, evidenceType, mfaInputSchema, staffInputSchema, staffRoles } from "./affiliation";
+export { boardQuerySchema, connectedListingSchema, listingCommandSchema, ownListingQuerySchema, wibInput, wibTimestamp } from "./connected-listings";
+export type { ConnectedListingInput, OwnListing, PublicListing } from "./connected-listings";

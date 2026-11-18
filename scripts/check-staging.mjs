@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
-export async function checkStaging({ origin, bypass, allowLocal = false, exposure = "protected", request = fetch }) {
+export async function checkStaging({ origin, bypass, allowLocal = false, exposure = "protected", catalog = "connected", request = fetch }) {
   const target = new URL(origin);
   const local = allowLocal && target.protocol === "http:" && target.hostname === "127.0.0.1";
   assert(target.protocol === "https:" || local, "Staging requires HTTPS");
   assert(!target.username && !target.password && target.pathname === "/" && !target.search && !target.hash, "Supply only the staging origin");
   assert(["protected", "public"].includes(exposure), "Explicitly select a supported exposure policy");
+  assert(["connected", "samples"].includes(catalog), "Explicitly select a supported catalog");
   assert(local || exposure === "public" || bypass, "A deployment-protection bypass secret is required for staging checks");
   const checked = [];
   async function send(path, options = {}, protectedAccess = true) {
@@ -38,12 +39,25 @@ export async function checkStaging({ origin, bypass, allowLocal = false, exposur
     checked.push("deployment protection denies public page and API access");
   }
   if (exposure === "public") {
+    if (catalog === "samples") {
     for (const path of ["/", "/listings/contoh-kopi"]) {
       const response = await send(path, {}, false);
       assert.equal(response.status, 200, "Public catalog and sample details must not require sign-in");
       assert((await response.text()).toLowerCase().includes("contoh listing"), "Public samples must be labeled");
     }
     checked.push("public catalog and sample details available without sign-in");
+    } else {
+      const home = await send("/", {}, false);
+      assert.equal(home.status, 200, "Public board must not require sign-in");
+      assert((await home.text()).includes("Mau titip apa hari ini?"), "Public board missing");
+      const board = await send("/api/listings", {}, false);
+      assert.equal(board.status, 200, "Public listing projection unavailable");
+      privateResponse(board);
+      const data = await board.json();
+      assert(data.ok && Array.isArray(data.listings), "Invalid board projection");
+      assert(data.listings.every(row => !("destination" in row) && !("owner_id" in row)), "Private listing fields exposed");
+      checked.push("public connected board and safe listing projection available without sign-in");
+    }
   }
   const login = await send("/login");
   assert.equal(login.status, 200, "Connected login must be available behind deployment protection");
@@ -83,6 +97,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       bypass,
       allowLocal: process.env.BEETIP_STAGING_ALLOW_LOCAL === "1",
       exposure: process.env.BEETIP_STAGING_EXPOSURE ?? "protected",
+      catalog: process.env.BEETIP_STAGING_CATALOG ?? "connected",
     })));
   } catch {
     console.error("Staging smoke failed. Check the target, deployment protection, connected configuration, Auth redirects, and private response headers. No email or authenticated journey was verified.");
