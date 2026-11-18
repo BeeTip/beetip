@@ -419,6 +419,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      notification_inbox: {
+        Args: { p_before?: string; p_before_id?: string }
+        Returns: Json
+      }
+      read_notification: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      set_notification_preference: {
+        Args: { p_type: string; p_email: boolean }
+        Returns: undefined
+      }
+      notification_target: {
+        Args: { p_id: string }
+        Returns: string
+      }
       affiliation_command: {
         Args: {
           p_action: string
