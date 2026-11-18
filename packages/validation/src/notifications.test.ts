@@ -9,8 +9,11 @@ describe("notification boundary and registry", () => {
     expect(Object.keys(notificationRegistry).sort()).toEqual([...notificationEventTypes].sort());
     expect(region.match(/^  \('/gm)).toHaveLength(notificationEventTypes.length);
     for (const [event, rule] of Object.entries(notificationRegistry)) {
-      expect(region).toContain(`('${event}','${rule.recipients}','${rule.target}','${rule.template}','${rule.title}','${rule.email}',${rule.implemented})`);
+      const seedFlag = event === "funding_review" ? false : rule.implemented;
+      expect(region).toContain(`('${event}','${rule.recipients}','${rule.target}','${rule.template}','${rule.title}','${rule.email}',${seedFlag})`);
     }
+    const funding = readFileSync(new URL("../../../supabase/migrations/20261119001000_btp12_incoming_funding.sql", import.meta.url), "utf8");
+    expect(funding).toContain(`update private.notification_rules set implemented=${notificationRegistry.funding_review.implemented} where event_type='funding_review';`);
   });
   it("rejects actor spoofing and read reversal", () => {
     const read = { action: "read", id: "00000000-0000-4000-8000-000000000001" };

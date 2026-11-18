@@ -749,6 +749,27 @@ export type Database = {
         Args: { p_body: string; p_client: string; p_order: string }
         Returns: Json
       }
+      funding_command: {
+        Args: {
+          p_account?: string
+          p_action: string
+          p_amount?: number
+          p_id: string
+          p_operation_id: string
+          p_reason?: string
+          p_reference?: string
+        }
+        Returns: string
+      }
+      funding_evidence: {
+        Args: { p_id: string; p_upload: boolean }
+        Returns: string
+      }
+      funding_queue: {
+        Args: { p_after?: string; p_after_id?: string; p_order?: string }
+        Returns: Json
+      }
+      funding_view: { Args: { p_order: string }; Returns: Json }
       notification_inbox: {
         Args: { p_before?: string; p_before_id?: string }
         Returns: Json

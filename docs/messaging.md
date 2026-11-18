@@ -54,6 +54,8 @@ First-release chat is text-only. Receipt, funding, verification, and dispute evi
 
 Use private buckets and server-authorized upload intents. Limit evidence to validated JPEG, PNG, or PDF up to a proposed 5 MB. Validate signatures as well as declared MIME, use generated object names, strip image metadata, and serve PDF as a download. Finalize only an object that exists and passes validation. Reject executable formats and SVG. Purge abandoned uploads through a job. Short-lived download URLs require a fresh authorization check and must not enter logs or email.
 
+[BTP-12 funding evidence](connected-funding.md) uses authorized JPEG and PNG uploads up to 2 MiB, re-encodes images, and serves private attachments through the application. It includes a bounded local cleanup command for abandoned synthetic drafts.
+
 ## Notification rules
 
 | Event | Recipients | In-app | Email |

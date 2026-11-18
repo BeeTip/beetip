@@ -28,7 +28,7 @@ export const notificationRegistry = {
   order_accepted: { recipients: "order_parties", target: "order", template: "order_accepted.v1", title: "Penawaran disepakati", email: "summary", implemented: true },
   order_expired: { recipients: "order_parties", target: "order", template: "order_expired.v1", title: "Pesanan kedaluwarsa", email: "summary", implemented: false },
   order_cancelled: { recipients: "order_parties", target: "order", template: "order_cancelled.v1", title: "Pembatalan pesanan diperbarui", email: "summary", implemented: false },
-  funding_review: { recipients: "parties_and_assignees", target: "order", template: "funding_review.v1", title: "Pemeriksaan dana diperbarui", email: "summary", implemented: false },
+  funding_review: { recipients: "parties_and_assignees", target: "order", template: "funding_review.v1", title: "Pemeriksaan dana diperbarui", email: "summary", implemented: true },
   amendment_action: { recipients: "parties_and_assignees", target: "order", template: "amendment_action.v1", title: "Perubahan pesanan perlu diperiksa", email: "summary", implemented: false },
   delivery_confirmed: { recipients: "parties_and_assignees", target: "order", template: "delivery_confirmed.v1", title: "Serah terima dikonfirmasi", email: "summary", implemented: false },
   order_message: { recipients: "other_participant", target: "order", template: "order_message.v1", title: "Pesan pesanan baru", email: "unread_window", implemented: false },
