@@ -31,6 +31,8 @@ export async function POST(request: Request) {
       if (!error.status || error.status >= 500) return reply({ ok: false, message: "Layanan akun belum tersedia. Coba lagi nanti." }, 503);
       if (input.action !== "recover" && input.action !== "signup") return reply({ ok: false, message: "Permintaan gagal. Periksa akun atau coba lagi." }, 400);
     }
-    return reply({ ok: true, destination: input.action === "login" ? accountRedirect(input.next) : "/account", message: input.action === "signup" || input.action === "recover" ? "Jika alamat dapat digunakan, tautan konfirmasi akan dikirim. Periksa kotak masuk email. Setelah konfirmasi, kamu langsung masuk ke BeeTip." : "Perubahan tersimpan." });
+    if (input.action === "recover") return reply({ ok: true, destination: "/account", message: "Jika alamat dapat digunakan, tautan pemulihan akan dikirim. Periksa kotak masuk dan buka tautan untuk membuat kata sandi baru." });
+    if (input.action === "signup") return reply({ ok: true, destination: "/account", message: "Jika alamat dapat digunakan, tautan konfirmasi akan dikirim. Periksa kotak masuk email. Setelah konfirmasi, kamu langsung masuk ke BeeTip." });
+    return reply({ ok: true, destination: input.action === "login" ? accountRedirect(input.next) : "/account", message: "Perubahan tersimpan." });
   } catch (error) { return boundaryFailure(error); }
 }

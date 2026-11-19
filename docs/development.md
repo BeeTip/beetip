@@ -1,8 +1,6 @@
-# Develop the connected identity slice
+# Develop BeeTip in connected mode
 
-Current owner policy: [public browsing and open onboarding](public-onboarding.md) supersede the earlier pending-member and protected-cohort defaults described in this historical setup record. BTP-04 adds [connected listing publishing, owner edits and safe public pagination](connected-listings.md); use its verification commands for the current board. The setup and acceptance details below retain their historical slice context.
-
-BTP-02 implements real Auth and private support creation and passed acceptance on protected Vercel staging on 18 November 2026. BTP-03 now implements [optional affiliation and scoped staff access](affiliation-staff.md), verified locally against the dedicated development database. Support replies, realtime, notifications and connected marketplace flows remain later work. The older setup and acceptance sections below retain their historical policy context.
+[Run and demonstrate BeeTip](running-beetip.md) covers the current connected walkthrough and disposable local stack. Under the [public onboarding policy](public-onboarding.md), visitors can browse and email-confirmed users can use ordinary marketplace features. [Affiliation review](affiliation-staff.md) is optional. The dated acceptance sections record the earlier identity slice.
 
 ## Development project
 
@@ -16,14 +14,14 @@ The initial generated config push changed MFA/email defaults as well. A correcti
 
 ## Configure the application
 
-Copy `apps/web/.env.example` to `apps/web/.env.local`. Set `BEETIP_MODE=connected`, the exact `APP_ORIGIN`, development Supabase URL, and its active publishable key. The current workspace already has an ignored local file. No privileged key is needed by the application.
+If `apps/web/.env.local` is absent, copy `apps/web/.env.example` to that path. Set `BEETIP_MODE=connected`, the exact `APP_ORIGIN`, the development or disposable local Supabase URL, and its active publishable key. Keep existing environment files out of Git. Sign-in and ordinary marketplace requests use the user's session. Follow the feature runbook for server-only keys used by synthetic funding storage or background jobs.
 
 ```powershell
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open `/login`. A confirmed user sees pending affiliation on `/account` and can create a private support thread at `/support`. Pending affiliation does not permit transactions. Unmigrated demo routes redirect to `/account` in connected mode. Missing configuration displays an unavailable state rather than loading demo personas.
+Open `/login`. A confirmed user can publish listings from `/account` and contact private support. Access to staff queues requires the appropriate assignment and MFA. Unmigrated demo routes redirect to `/account` in connected mode. Missing configuration displays an unavailable state.
 
 The local app never imports a whole real dataset. Read projections are RLS-filtered. Protected responses are private and uncached. Support retries reuse an operation ID and body. A changed payload conflicts. Logout/account changes clear private support caches across tabs, with visibility/focus revalidation as a fallback.
 

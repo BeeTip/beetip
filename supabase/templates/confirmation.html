@@ -1,0 +1,9 @@
+{{ $next := "/account" }}
+{{ if eq .RedirectTo (printf "%s/auth/callback?next=%%2Flistings%%2Fnew" .SiteURL) }}
+  {{ $next = "/listings/new" }}
+{{ else if eq .RedirectTo (printf "%s/auth/callback?next=%%2Fsupport" .SiteURL) }}
+  {{ $next = "/support" }}
+{{ end }}
+<h1>Konfirmasi akun BeeTip</h1>
+<p>Konfirmasikan email untuk melanjutkan ke BeeTip.</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup&amp;next={{ $next }}">Konfirmasi email</a></p>

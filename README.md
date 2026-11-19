@@ -82,7 +82,7 @@ The connected pilot is planned in the [system design](docs/system-design.md), wi
 
 `ApplicationService` is the typed boundary for queries and mutations. Operations return stable `VALIDATION`, `PERMISSION`, `CONFLICT`, `EXPIRED`, or `INVALID_STATE` failures. Successful mutations use operation identifiers and audit records. `DemoService` implements this interface in the browser.
 
-The entire local dataset is visible to the browser and can be edited through developer tools. Persona checks demonstrate behavior only. Before real use, replace the adapter with authenticated server endpoints, PostgreSQL transactions and constraints, row-level security, private file access, server-held token hashes, rate limits, durable idempotency, expiry jobs, verified SMTP delivery, and actual transfer reconciliation. Do not expose a service credential in the client.
+The synthetic dataset is visible to the browser and can be edited through developer tools. Use connected mode for authenticated sessions, server-side authorization, database transactions and private file handling. Check the [release requirements](docs/running-beetip.md#release-boundary) before accepting real data or payments.
 
 ## Pilot boundary
 
@@ -94,4 +94,4 @@ Use the mobile + button to choose Minta dibelikan or Buka jasa titip. Create a r
 
 To try immediate acceptance, switch to Rizky and open Tolong belikan roti. Confirm Saya bisa belikan to create the order at its fixed fee. Negotiable requests still need the requester's approval. Shopping remains blocked until funds are verified. Administrators can moderate listings independently of existing orders and reply to support from their inbox. Hubungi bantuan is available from Profile and order details.
 
-Version 1 browser records migrate to version 2 without replacing accepted terms or money records. New drafts use versioned session storage. Support and order chat remain local to one browser; realtime delivery and live maps are documented follow-up work in the PRD and architecture. Friends' uncoached usability retesting remains a human validation step.
+Version 1 demo records migrate to version 2 without replacing accepted terms or money records. New demo drafts use versioned session storage. Connected mode persists [order chat](docs/connected-chat.md) and [support](docs/connected-support.md) in Supabase. Live maps and uncoached usability testing remain follow-up work.
