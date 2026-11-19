@@ -44,7 +44,7 @@ $env:BEETIP_STAGING_EXPOSURE = 'public'
 rtk pnpm test:staging
 ```
 
-This loopback smoke check requires an available catalog on the configured Supabase stack. An empty catalog is valid. Use the walkthrough below to verify authenticated actions.
+This loopback smoke check requires an available catalog on the configured Supabase stack. An empty catalog is valid. It also verifies that anonymous requests to the support, orders and notification APIs are denied and receive private, uncached responses. Use the walkthrough below to verify authenticated actions.
 
 The disposable stack's local mail inbox captures signup and recovery messages. After installing Chromium for Playwright, verify that both links work in a fresh browser session and that a password reset replaces the previous password.
 

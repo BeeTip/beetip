@@ -64,11 +64,17 @@ export async function checkStaging({ origin, bypass, allowLocal = false, exposur
   privateResponse(login, false);
   assert((await login.text()).includes("Masuk ke BeeTip"), "Connected login is missing or configuration is unavailable");
   checked.push("connected login and private response headers");
-  const history = await send("/api/identity/support");
-  assert.equal(history.status, 401, "Support history must require an application session");
-  privateResponse(history);
-  assert.equal((await history.json()).ok, false);
-  checked.push("anonymous support history denied");
+  for (const path of [
+    "/api/identity/support",
+    "/api/identity/orders?id=00000000-0000-4000-8000-000000000001",
+    "/api/identity/notifications",
+  ]) {
+    const response = await send(path);
+    assert.equal(response.status, 401, `${path} must require an application session`);
+    privateResponse(response);
+    assert.equal((await response.json()).ok, false);
+  }
+  checked.push("anonymous access to support, orders, and notifications denied with uncached responses");
   const denied = await send("/api/identity/auth", {
     method: "POST",
     headers: { Origin: "https://unrelated.invalid", "Content-Type": "application/json" },
