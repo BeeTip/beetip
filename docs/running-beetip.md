@@ -1,6 +1,6 @@
 # Run and demonstrate BeeTip
 
-Use the synthetic demo for the complete shopping, handover and settlement walkthrough. Use connected mode with separate test accounts to demonstrate accounts, orders, private chat, support and synthetic incoming funding. Connected purchasing, handover and settlement remain release work.
+For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support and synthetic incoming funding with separate test accounts. Connected purchasing, handover and settlement remain release work.
 
 ## Start the full synthetic demo
 
@@ -22,6 +22,8 @@ Stop the server before switching modes. Clear the shell override with `Remove-It
 
 Follow [development setup](development.md) to configure the ignored `apps/web/.env.local` from `.env.example`. All four settings are required: `BEETIP_MODE=connected`, the exact `APP_ORIGIN`, the dedicated development project's Supabase URL and its publishable key. User requests do not need a service credential. Apply and verify the repository migrations in order against the dedicated development database before running the corresponding feature.
 
+You can also rehearse against a disposable Supabase stack with Docker and the Supabase CLI. In a fresh directory, copy `supabase/config.toml`, `supabase/migrations`, `supabase/functions` and `supabase/templates` under `supabase/`. Give the copy a unique `project_id`, choose free ports and set the Auth site URL and callback URLs to match the local app origin below. Run `rtk proxy supabase start --workdir $stack`, where `$stack` is the absolute path to the fresh directory. Use that stack's API URL and publishable key in the app. Use the stack's own server-only key for the [synthetic funding storage rehearsal](connected-funding.md#evidence-and-notification-access). Stop the copy with `rtk proxy supabase stop --workdir $stack` when finished.
+
 ```powershell
 $env:BEETIP_MODE = 'connected'
 $env:APP_ORIGIN = 'http://127.0.0.1:3108'
@@ -42,7 +44,17 @@ $env:BEETIP_STAGING_EXPOSURE = 'public'
 rtk pnpm test:staging
 ```
 
-This loopback smoke check requires a reachable development catalog. Use the walkthrough below to verify authenticated actions.
+This loopback smoke check requires an available catalog on the configured Supabase stack. An empty catalog is valid. Use the walkthrough below to verify authenticated actions.
+
+The disposable stack's local mail inbox captures signup and recovery messages. After installing Chromium for Playwright, verify that both links work in a fresh browser session and that a password reset replaces the previous password.
+
+```powershell
+$env:BEETIP_TEST_LOCAL_STACK = $stack
+$env:BEETIP_TEST_URL = 'http://127.0.0.1:3108'
+rtk proxy node scripts/test-local-auth-email.mjs
+```
+
+Set `$stack` in the terminal running the test. The test creates a synthetic account in that stack. Use the [staging Auth procedure](staging.md) to verify external delivery on a deployed candidate.
 
 ## Connected walkthrough
 
@@ -68,6 +80,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 | Stale terms or exhausted capacity | A conflict message requiring a refreshed review before acceptance. |
 | Offline message | Preserve the in-memory attempt and explain whether it is pending, failed or committed. |
 | Expired reservation | Use server-derived status and show the recovery action; do not imply a verified payment. |
+| Funding review | Show clearly whether evidence is still a draft, awaiting review or verified. Keep the next step and any amount still due visible on the order. |
 | Logout, account change or suspension | Clear private data and stop protected reads and sends. |
 | Narrow viewport or keyboard use | Readable content, reachable controls and focus, labeled fields, no horizontal overflow. |
 
@@ -87,7 +100,7 @@ rtk pnpm audit --prod --audit-level high
 rtk pnpm test:e2e
 ```
 
-The demo browser suite builds and runs its own production server. Rebuild in connected mode before connected browser acceptance. The session harnesses require `BEETIP_TEST_PROJECT_REF=rgiptdfjlmwldngapojq`, the local candidate URL and authorized development test access. They create and remove only their own fixtures. See [order acceptance](connected-orders.md), [listing acceptance](connected-listings.md), [offer acceptance](connected-offers.md) and [notifications](notifications.md) for exact commands and evidence.
+The demo browser suite builds and runs its own production server. Rebuild in connected mode before connected browser acceptance. Hosted session harnesses require `BEETIP_TEST_PROJECT_REF=rgiptdfjlmwldngapojq`, the local candidate URL and authorized development test access. For the local chat and funding harnesses, set `BEETIP_TEST_LOCAL_STACK` to the disposable work directory and `BEETIP_TEST_URL` to the app's loopback origin. See [order acceptance](connected-orders.md), [listing acceptance](connected-listings.md), [offer acceptance](connected-offers.md) and [notifications](notifications.md) for their exact commands and evidence.
 
 For the isolated database checks, point `BEETIP_LOCAL_DATABASE_URL` at a disposable loopback PostgreSQL 18 instance whose test user can create databases and roles. The database job in [CI](../.github/workflows/ci.yml) lists the current commands. These checks apply fresh migrations and run role and concurrency assertions with local platform stubs. Use the connected acceptance procedures to verify real Supabase Auth, Storage, Realtime and Cron behavior where applicable.
 
