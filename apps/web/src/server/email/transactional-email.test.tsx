@@ -73,6 +73,14 @@ describe("transactional email routes", () => {
     expect(transport).not.toHaveBeenCalled();
   });
 
+  it("leaves the worker disabled until explicitly enabled", async () => {
+    config();
+    vi.stubEnv("BEETIP_EMAIL_ENABLED", "");
+    const transport = mockTransport(() => { throw new Error("Unexpected send"); });
+    expect((await runWorker(request({}))).status).toBe(503);
+    expect(transport).not.toHaveBeenCalled();
+  });
+
   it("dispatches only the prepared recipient, fixed content and fixed RPCs", async () => {
     config();
     const transport = mockTransport(() => Response.json({ messageId: "<provider@example.invalid>" }, { status: 201 }));
@@ -85,7 +93,8 @@ describe("transactional email routes", () => {
       headers: { IdempotencyKey: dispatchId },
       tags: [dispatchTag(dispatchId, addressHash(address), signingKey), `beetip-email-${dispatchId}`],
     });
-    expect(payload(2).textContent).toContain(`${localOrigin}/account/notifications`);
+    expect(payload(2).htmlContent).toContain(`${localOrigin}/account/notifications`);
+    expect(payload(2)).not.toHaveProperty("textContent");
     expect(JSON.stringify(payload(2))).not.toMatch(/PRIVATE MARKER|other@example|ignored\.example/);
     expect(payload(3)).toMatchObject({ p_outcome: "accepted", p_provider_id: "provider@example.invalid" });
   });

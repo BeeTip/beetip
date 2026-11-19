@@ -199,6 +199,24 @@ try {
   }
   pass("same-window sources group once, late sources roll into a new group, and a read or replaced support assignment suppresses mail");
 
+  const acceptedId = await idForEvent(await summary(requester));
+  const [acceptedJob] = await claim(worker);
+  assert.equal(acceptedJob.id, acceptedId);
+  const acceptedDispatch = await prepare(acceptedJob);
+  await finish(acceptedJob, "accepted", "awaiting-event@example.invalid");
+  assert.equal((await operatorQueue(leadClient)).items.some(item => item.id === acceptedId), false);
+  await owner.query("update private.email_deliveries set updated_at=now()-interval '49 hours' where id=$1", [acceptedId]);
+  const staleAcceptance = await operatorQueue(leadClient);
+  assert.equal(staleAcceptance.needsAttention, true);
+  assert.equal(staleAcceptance.items.find(item => item.id === acceptedId)?.replay_ready, false);
+  await assert.rejects(action(acceptedJob, acceptedDispatch.dispatchId, "replay"), /CONFLICT/);
+  await action(acceptedJob, acceptedDispatch.dispatchId, "close");
+  await hook(acceptedDispatch.dispatchId, requester, "awaiting-event@example.invalid", "accepted");
+  assert.equal(await status(acceptedJob), "suppressed");
+  await hook(acceptedDispatch.dispatchId, requester, "awaiting-event@example.invalid", "delivered");
+  assert.equal(await status(acceptedJob), "delivered");
+  pass("accepted sends missing a final callback enter a close-only queue and still record late delivery");
+
   const rateId = await idForEvent(await summary(requester));
   let rateDispatch;
   for (let attempt = 1; attempt <= 5; attempt++) {
@@ -249,6 +267,8 @@ try {
   assert.equal(await prepare(budget), null);
   assert.equal(await status(budget), "retry");
   assert.equal(await value(owner, "select attempts result from private.email_deliveries where id=$1", [budget.id]), 0);
+  assert.equal(await value(owner, "select monitoring_since result from private.email_worker_health"), null);
+  assert.equal((await operatorQueue(leadClient)).missedScheduler, false);
   await owner.query("update private.email_worker_health set monitoring_since=now()-interval '6 minutes'");
   assert.equal((await operatorQueue(leadClient)).missedScheduler, true);
   await worker.query("select public.btp11_heartbeat()");

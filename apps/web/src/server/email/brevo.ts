@@ -16,7 +16,6 @@ function retrySeconds(header: string | null) {
 export function brevoSender(config: { apiKey: string; sender: string; origin: string; signingKey: string }) {
   const link = `${config.origin}/account/notifications`;
   const subject = "Ada pembaruan di BeeTip";
-  const textContent = `Masuk ke BeeTip untuk melihat pembaruan Anda.\n\n${link}`;
   const href = link.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const htmlContent = `<p>Masuk ke BeeTip untuk melihat pembaruan Anda.</p><p><a href="${href}">Buka notifikasi BeeTip</a></p>`;
   return async function send(address: string, dispatchId: string): Promise<SendResult> {
@@ -28,7 +27,6 @@ export function brevoSender(config: { apiKey: string; sender: string; origin: st
           sender: { email: config.sender, name: "BeeTip" },
           to: [{ email: address, contactPixelTrackingConsent: false }],
           subject,
-          textContent,
           htmlContent,
           headers: { IdempotencyKey: dispatchId },
           tags: [dispatchTag(dispatchId, addressHash(address), config.signingKey), `beetip-email-${dispatchId}`],

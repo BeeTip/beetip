@@ -24,6 +24,7 @@ create unique index email_open_window on private.email_deliveries(recipient_id,c
 create index email_due on private.email_deliveries(due_at,id) where status in ('queued','retry');
 create index email_expiring on private.email_deliveries(lease_until,id) where status in ('leased','sending');
 create index email_attention on private.email_deliveries(updated_at desc,id) where status in ('dead_letter','uncertain');
+create index email_accepted on private.email_deliveries(updated_at,id) where status='accepted';
 create index email_recipient on private.email_deliveries(recipient_id);
 create index email_conversation on private.email_deliveries(conversation_id);
 
@@ -58,7 +59,7 @@ create table private.email_budget (
 );
 create table private.email_worker_health (
   singleton boolean primary key check (singleton),
-  monitoring_since timestamptz not null default clock_timestamp(),
+  monitoring_since timestamptz,
   last_success_at timestamptz
 );
 insert into private.email_worker_health(singleton) values(true);
@@ -277,7 +278,8 @@ begin
     select 1 from private.email_dispatches where id=v_delivery.dispatch_id
   ) then return; end if;
   if p_event='accepted' then
-    if v_delivery.status in ('queued','leased','sending','retry','uncertain','suppressed')
+    if v_delivery.status in ('queued','leased','sending','retry','uncertain')
+      or (v_delivery.status='suppressed' and v_delivery.last_error is distinct from 'operator_closed')
       or (v_delivery.status='dead_letter' and v_delivery.last_error in ('rejected','rate_limited')) then
       update private.email_deliveries set status='accepted',last_error=null,dispatch_id=p_dispatch,
         lease_token=null,lease_until=null,updated_at=clock_timestamp() where id=v_delivery.id;
@@ -302,10 +304,12 @@ $$;
 
 create function private.btp11_alerts()
 returns jsonb language sql stable set search_path='' as $$
-  select jsonb_build_object('missedScheduler',coalesce(h.last_success_at,h.monitoring_since)<now()-interval '5 minutes',
+  select jsonb_build_object('missedScheduler',h.monitoring_since is not null
+      and coalesce(h.last_success_at,h.monitoring_since)<now()-interval '5 minutes',
     'lastSuccessAt',h.last_success_at,
     'overdue',exists(select 1 from private.email_deliveries where status in ('queued','retry') and due_at<now()-interval '5 minutes'),
-    'needsAttention',exists(select 1 from private.email_deliveries where status in ('uncertain','dead_letter')))
+    'needsAttention',exists(select 1 from private.email_deliveries where status in ('uncertain','dead_letter')
+      or (status='accepted' and updated_at<=now()-interval '48 hours')))
   from private.email_worker_health h where singleton;
 $$;
 
@@ -316,8 +320,9 @@ begin
   return private.btp11_alerts() || jsonb_build_object('items',(
     select coalesce(jsonb_agg(to_jsonb(page) order by updated_at desc,id),'[]'::jsonb) from (
       select id,dispatch_id,status,last_error,attempts,updated_at,
-        status<>'uncertain' or updated_at<=now()-interval '30 minutes' as replay_ready
+        status='dead_letter' or (status='uncertain' and updated_at<=now()-interval '30 minutes') as replay_ready
       from private.email_deliveries where status in ('uncertain','dead_letter')
+        or (status='accepted' and updated_at<=now()-interval '48 hours')
       order by updated_at desc,id limit 50
     ) page
   ));
@@ -330,7 +335,10 @@ begin
   if not private.has_staff_role('platform_admin') then raise exception 'PERMISSION: Platform admin and MFA required'; end if;
   if p_action is null or p_action not in ('replay','reconciled_replay','close') then raise exception 'VALIDATION: Invalid email action'; end if;
   select * into v_row from private.email_deliveries where id=p_id and dispatch_id=p_dispatch for update;
-  if not found or v_row.status not in ('dead_letter','uncertain') then raise exception 'CONFLICT: Email status changed'; end if;
+  if not found or (v_row.status not in ('dead_letter','uncertain') and not
+    (v_row.status='accepted' and p_action='close' and v_row.updated_at<=clock_timestamp()-interval '48 hours')) then
+    raise exception 'CONFLICT: Email status changed';
+  end if;
   if p_action<>'close' then
     if (v_row.status='uncertain' and (p_action<>'reconciled_replay' or v_row.updated_at>clock_timestamp()-interval '30 minutes'))
       or (v_row.status='dead_letter' and p_action<>'replay') then
