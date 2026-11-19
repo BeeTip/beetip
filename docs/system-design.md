@@ -144,6 +144,8 @@ Listings have structured item rows, kind, owner, area, schedule, fee mode, limit
 
 Normalize receipts into receipt headers, lines, discounts, and order allocations. Lock receipt lines before allocation and prevent allocated totals exceeding their approved value. One receipt can cover several orders without reimbursing the same value twice. Financial events, reviews, dispute holds, and audit are append-only facts. Audited compensating records correct mistakes. Payment evidence is not verified incoming money.
 
+[Connected purchase progress](connected-purchases.md) implements private receipts and allocations on the payable-order lock. The provider can reuse remaining lines across a trip. Customers see per-order gross, discount and net, while the provider retains access to the shared original. Recorded purchases pin the affected approved item rows during subsequent amendments.
+
 Index board filters by active state, kind, cutoff, and ID. Index participant orders separately by customer and provider with created time and ID. Index active reservations by listing/trip and expiry, offers by listing and author, receipts by normalized external reference, and transfers by order and status. Use keyset pagination. Messaging and outbox indices are specified in [messaging contracts](messaging.md).
 
 ### Atomic commands and single ownership

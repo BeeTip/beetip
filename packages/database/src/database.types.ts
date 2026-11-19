@@ -877,9 +877,24 @@ export type Database = {
         Args: { p_body: string; p_operation_id: string }
         Returns: string
       }
+      purchase_evidence_path: {
+        Args: { p_key: string; p_order: string; p_upload: boolean }
+        Returns: string
+      }
       read_amendments: { Args: { p_order: string }; Returns: Json }
       read_notification: { Args: { p_id: string }; Returns: undefined }
       read_order: { Args: { p_id: string }; Returns: Json }
+      read_purchase: { Args: { p_order: string }; Returns: Json }
+      record_purchase: {
+        Args: {
+          p_action: string
+          p_operation_id: string
+          p_order: string
+          p_payload: Json
+          p_version: number
+        }
+        Returns: string
+      }
       save_listing: {
         Args: {
           p_listing: Json

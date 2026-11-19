@@ -52,8 +52,8 @@ function Proposal({ items, disabled, propose }: { items: AmendmentItem[]; disabl
   </fieldset></form>;
 }
 
-export function ConnectedAmendments({ orderId, memberId, refreshKey, onChange }: {
-  orderId: string; memberId: string; refreshKey: number; onChange: () => void;
+export function ConnectedAmendments({ orderId, memberId, refreshKey, completed, onChange }: {
+  orderId: string; memberId: string; refreshKey: number; completed?: boolean; onChange: () => void;
 }) {
   const [view, setView] = useState<AmendmentView | null>(null);
   const [readError, setReadError] = useState("");
@@ -145,12 +145,12 @@ export function ConnectedAmendments({ orderId, memberId, refreshKey, onChange }:
         <p className="break-words">{pending.reason}</p>
         <Terms items={pending.items} budget={pending.budget} />
         <p>Total jika disetujui {money.format(pending.budget + view.fee)}, termasuk ongkos. Belanja menunggu keputusan dan dana terverifikasi yang cukup.</p>
-        {view.editable && !view.provider && <>
+        {view.editable && !completed && !view.provider && <>
           <Button type="button" disabled={busy || retry} onClick={() => command({ action: "approve", amendmentId: pending.id })}>Setujui perubahan</Button>
           <Button type="button" variant="secondary" disabled={busy || retry} onClick={() => command({ action: "reject", amendmentId: pending.id })}>Tolak perubahan</Button>
         </>}
       </div>}
-      {view.editable && view.provider && !pending &&
+      {view.editable && !completed && view.provider && !pending &&
         <details key={view.version} className="stack">
           <summary>Usulkan perubahan barang atau biaya</summary>
           <Proposal items={view.items} disabled={busy || retry} propose={(items, reason) => command({ action: "propose", items, reason })} />
