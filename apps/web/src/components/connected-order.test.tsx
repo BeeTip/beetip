@@ -16,14 +16,20 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 it("uses server state even with an old deadline and refreshes expiry without a browser decision", async () => {
-  const fetch = vi.fn().mockResolvedValueOnce(response("awaiting_payment")).mockResolvedValueOnce(response("expired"));
+  let orderReads = 0;
+  const fetch = vi.fn((url: string, options: RequestInit) => {
+    expect(options.cache).toBe("no-store");
+    return Promise.resolve(url.includes("/funding")
+      ? { ok: true, json: async () => ({ memberId: "member", data: null }) }
+      : response(orderReads++ === 0 ? "awaiting_payment" : "expired"));
+  });
   vi.stubGlobal("fetch", fetch);
   await act(async () => root.render(<ConnectedOrderDetail id="order" memberId="member" />));
   expect(host.textContent).toContain("Menunggu pembayaran");
   await act(async () => vi.advanceTimersByTimeAsync(30000));
   expect(host.textContent).toContain("Reservasi kedaluwarsa");
   expect(host.textContent).toContain("tidak lagi memakai kapasitas");
-  expect(fetch.mock.calls[1][1].cache).toBe("no-store");
+  expect(orderReads).toBe(2);
 });
 it("retries a failed status read without a mutation", async () => {
   const fetch = vi.fn().mockRejectedValueOnce(new Error("Jaringan terputus")).mockResolvedValueOnce(response("expired"));

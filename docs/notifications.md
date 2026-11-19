@@ -4,7 +4,7 @@ Issue contract: [BeeTip/beetip #12](https://github.com/BeeTip/beetip/issues/12).
 
 ## Registry and ownership
 
-`packages/validation/src/notifications.ts` is the typed source for all 20 documented event families, recipient rules, template versions, safe fixed titles, target kinds, email modes and integration flags. `scripts/notification-registry.mjs` generates the marked SQL seed in `20261119000000_notification_inbox.sql`. The registry parity test checks every field and event. Check or regenerate with:
+`packages/validation/src/notifications.ts` defines the 20 documented event families, recipient rules, template versions, fixed titles, target kinds, email modes and integration flags. `scripts/notification-registry.mjs` checks the original SQL seed in `20261119000000_notification_inbox.sql`. Later migrations apply activation and delivery-mode changes. The registry parity test checks every seed field and event.
 
 ```powershell
 rtk proxy node --experimental-strip-types scripts/notification-registry.mjs
@@ -38,15 +38,17 @@ BTP-06 provides `private.acceptance_notification_intents(order_id,recipient_id,e
 
 Apply `20261118062602_atomic_acceptance.sql` before `20261119000000_notification_inbox.sql`. Notification SQL also installs without orders; its order authorization branch uses guarded dynamic SQL and denies access if orders do not exist. If installing notifications before acceptance, the parent must subsequently install the bridge trigger and run the same backfill block, since a table created later cannot acquire a previously skipped trigger automatically. The integrated test exercises the actual BTP-06 `accept_order` command, exact replay, counterpart-only notification, both intents, target permissions and backfill deduplication.
 
-Future order expiry/cancellation, funding, amendments, delivery, dispute, transfer and chat mappings are typed but inactive. As each feature lands, its owner must wire transaction-local events, implement its exact party/assignee resolver and current target permission, activate its registry flag, regenerate SQL and add database parity/access tests. The current order resolver admits counterparties only; it grants no financial-reviewer or support access to an order. Later assigned-operator events require explicit scoped assignment tables before activation. Chat remains inactive until its grouping/read-cursor owner implements the messaging contract. A pending email intent is not permission to send it.
+Each feature that activates another event family wires transaction-local events, resolves recipients with current target permission, updates its registry entry through a forward migration and adds database parity and access tests. Order-message notifications admit the two order parties. Support queue notifications are in-app only. Support replies write an in-app event and durable email source for the requester or assigned support operator. The grouped chat email worker remains a separate gate.
 
 ## Inbox and transport
+
+The `funding_review` event opens the funding queue for the assigned finance operator and uses current funding access to protect the destination. See the [incoming funding contract](connected-funding.md).
 
 `/account/notifications` provides private notifications, an unread indicator, individual monotonic read actions, retry/empty/error states, keyset pagination and per-event email preferences. GET `/api/identity/notifications` returns at most 20 items and a cursor, using 21-row lookahead. Unread counts use the same live visibility predicate as the inbox. PostgreSQL timestamp precision is preserved in cursors, with UUID ordering for equal timestamps. There is no mark-unread or caller-selected read timestamp. Concurrent read requests preserve the first committed read time via row locking and `coalesce`.
 
 POST accepts only `{action:'read',id}` or `{action:'preference',eventType,email}`. It validates same origin, request size, session, strict schemas and `X-Beetip-Member` account-change protection. SQL independently resolves the actor from `auth.uid()` and the retained Auth session. Direct table writes are revoked. RLS protects notification and preference reads, with explicit grants only to authenticated users. Internal registry/delivery tables have RLS and no member grants. Protected responses are private/no-store.
 
-GET `/api/identity/notifications/:id/target` rechecks the notification owner and its current target permission before returning a fixed internal route. Targets contain no user-provided URLs or sensitive payloads. Destinations retain their own authorization; the notification is not an access capability. Notification reads do not mark conversations read. Support targets currently open `/support`; the support queue/claim UI remains owned by the later support workflow and is not implemented by this inbox. The inbox is directly addressable; the parent can add its account-navigation link alongside BTP-06 to avoid conflicting shared page edits.
+GET `/api/identity/notifications/:id/target` rechecks the notification owner and its current target permission before returning an internal route. Destinations enforce their own authorization. Notification reads do not mark conversations read. Unassigned support alerts open `/support`. Assignment and reply alerts open the authorized case in the support workspace.
 
 The client checks the returned member ID, aborts stale requests, clears cached content on account-change signals, and refreshes on focus/visibility and every 30 seconds while visible. It stores no notification state in localStorage. No realtime publication or email sending is introduced.
 

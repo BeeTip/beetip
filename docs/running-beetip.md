@@ -1,6 +1,6 @@
 # Run and demonstrate BeeTip
 
-Use the synthetic demo for the complete shopping, handover and settlement walkthrough. Use connected mode to demonstrate the implemented account and marketplace slices with separate real test accounts. Connected funding, purchasing, handover and settlement still require their implementation issues before a complete real-order journey can run.
+Use the synthetic demo for the complete shopping, handover and settlement walkthrough. Use connected mode with separate test accounts to demonstrate accounts, orders, private chat, support and synthetic incoming funding. Connected purchasing, handover and settlement remain release work.
 
 ## Start the full synthetic demo
 
@@ -12,7 +12,9 @@ $env:BEETIP_MODE = 'demo'
 rtk pnpm dev
 ```
 
-Open `http://127.0.0.1:3107`. Follow the [README walkthrough](../README.md#demo-walkthrough) using Nadia, Rizky and the two administrators. Check that the customer can understand the next action, recover a failed action and reconcile the simulated amounts. The persona selector, local records and transfers are synthetic. A demo completed in one browser does not prove connected authorization, cross-device synchronization or actual bank transfers.
+Open `http://127.0.0.1:3107`. Follow the [README walkthrough](../README.md#demo-walkthrough) using Nadia, Rizky and the two administrators. The persona selector, local records and transfers are synthetic. For a short demo, start with seeded order `BTP-001` and finish when the ledger shows Rp70,000 received, Rp65,000 paid out and Rp5,000 refunded. For a full demo, start from a listing and follow the order through funding, shopping, handover and reconciliation.
+
+To rehearse the same demo from a production build, keep `BEETIP_MODE=demo` set and use `rtk pnpm build` followed by `rtk pnpm --filter @beetip/web start`.
 
 Stop the server before switching modes. Clear the shell override with `Remove-Item Env:BEETIP_MODE`. To reset only the demo fixtures, use **Reset data lokal** in the demo interface.
 
@@ -31,6 +33,17 @@ Use `http://127.0.0.1:3108`. This runs the production build locally. It does not
 
 Missing connected configuration shows an unavailable state. It does not fall back to demo personas. Vercel Production rejects demo mode.
 
+With the connected server running, verify anonymous browsing, private response headers and callback handling from a second PowerShell terminal:
+
+```powershell
+$env:BEETIP_STAGING_URL = 'http://127.0.0.1:3108'
+$env:BEETIP_STAGING_ALLOW_LOCAL = '1'
+$env:BEETIP_STAGING_EXPOSURE = 'public'
+rtk pnpm test:staging
+```
+
+This loopback smoke check requires a reachable development catalog. Use the walkthrough below to verify authenticated actions.
+
 ## Connected walkthrough
 
 Use separate browser profiles for two confirmed synthetic accounts. Do not use retained operator accounts as customer fixtures.
@@ -40,7 +53,8 @@ Use separate browser profiles for two confirmed synthetic accounts. Do not use r
 3. As the other account, open the listing and propose an offer. As the requester, review the current version under **Penawaran saya** and accept it. Changes to terms require fresh consent; an unavailable slot must produce an actionable error.
 4. Open **Pesanan saya** in both accounts. Both must see the same immutable terms and reservation deadline; an unrelated account must not see the order. The counterpart receives an in-app notification with an authorized order link.
 5. Open **Chat pesanan** from the order, send text in both accounts and refresh to confirm saved history. Disconnect one account, send from the other and reconnect to recover missed messages. Follow [private-chat acceptance](connected-chat.md) for response-loss retry, revoked access and logout checks. Follow [reservation expiry](connected-expiry.md) to verify a disposable unpaid order expires with all tabs closed and retains read-only chat history. Use the guarded synthetic harness rather than altering retained support.
-6. Stop before sending money. Connected payment verification and fulfillment are later slices. The order screen must accurately explain the available next action and the current payment limitation.
+6. Open **Hubungi bantuan** as a member, then claim the case from an MFA-enabled support account. Reply, resolve, and reopen it. Use a separate lead account to rehearse reassignment. [Private support walkthrough](connected-support.md).
+7. In a disposable funding rehearsal, upload synthetic evidence from the customer’s order and review it with an assigned finance account using MFA. Confirm the order shows funding verified only after the bank review. [Incoming funding walkthrough and configuration](connected-funding.md).
 
 ## UX acceptance for each slice
 
@@ -57,7 +71,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 | Logout, account change or suspension | Clear private data and stop protected reads and sends. |
 | Narrow viewport or keyboard use | Readable content, reachable controls and focus, labeled fields, no horizontal overflow. |
 
-These are review criteria. Browser emulation does not establish physical-device usability or user satisfaction. Uncoached pilot feedback remains part of release validation.
+For a usability rehearsal, ask a tester on their own phone to find an order, explain its status and the amount due, and advance it without coaching. Repeat with a failed or interrupted action. Record where they hesitate, what they believe happened, and whether they can recover. For handover, try both camera scanning and manual code entry on Android and iOS. Browser emulation covers layout and keyboard behavior. Record physical-device and uncoached results separately.
 
 ## Repeat validation
 
@@ -75,8 +89,16 @@ rtk pnpm test:e2e
 
 The demo browser suite builds and runs its own production server. Rebuild in connected mode before connected browser acceptance. The session harnesses require `BEETIP_TEST_PROJECT_REF=rgiptdfjlmwldngapojq`, the local candidate URL and authorized development test access. They create and remove only their own fixtures. See [order acceptance](connected-orders.md), [listing acceptance](connected-listings.md), [offer acceptance](connected-offers.md) and [notifications](notifications.md) for exact commands and evidence.
 
+For the isolated database checks, point `BEETIP_LOCAL_DATABASE_URL` at a disposable loopback PostgreSQL 18 instance whose test user can create databases and roles. The database job in [CI](../.github/workflows/ci.yml) lists the current commands. These checks apply fresh migrations and run role and concurrency assertions with local platform stubs. Use the connected acceptance procedures to verify real Supabase Auth, Storage, Realtime and Cron behavior where applicable.
+
 ## Release boundary
 
-The checked-in application, the migrated development database and the public Vercel deployment are separate candidates. Record the exact source and migration versions for each. A merged change does not update the public deployment by itself.
+Record the source commit, last migration, target environment and validation results together before promoting a candidate. Use the following evidence for each target.
 
-Production readiness requires the remaining connected financial and support slices, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track those gates. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate. Current feature evidence supports only the environments explicitly recorded there.
+| Target | Evidence to record |
+| --- | --- |
+| Synthetic demo | Production build starts with `BEETIP_MODE=demo`, and the browser suite and selected walkthrough pass with synthetic personas. |
+| Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
+| Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
+
+Production readiness requires connected fulfillment and settlement, transactional application email, funding evidence retention and late-money reconciliation, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track release validation and promotion. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate.

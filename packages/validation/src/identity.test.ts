@@ -21,6 +21,9 @@ describe("connected identity boundaries", () => {
   });
   it("preserves supported account intent without allowing external or privileged redirects", () => {
     for (const target of ["/support", "/listings/new", "/account/notifications"]) expect(accountRedirect(target)).toBe(target);
+    const id = "00000000-0000-4000-8000-000000000001";
+    for (const target of [`/support?case=${id}`, `/support?orderId=${id}`]) expect(accountRedirect(target)).toBe(target);
+    expect(accountRedirect(`/support?case=${id}&next=//example.invalid`)).toBe("/account");
     for (const target of [undefined, "/admin", "//evil.test", "/\\evil.test", "/auth/password", "/support?user=other"]) expect(accountRedirect(target)).toBe("/account");
   });
   it("does not accept client roles or actors", () => {

@@ -3,21 +3,40 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { isAbsolute } from "node:path";
 import { chromium, expect } from "@playwright/test";
+import pg from "pg";
 
 const project = process.env.BEETIP_TEST_PROJECT_REF;
-assert.equal(project, "rgiptdfjlmwldngapojq", "Dedicated development project only");
+const localWorkdir = process.env.BEETIP_TEST_LOCAL_STACK;
 const origin = process.env.BEETIP_TEST_URL ?? "http://127.0.0.1:3108";
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(origin), "Local candidate only");
-const settings = Object.fromEntries(readFileSync(new URL("../apps/web/.env.local", import.meta.url), "utf8").split(/\r?\n/).filter(line => line.includes("=")).map(line => [line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)]));
-assert.equal(settings.NEXT_PUBLIC_SUPABASE_URL, `https://${project}.supabase.co`);
-const keys = JSON.parse(execFileSync("rtk", ["proxy", "supabase", "projects", "api-keys", "--project-ref", project, "--reveal", "--output", "json"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
-const key = keys.find(row => row.type === "secret" && !row.disabled) ?? keys.find(row => row.name === "service_role" && !row.disabled);
-assert(key?.api_key);
+const cliOptions = { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] };
+const evidence = localWorkdir ? "test-results/btp08-local" : "test-results/btp08";
+
+function target() {
+  if (localWorkdir) {
+    assert(isAbsolute(localWorkdir) && !project, "Supply a local stack directory without a hosted project reference");
+    const stack = JSON.parse(execFileSync("rtk", ["proxy", "supabase", "status", "--workdir", localWorkdir, "--output", "json"], cliOptions));
+    const db = new URL(stack.DB_URL);
+    assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(stack.API_URL) && db.protocol === "postgresql:" && db.hostname === "127.0.0.1" && db.port && !db.search && !db.hash, "Require a loopback Supabase API and database without connection overrides");
+    assert(stack.PUBLISHABLE_KEY && stack.SERVICE_ROLE_KEY, "Local Supabase Auth must be running");
+    return { url: stack.API_URL, publicKey: stack.PUBLISHABLE_KEY, adminKey: stack.SERVICE_ROLE_KEY, database: db.href };
+  }
+  assert.equal(project, "rgiptdfjlmwldngapojq", "Dedicated development project only");
+  const settings = Object.fromEntries(readFileSync(new URL("../apps/web/.env.local", import.meta.url), "utf8").split(/\r?\n/).filter(line => line.includes("=")).map(line => [line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)]));
+  assert.equal(settings.NEXT_PUBLIC_SUPABASE_URL, `https://${project}.supabase.co`);
+  const keys = JSON.parse(execFileSync("rtk", ["proxy", "supabase", "projects", "api-keys", "--project-ref", project, "--reveal", "--output", "json"], cliOptions));
+  const key = keys.find(row => row.type === "secret" && !row.disabled) ?? keys.find(row => row.name === "service_role" && !row.disabled);
+  assert(key?.api_key);
+  return { url: settings.NEXT_PUBLIC_SUPABASE_URL, publicKey: settings.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, adminKey: key.api_key };
+}
+
+const { url, publicKey, adminKey, database } = target();
 const require = createRequire(new URL("../apps/web/package.json", import.meta.url));
 const { createClient } = require("@supabase/supabase-js");
 const { createServerClient } = require("@supabase/ssr");
-const admin = createClient(settings.NEXT_PUBLIC_SUPABASE_URL, key.api_key, { auth: { persistSession: false, autoRefreshToken: false } });
+const admin = createClient(url, adminKey, { auth: { persistSession: false, autoRefreshToken: false } });
 const fixtures = [];
 const listingIds = [];
 const checks = [];
@@ -34,10 +53,18 @@ async function history(fixture, order, status = 200) {
   assert.match(response.headers()["cache-control"], /private, no-store/);
   return response.json();
 }
-function sql(query) {
-  mkdirSync("test-results/btp08", { recursive: true });
-  writeFileSync("test-results/btp08/fixtures.sql", query);
-  return JSON.parse(execFileSync("rtk", ["proxy", "supabase", "db", "query", "--linked", "--project-ref", project, "--file", "test-results/btp08/fixtures.sql", "--output", "json"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+async function sql(query) {
+  mkdirSync(evidence, { recursive: true });
+  const file = `${evidence}/fixtures.sql`;
+  writeFileSync(file, query);
+  if (!database) return JSON.parse(execFileSync("rtk", ["proxy", "supabase", "db", "query", "--linked", "--project-ref", project, "--file", file, "--output", "json"], cliOptions));
+  const client = new pg.Client({ connectionString: database, statement_timeout: 15000 });
+  try {
+    await client.connect();
+    return await client.query(query);
+  } finally {
+    await client.end();
+  }
 }
 try {
   browser = await chromium.launch({ executablePath: process.env.BEETIP_BROWSER_EXECUTABLE });
@@ -55,7 +82,7 @@ try {
     await fixture.page.getByRole("button", { name: "Masuk", exact: true }).click();
     await fixture.page.waitForURL("**/account");
     const cookies = await fixture.context.cookies();
-    fixture.client = createServerClient(settings.NEXT_PUBLIC_SUPABASE_URL, settings.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, { cookies: { getAll: () => cookies, setAll() {} } });
+    fixture.client = createServerClient(url, publicKey, { cookies: { getAll: () => cookies, setAll() {} } });
   }
   const [customer, provider, stranger] = fixtures;
   const { data: { session } } = await provider.client.auth.getSession();
@@ -151,22 +178,22 @@ try {
     assert(await provider.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Overflow at ${width}`);
   }
   await provider.page.setViewportSize({ width: 390, height: 844 });
-  mkdirSync("test-results/btp08", { recursive: true });
-  await provider.page.screenshot({ path: "test-results/btp08/chat-mobile.png", fullPage: true });
+  mkdirSync(evidence, { recursive: true });
+  await provider.page.screenshot({ path: `${evidence}/chat-mobile.png`, fullPage: true });
   checks.push("offline recipient catches up on reconnect; rendered chat fits 390/768/1440 widths");
 
-  sql(`update public.reservations set expires_at=clock_timestamp()-interval '1 second' where order_id='${order}'::uuid;`);
+  await sql(`update public.reservations set expires_at=clock_timestamp()-interval '1 second' where order_id='${order}'::uuid;`);
   await provider.page.reload();
   await expect(provider.page.getByText("Percakapan ditutup. Riwayat tetap dapat dibaca.", { exact: true })).toBeVisible();
   await expect(stored(provider.page)).toContainText(send.body);
   await expect(provider.page.getByRole("button", { name: "Kirim pesan", exact: true })).toHaveCount(0);
   await command(customer, "chat", { action: "send", order, clientId: randomUUID(), body: "Too late" }, 409);
-  sql(`update public.conversation_members set revoked_at=clock_timestamp() where conversation_id=(select conversation_id from public.orders where id='${order}'::uuid) and member_id='${provider.id}'::uuid;`);
+  await sql(`update public.conversation_members set revoked_at=clock_timestamp() where conversation_id=(select conversation_id from public.orders where id='${order}'::uuid) and member_id='${provider.id}'::uuid;`);
   await history(provider, order, 403);
   assert.equal((await provider.client.from("messages").select("*").eq("conversation_id", (await customer.client.from("orders").select("conversation_id").eq("id", order).single()).data.conversation_id)).data.length, 0);
   await provider.page.reload();
   await expect(provider.page.getByRole("heading", { name: "Percakapan tidak tersedia", exact: true })).toBeVisible();
-  sql(`update public.conversation_members set revoked_at=null where conversation_id=(select conversation_id from public.orders where id='${order}'::uuid) and member_id='${provider.id}'::uuid;`);
+  await sql(`update public.conversation_members set revoked_at=null where conversation_id=(select conversation_id from public.orders where id='${order}'::uuid) and member_id='${provider.id}'::uuid;`);
   await provider.page.reload();
   await expect(stored(provider.page)).toContainText(send.body);
   const logout = await provider.context.newPage();
@@ -178,21 +205,21 @@ try {
   await command(customer, "listings", { operationId: randomUUID(), listingId: cronListing, version: 0, listing: listingBody });
   const { orderId: cronOrder } = await command(stranger, "orders", { operationId: randomUUID(), listingId: cronListing, listingVersion: 1 });
   await Promise.all(fixtures.flatMap(fixture => fixture.context.pages()).map(page => page.close()));
-  sql(`update public.reservations set expires_at=clock_timestamp()-interval '1 second' where order_id='${cronOrder}'::uuid;`);
-  await expect.poll(() => sql(`select o.state,r.released_at from public.orders o join public.reservations r on r.order_id=o.id where o.id='${cronOrder}'::uuid;`).rows[0]?.state, { timeout: 90000, intervals: [5000] }).toBe("expired");
+  await sql(`update public.reservations set expires_at=clock_timestamp()-interval '1 second' where order_id='${cronOrder}'::uuid;`);
+  await expect.poll(async () => (await sql(`select o.state,r.released_at from public.orders o join public.reservations r on r.order_id=o.id where o.id='${cronOrder}'::uuid;`)).rows[0]?.state, { timeout: 90000, intervals: [5000] }).toBe("expired");
   const expired = await stranger.context.request.get(`${origin}/api/identity/orders?id=${cronOrder}`);
   assert.equal(expired.status(), 200);
   assert.equal((await expired.json()).order.state, "expired");
   assert((await history(customer, cronOrder)).page.closed);
-  checks.push("actual hosted Cron expires a disposable order with every participant tab closed; separate participant projections remain correct");
-  console.log(JSON.stringify({ result: "PASS", checks, boundary: "Dedicated development synthetic messages; no email, physical devices, settlement or production release" }));
+  checks.push("Supabase Cron expires a disposable order with every participant tab closed; separate participant projections remain correct");
+  console.log(JSON.stringify({ result: "PASS", checks, scope: database ? "Disposable local Supabase" : "Dedicated hosted development Supabase" }));
 } finally {
   await browser?.close();
   await Promise.all(fixtures.map(fixture => fixture.client?.removeAllChannels()));
   if (listingIds.length) {
     assert(listingIds.every(id => /^[0-9a-f-]{36}$/.test(id)));
     const ids = listingIds.map(id => `'${id}'::uuid`).join(",");
-    sql(`begin;
+    await sql(`begin;
       create temporary table btp08_orders as select id,conversation_id from public.orders where listing_id in (${ids});
       delete from public.notifications where target_id in (select id from btp08_orders) or target_id in (${ids});
       delete from private.acceptance_notification_intents where order_id in (select id from btp08_orders);

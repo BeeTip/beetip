@@ -1,6 +1,6 @@
 # Private connected order chat
 
-BTP-08 adds private text conversations to the orders created by atomic acceptance. Both participants can open **Pesan pesanan** from their order. The synthetic demo keeps its existing local chat adapter. Support replies and queue assignment remain BTP-09.
+BTP-08 adds private text conversations to the orders created by atomic acceptance. Both participants can open **Pesan pesanan** from their order. The synthetic demo keeps its existing local chat adapter. Use **Minta bantuan untuk pesanan ini** to open a separate private support case with a reference to the order. Operator access through that case requires an explicit grant. [Private support operations](connected-support.md).
 
 ## Durable messages and access
 
@@ -58,6 +58,17 @@ rtk proxy node scripts/test-chat-sessions.mjs
 ```
 
 It refuses other projects and nonlocal web candidates, uses synthetic confirmed accounts without sending email, checks live private subscription access, API guards, concurrent retry/read state, rendered response-loss recovery, reconnect catch-up, expiration and logout, and deletes only its own fixtures. It preserves retained accounts, support, staff/MFA and audit facts. Screenshots are ignored verification artifacts.
+
+The same harness can use a disposable local Supabase stack. Apply the current migrations and start the connected production build against the stack's API URL and publishable key. Keep the application origin identical in both terminals. In the harness terminal, supply the absolute directory passed to `supabase start --workdir` and the application's loopback URL:
+
+```powershell
+Remove-Item Env:BEETIP_TEST_PROJECT_REF -ErrorAction SilentlyContinue
+$env:BEETIP_TEST_LOCAL_STACK = 'C:/path/to/disposable-stack'
+$env:BEETIP_TEST_URL = 'http://127.0.0.1:3108'
+rtk proxy node scripts/test-chat-sessions.mjs
+```
+
+This exercises Auth, Realtime and Cron on the actual local services, and saves artifacts under `test-results/btp08-local`.
 
 ## Rollback and release
 
