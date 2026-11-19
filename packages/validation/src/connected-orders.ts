@@ -9,5 +9,6 @@ export const ordersPageSchema = z.object({ before: z.iso.datetime({ offset: true
 export type AcceptanceCommand = z.infer<typeof acceptanceCommandSchema>;
 export type ConnectedOrder = {
   id: string; state: string; conversationId: string; reservationUntil: string;
+  boothDemo: boolean;
   terms: { title: string; shop: string; items: { name: string; specification: string; quantity: number; unitBudget: number }[]; budget: number; fee: number; destination: string; start: string; end: string };
 };

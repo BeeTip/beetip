@@ -1,6 +1,6 @@
 # Current system and migration constraints
 
-Inspected 17 November 2026. This document preserves the browser-local demo baseline used to design the backend migration. The connected identity/private-support slice has since been implemented and committed in `2069764`; its current setup and remaining gates are in [development](development.md) and [staging](staging.md).
+Inspected 17 November 2026. This document preserves the browser-local baseline used to design the backend migration. See [Run and demonstrate BeeTip](running-beetip.md) for the current connected application and booth rehearsal, and the [implementation plan](implementation-plan.md) for release status.
 
 ## Overview
 

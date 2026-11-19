@@ -1,10 +1,10 @@
 # Implementation plan and issue index
 
-Planned on 17 November 2026. The [roadmap issue](https://github.com/BeeTip/beetip/issues/2) tracks 24 implementation and owner-decision issues. Every issue has a user outcome, acceptance criteria, blocking references, and closure evidence requirements. No implementation, paid provisioning, or deployment is included in this documentation pass.
+The [roadmap issue](https://github.com/BeeTip/beetip/issues/2) tracks 24 implementation and owner-decision issues. Every issue has a user outcome, acceptance criteria, blocking references, and closure evidence requirements.
 
 ## Delivery contract
 
-The owner's 18 November [public onboarding policy](public-onboarding.md) supersedes mandatory campus membership approval and the closed staging cohort. Public sample browsing and email-confirmed self-service accounts are the current slice; affiliation review must become optional, and real marketplace transactions remain in later issues.
+The owner's [public onboarding policy](public-onboarding.md) allows email-confirmed self-service accounts and optional affiliation. The 19 November [hosted booth scope](running-beetip.md#hosted-booth-walkthrough) uses two pre-confirmed accounts for publishing and taking listings, private chat, shopping and delivery confirmation. Only orders between those designated accounts skip funding. Track the rehearsal under [BTP-21](https://github.com/BeeTip/beetip/issues/23). Real-money operation remains subject to the existing release gates.
 
 [BTP-02](https://github.com/BeeTip/beetip/issues/4) and [BTP-22](https://github.com/BeeTip/beetip/issues/24) passed identity-slice acceptance on 18 November 2026. [Development evidence](development.md) and [protected staging acceptance](staging.md) record real email confirmation/recovery, verified operator MFA and assignment, recipient restrictions, deployment protection, failures and cleanup. Staging uses the owner's personal Hobby account and Brevo Free under a zero-cost limit. Later marketplace and release work remains open.
 

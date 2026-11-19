@@ -51,17 +51,19 @@ try {
   const provider = await actor(), customer = await actor(), outsider = await actor();
   const account = uuid();
   await owner.query("insert into private.funding_accounts(id,label) values($1,'Akun simulasi')", [account]);
-  async function order() {
+  async function order({ buyer = customer, fund = true } = {}) {
     const listing = uuid(), offer = uuid();
     await owner.query(`insert into public.listings(id,owner_id,type,title,shop,category,area,destination,items,budget,fee,bound,negotiable,capacity,spending_capacity,start_at,end_at,cutoff_at,status)
       values($1,$2,'trip','Uji serah terima','Warung','Makanan','Alam Sutera','Kampus',$3,40000,5000,5000,false,2,100000,
         now()+interval '1 day',now()+interval '25 hours',now()+interval '23 hours','active')`,
     [listing, provider.id, JSON.stringify([{ name: "Nasi", specification: "", quantity: 2, unitBudget: 20000 }])]);
-    await customer.client.query("select public.save_offer($1,$2,$3,0,1,5000,'save')", [uuid(), offer, listing]);
+    await buyer.client.query("select public.save_offer($1,$2,$3,0,1,5000,'save')", [uuid(), offer, listing]);
     const id = await first(provider.client, "select public.accept_order($1,$2,1,$3,1)", [uuid(), listing, offer]);
-    await owner.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
-      select $1,$2,$3,private.funding_required($1),'verified',now(),now(),$4`, [id, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, outsider.id]);
-    await owner.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
+    if (fund) {
+      await owner.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
+        select $1,$2,$3,private.funding_required($1),'verified',now(),now(),$4`, [id, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, outsider.id]);
+      await owner.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
+    }
     return id;
   }
   async function finish(id, quantity = 1) {
@@ -126,6 +128,31 @@ try {
   const unavailable = await order();
   await finish(unavailable, 0);
   await assert.rejects(start(provider, unavailable), /CONFLICT/);
+
+  const ordinaryUnpaid = await order({ fund: false });
+  assert.equal(await state(customer, ordinaryUnpaid), "awaiting_payment");
+  await assert.rejects(finish(ordinaryUnpaid), /CONFLICT: Purchase funding/);
+  await assert.rejects(customer.client.query("insert into private.booth_members values($1)", [customer.id]), /permission denied/);
+  await owner.query("insert into private.booth_members values($1),($2)", [provider.id, customer.id]);
+  assert.equal(await state(customer, ordinaryUnpaid), "awaiting_payment", "Existing orders keep their payment rules");
+  await assert.rejects(order({ buyer: outsider, fund: false }), /Booth accounts can only order with another booth account/);
+  const booth = await order({ fund: false });
+  assert.equal(await state(customer, booth), "booth_ready");
+  assert.equal(await first(outsider.client, "select count(*)::int from public.orders where id=$1", [booth]), 0);
+  const reservation = await first(owner, "select row_to_json(r) from (select expires_at, funding_verified_at from public.reservations where order_id=$1) r", [booth]);
+  assert(Date.parse(reservation.expires_at) > Date.now()+23*60*60*1000);
+  assert.equal(reservation.funding_verified_at, null);
+  await assert.rejects(owner.query("insert into private.funding_submissions(order_id,account_id,reference,amount) values($1,$2,'BOOTHPAYMENT',45000)", [booth, account]), /Payment is disabled/);
+  await first(customer.client, "select public.btp08_send($1,$2,'Siap untuk demo')", [booth, uuid()]);
+  const history = await first(provider.client, "select public.btp08_history($1)", [booth]);
+  assert.match(JSON.stringify(history), /Siap untuk demo/);
+  await assert.rejects(outsider.client.query("select public.btp08_history($1)", [booth]), /PERMISSION/);
+  await finish(booth, 2);
+  await start(provider, booth);
+  assert.equal(await consume(provider, booth, (await issue(customer, booth)).code), "confirmed");
+  assert.equal(await state(customer, booth), "delivery_confirmed");
+  assert.equal(await first(owner, "select count(*)::int from private.funding_submissions where order_id=$1", [booth]), 0);
+
   const attempts = () => first(owner, "select failed_attempts from private.handover_challenges where order_id=$1", [id]);
   assert.equal(await attempts(), 0);
 

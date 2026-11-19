@@ -10,6 +10,9 @@ export async function POST(request: Request) {
     if (request.headers.get("X-Beetip-Member") !== user.id) throw new Error("PERMISSION");
     const input = parsed.data;
     const { data, error } = await client.rpc("accept_order", { p_operation_id: input.operationId, p_listing_id: input.listingId, p_listing_version: input.listingVersion, p_offer_id: input.offerId, p_offer_version: input.offerVersion });
+    if (error?.message === "CONFLICT: Booth accounts can only order with another booth account") {
+      return reply({ ok: false, code: "CONFLICT", message: "Akun demo hanya dapat membuat pesanan dengan akun demo lainnya." }, 409);
+    }
     if (error) return commandFailure(error);
     return reply({ ok: true, orderId: data });
   } catch (error) { return boundaryFailure(error); }

@@ -40,11 +40,25 @@ function ConnectedOrderContent({ id, memberId }: { id: string; memberId: string 
   const completed = ["purchased", "purchase_partial", "purchase_unavailable", "delivering", "delivery_confirmed"].includes(order.state);
   const refresh = () => setAttempt(value => value + 1);
   const actions = <>
+    <Link className="button button-secondary" href={`/chat/${id}`}>Pesan pesanan</Link>
     <ConnectedPurchase orderId={id} memberId={memberId} refreshKey={attempt} orderState={order.state} closed={["expired", "cancelled"].includes(order.state)} onChange={refresh} />
     <ConnectedAmendments orderId={id} memberId={memberId} refreshKey={attempt} completed={completed} onChange={refresh} />
-    <ConnectedFunding orderId={id} memberId={memberId} refreshKey={attempt} />
-    <ConnectedOrderCases orderId={id} memberId={memberId} refreshKey={attempt} onChange={refresh} />
-    <Link className="button button-secondary" href={`/chat/${id}`}>Pesan pesanan</Link><Link href="/account/orders">Kembali ke daftar pesanan</Link>
+    {!order.boothDemo && <>
+      <ConnectedFunding orderId={id} memberId={memberId} refreshKey={attempt} />
+      <ConnectedOrderCases orderId={id} memberId={memberId} refreshKey={attempt} onChange={refresh} />
+    </>}
+    <Link href="/account/orders">Kembali ke daftar pesanan</Link>
   </>;
-  return <section className="panel stack"><h1>{order.terms.title}</h1><p>Pesanan {order.id}</p><p role="status">{connectedOrderState(order.state)}</p>{order.state === "expired" && <p>Reservasi tidak lagi memakai kapasitas. Pesanan ini tidak dapat dilanjutkan. Buka daftar untuk membuat kesepakatan baru.</p>}<Button onClick={() => setAttempt(value => value + 1)}>Perbarui status</Button><h2>Kesepakatan awal</h2>{order.terms.items.map((item, index) => <p key={index}>{item.name} x {item.quantity}: {item.specification} ({money(item.unitBudget)} per item)</p>)}<p>Batas belanja: {money(order.terms.budget)}. Ongkos: {money(order.terms.fee)}.</p><p>Tujuan: {order.terms.destination}</p><p>Pengantaran: {time(order.terms.start)} sampai {time(order.terms.end)}</p>{order.state === "awaiting_payment" && <p>Reservasi sampai {time(order.reservationUntil)}.</p>}{actions}</section>;
+  return <section className="panel stack">
+    <h1>{order.terms.title}</h1><p>Pesanan {order.id}</p><p role="status">{connectedOrderState(order.state)}</p>
+    {order.boothDemo && <p>Pesanan demo. Lanjutkan chat, belanja, dan serah terima tanpa pembayaran. Gunakan data dan struk contoh.</p>}
+    {order.state === "expired" && <p>Reservasi tidak lagi memakai kapasitas. Pesanan ini tidak dapat dilanjutkan. Buka daftar untuk membuat kesepakatan baru.</p>}
+    <Button onClick={() => setAttempt(value => value + 1)}>Perbarui status</Button>
+    <h2>Kesepakatan awal</h2>
+    {order.terms.items.map((item, index) => <p key={index}>{item.name} x {item.quantity}: {item.specification} ({money(item.unitBudget)} per item)</p>)}
+    <p>Batas belanja: {money(order.terms.budget)}. Ongkos: {money(order.terms.fee)}.</p><p>Tujuan: {order.terms.destination}</p>
+    <p>Pengantaran: {time(order.terms.start)} sampai {time(order.terms.end)}</p>
+    {["awaiting_payment", "booth_ready"].includes(order.state) && <p>Reservasi sampai {time(order.reservationUntil)}.</p>}
+    {actions}
+  </section>;
 }

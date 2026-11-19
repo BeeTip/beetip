@@ -2,7 +2,7 @@
 
 A two-way community jastip marketplace centered on Alam Sutera. Anyone can browse; an email-confirmed account can access its dashboard without manual membership approval.
 
-Follow [Run and demonstrate BeeTip](docs/running-beetip.md) for the full synthetic demo, the connected production-build walkthrough, UX acceptance checks and release boundaries.
+Follow [Run and demonstrate BeeTip](docs/running-beetip.md) for the hosted booth walkthrough, the local synthetic demo, and connected release checks.
 
 ## Repository status
 

@@ -537,6 +537,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          booth_demo: boolean
           conversation_id: string
           created_at: string
           customer_id: string
@@ -550,6 +551,7 @@ export type Database = {
           trip_id: string | null
         }
         Insert: {
+          booth_demo?: boolean
           conversation_id: string
           created_at?: string
           customer_id: string
@@ -563,6 +565,7 @@ export type Database = {
           trip_id?: string | null
         }
         Update: {
+          booth_demo?: boolean
           conversation_id?: string
           created_at?: string
           customer_id?: string

@@ -2,6 +2,12 @@
 
 This is the deployment runbook. The existing public sample deployment and accepted account flows are recorded in [public onboarding](public-onboarding.md); [staging progress](staging.md) retains the earlier protected identity candidate. Later connected marketplace slices have separate local and development-database evidence and are not deployed merely by merging their source. The complete production marketplace has not been released. Follow [the implementation plan](implementation-plan.md) and [runnable walkthrough](running-beetip.md) before executing this runbook.
 
+## Booth deployment
+
+The booth uses the existing public `beetip-campus` deployment on Vercel and the dedicated `beetip-development` Supabase project. Deploy from the exact repository commit after applying its pending migrations and verifying the migration history. Keep the connected mode and exact public application origin. Provide `BEETIP_RECEIPT_STORAGE_SECRET` as a sensitive server-side Vercel variable for private sample receipt upload and download. Keep signup, email confirmation, recovery, and application access based on normal Supabase Auth.
+
+Provision the two synthetic booth accounts and follow the [booth walkthrough](running-beetip.md#hosted-booth-walkthrough) against the hosted alias with separate sessions. Verify guest browsing, anonymous private API denial, publication, acceptance, chat history, sample receipt upload and allocation, and delivery confirmation. Record the exact deployed revision and rehearsal evidence. The booth uses the Vercel project's Production slot for its stable alias. Marketplace launch and payment operations remain under the release plan below.
+
 ## Establish ownership and cost
 
 1. Record the Vercel team owner, Supabase owner, backup operator, email-domain owner, and two independent financial operators.

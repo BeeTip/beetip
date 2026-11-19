@@ -1,6 +1,6 @@
 # Public browsing and self-service accounts
 
-The maker changed the access policy on 18 November 2026: anyone can browse BeeTip, create an account, confirm their email and use their dashboard without manual membership approval. The selected scope is a public sample catalog and open onboarding, not real listing publishing or marketplace transactions.
+Anyone can browse BeeTip, create an account, confirm their email and use their dashboard without manual membership approval. The 18 November acceptance below covers the original public sample catalog and open onboarding build. The 19 November [booth walkthrough](running-beetip.md#hosted-booth-walkthrough) adds connected listing publishing, acceptance, chat and delivery to the deployment scope.
 
 ## Access and privacy
 
