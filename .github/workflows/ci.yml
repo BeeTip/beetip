@@ -58,3 +58,4 @@ jobs:
       - run: node scripts/test-btp07-expiry.mjs
       - run: node scripts/test-btp08-chat.mjs
       - run: node scripts/test-btp09-support.mjs
+      - run: node scripts/test-btp12-funding.mjs

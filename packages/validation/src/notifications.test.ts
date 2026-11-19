@@ -11,6 +11,8 @@ describe("notification boundary and registry", () => {
     for (const [event, rule] of Object.entries(notificationRegistrySeed)) {
       expect(region).toContain(`('${event}','${rule.recipients}','${rule.target}','${rule.template}','${rule.title}','${rule.email}',${rule.implemented})`);
     }
+    const funding = readFileSync(new URL("../../../supabase/migrations/20261119001000_btp12_incoming_funding.sql", import.meta.url), "utf8");
+    expect(funding).toContain(`update private.notification_rules set implemented=${notificationRegistry.funding_review.implemented} where event_type='funding_review';`);
   });
   it("offers email preferences for support replies, with queue alerts delivered in app", () => {
     expect(notificationRegistry.support_opened.email).toBe("in_app_only");

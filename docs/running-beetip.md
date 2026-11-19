@@ -1,6 +1,6 @@
 # Run and demonstrate BeeTip
 
-Use the synthetic demo for the complete shopping, handover and settlement walkthrough. Use connected mode to demonstrate the implemented account and marketplace slices with separate real test accounts. Connected funding, purchasing, handover and settlement still require their implementation issues before a complete real-order journey can run.
+Use the synthetic demo for the complete shopping, handover and settlement walkthrough. Use connected mode with separate test accounts to demonstrate accounts, orders, private chat, support and synthetic incoming funding. Connected purchasing, handover and settlement remain release work.
 
 ## Start the full synthetic demo
 
@@ -53,7 +53,8 @@ Use separate browser profiles for two confirmed synthetic accounts. Do not use r
 3. As the other account, open the listing and propose an offer. As the requester, review the current version under **Penawaran saya** and accept it. Changes to terms require fresh consent; an unavailable slot must produce an actionable error.
 4. Open **Pesanan saya** in both accounts. Both must see the same immutable terms and reservation deadline; an unrelated account must not see the order. The counterpart receives an in-app notification with an authorized order link.
 5. Open **Chat pesanan** from the order, send text in both accounts and refresh to confirm saved history. Disconnect one account, send from the other and reconnect to recover missed messages. Follow [private-chat acceptance](connected-chat.md) for response-loss retry, revoked access and logout checks. Follow [reservation expiry](connected-expiry.md) to verify a disposable unpaid order expires with all tabs closed and retains read-only chat history. Use the guarded synthetic harness rather than altering retained support.
-6. Stop before sending money. Connected payment verification and fulfillment are later slices. The order screen must accurately explain the available next action and the current payment limitation.
+6. Open **Hubungi bantuan** as a member, then claim the case from an MFA-enabled support account. Reply, resolve, and reopen it. Use a separate lead account to rehearse reassignment. [Private support walkthrough](connected-support.md).
+7. In a disposable funding rehearsal, upload synthetic evidence from the customer’s order and review it with an assigned finance account using MFA. Confirm the order shows funding verified only after the bank review. [Incoming funding walkthrough and configuration](connected-funding.md).
 
 ## UX acceptance for each slice
 
@@ -100,4 +101,4 @@ Record the source commit, last migration, target environment and validation resu
 | Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
 | Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
 
-Production readiness requires the remaining connected financial and support slices, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track those gates. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate. Current feature evidence supports only the environments explicitly recorded there.
+Production readiness requires connected fulfillment and settlement, transactional application email, funding evidence retention and late-money reconciliation, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track release validation and promotion. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate.

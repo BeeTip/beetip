@@ -42,6 +42,8 @@ Each feature that activates another event family wires transaction-local events,
 
 ## Inbox and transport
 
+The `funding_review` event opens the funding queue for the assigned finance operator and uses current funding access to protect the destination. See the [incoming funding contract](connected-funding.md).
+
 `/account/notifications` provides private notifications, an unread indicator, individual monotonic read actions, retry/empty/error states, keyset pagination and per-event email preferences. GET `/api/identity/notifications` returns at most 20 items and a cursor, using 21-row lookahead. Unread counts use the same live visibility predicate as the inbox. PostgreSQL timestamp precision is preserved in cursors, with UUID ordering for equal timestamps. There is no mark-unread or caller-selected read timestamp. Concurrent read requests preserve the first committed read time via row locking and `coalesce`.
 
 POST accepts only `{action:'read',id}` or `{action:'preference',eventType,email}`. It validates same origin, request size, session, strict schemas and `X-Beetip-Member` account-change protection. SQL independently resolves the actor from `auth.uid()` and the retained Auth session. Direct table writes are revoked. RLS protects notification and preference reads, with explicit grants only to authenticated users. Internal registry/delivery tables have RLS and no member grants. Protected responses are private/no-store.
