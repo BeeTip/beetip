@@ -1,6 +1,6 @@
 # Run and demonstrate BeeTip
 
-For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support, amendments and synthetic incoming funding with separate test accounts. Connected purchasing, handover and settlement remain release work.
+For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support, amendments, synthetic incoming funding and receipt allocation with separate test accounts. Connected handover and settlement remain release work.
 
 ## Start the full synthetic demo
 
@@ -22,7 +22,7 @@ Stop the server before switching modes. Clear the shell override with `Remove-It
 
 Follow [development setup](development.md) to configure the ignored `apps/web/.env.local` from `.env.example`. All four settings are required: `BEETIP_MODE=connected`, the exact `APP_ORIGIN`, the dedicated development project's Supabase URL and its publishable key. User requests do not need a service credential. Apply and verify the repository migrations in order against the dedicated development database before running the corresponding feature.
 
-You can also rehearse against a disposable Supabase stack with Docker and the Supabase CLI. In a fresh directory, copy `supabase/config.toml`, `supabase/migrations`, `supabase/functions` and `supabase/templates` under `supabase/`. Give the copy a unique `project_id`, choose free ports and set the Auth site URL and callback URLs to match the local app origin below. Run `rtk proxy supabase start --workdir $stack`, where `$stack` is the absolute path to the fresh directory. Use that stack's API URL and publishable key in the app. Use the stack's own server-only key for the [synthetic funding storage rehearsal](connected-funding.md#evidence-and-notification-access). Stop the copy with `rtk proxy supabase stop --workdir $stack` when finished.
+You can also rehearse against a disposable Supabase stack with Docker and the Supabase CLI. In a fresh directory, copy `supabase/config.toml`, `supabase/migrations`, `supabase/functions` and `supabase/templates` under `supabase/`. Give the copy a unique `project_id`, choose free ports and set the Auth site URL and callback URLs to match the local app origin below. Set `enabled = false` under `[db.seed]` in the copy because this walkthrough creates its own synthetic records. Run `rtk proxy supabase start --workdir $stack`, where `$stack` is the absolute path to the fresh directory. Read the API URL and publishable key with `rtk proxy supabase status --workdir $stack` and set them as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` before building. Use the stack's own server-only key for the [synthetic funding storage rehearsal](connected-funding.md#evidence-and-notification-access). Stop the copy with `rtk proxy supabase stop --workdir $stack` when finished.
 
 ```powershell
 $env:BEETIP_MODE = 'connected'
@@ -58,7 +58,7 @@ Set `$stack` in the terminal running the test. The test creates a synthetic acco
 
 ## Connected walkthrough
 
-Use separate browser profiles for two confirmed synthetic accounts. Do not use retained operator accounts as customer fixtures.
+Use separate browser profiles for two confirmed synthetic accounts. Use dedicated synthetic accounts for customer, provider and operator actions. Start with the anonymous smoke test before adding fixtures so a failure can be traced to configuration or migrations.
 
 1. Browse `/` without signing in. The public board must exclude private destination and owner fields. An empty board should explain that there are no listings and keep filters and creation discoverable.
 2. Sign in as the requester, publish a future request with its budget, service fee, WIB cutoff and delivery window, and review it under **Listing saya**. Optional affiliation must not block ordinary confirmed accounts.
@@ -68,6 +68,7 @@ Use separate browser profiles for two confirmed synthetic accounts. Do not use r
 6. Open **Hubungi bantuan** as a member, then claim the case from an MFA-enabled support account. Reply, resolve, and reopen it. Use a separate lead account to rehearse reassignment. [Private support walkthrough](connected-support.md).
 7. In a disposable funding rehearsal, upload synthetic evidence from the customer’s order and review it with an assigned finance account using MFA. Confirm the order shows funding verified only after the bank review. [Incoming funding walkthrough and configuration](connected-funding.md).
 8. As the provider, open **Perubahan pesanan** and propose an increased shopping budget. As the customer, compare the original and proposed amounts, then approve the exact proposal. Confirm purchasing remains blocked until an assigned finance operator verifies the synthetic top-up. [Order amendment walkthrough](connected-amendments.md).
+9. Once the order shows **Siap belanja**, open **Progres belanja** as the provider. Add a synthetic receipt, allocate quantities to the order and verify gross, discount and net in both accounts. For a shared trip, open the sibling order and allocate the remaining quantities. Finish shopping after marking any missing items and providing a reason. [Purchase progress walkthrough and receipt Storage configuration](connected-purchases.md).
 
 ## UX acceptance for each slice
 
@@ -75,6 +76,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 
 | Situation | Expected experience |
 | --- | --- |
+| Order opened on mobile | The order status, amounts and next available action are easy to find together. Secondary details stay accessible without competing with the primary action. |
 | Loading or empty history | A visible status or empty state, with navigation still available. |
 | Failed fetch | A clear error and retry control without displaying another account's cached data. |
 | Slow or uncertain mutation | A pending state that prevents duplicate submission; retry reuses the original identity and payload. |
@@ -83,6 +85,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 | Offline message | Preserve the in-memory attempt and explain whether it is pending, failed or committed. |
 | Expired reservation | Use server-derived status and show the recovery action; do not imply a verified payment. |
 | Funding review | Show clearly whether evidence is still a draft, awaiting review or verified. Keep the next step and any amount still due visible on the order. |
+| Shared receipt | Show the provider which customer's order is open and how much of each receipt line remains. Show the customer their own item charges, discount and unavailable quantities. |
 | Logout, account change or suspension | Clear private data and stop protected reads and sends. |
 | Narrow viewport or keyboard use | Readable content, reachable controls and focus, labeled fields, no horizontal overflow. |
 
@@ -116,4 +119,4 @@ Record the source commit, last migration, target environment and validation resu
 | Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
 | Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
 
-Production readiness requires connected fulfillment and settlement, [staged verification of transactional email and scheduling](transactional-email.md), funding evidence retention and late-money reconciliation, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track release validation and promotion. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate.
+Production readiness requires connected handover and settlement, [staged verification of transactional email and scheduling](transactional-email.md), evidence retention and late-money reconciliation, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track release validation and promotion. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate.

@@ -18,7 +18,7 @@ The browser subscribes to its authorized private `member:<UUID>` topic before in
 
 The read action acknowledges the highest displayed sequence. Its database cursor only increases and cannot exceed committed history. Unread counts include counterpart messages above that cursor. A read acknowledgment does not establish email delivery or human understanding.
 
-Drafts and pending attempts stay in memory. Account changes, logout, permission denial and component cleanup clear private state and abort pending requests. Failed or timed-out sends remain visibly unconfirmed and can retry the original attempt. Successful sends appear as **Tersimpan**. The interface includes initial loading, empty history, failed history retry, closed history, older pagination and explicit read controls. Times use WIB.
+Drafts and pending attempts stay in memory. Account changes, logout, permission denial and component cleanup clear private state and abort pending requests. Failed or timed-out sends remain visibly unconfirmed and can retry the original attempt. When the send response or fetched history confirms the original attempt, it appears as **Tersimpan** and the composer clears if it still contains that message. The interface includes initial loading, empty history, failed history retry, closed history, older pagination and explicit read controls. Times use WIB.
 
 ## Expiry, funding and final closure
 
@@ -30,7 +30,7 @@ Current order states do not include final financial settlement. Future settlemen
 
 Each new message creates one counterpart-only in-app notification and durable channel intents. Notification access rechecks current conversation membership; a revoked member loses the notification target as well as message access. The authorized order target contains the chat link.
 
-`private.btp08_email_sources` associates a notification with its conversation sequence and unread window. The minute boundary plus one minute is its earliest proposed send time. These records are inputs for BTP-11, not an active email worker. The existing email-dispatch helper continues denying chat delivery until grouping, live read-cursor checks, suppression and provider recovery are implemented. No application email is sent by this feature. Chat attachments, typing indicators and a direct member inbox remain outside this slice.
+`private.btp08_email_sources` associates a notification with its conversation sequence and unread window. The [transactional email worker](transactional-email.md) uses these sources for grouping and rechecks access and the read cursor before dispatch. Live dispatch requires the configured provider and scheduler. Chat attachments, typing indicators and a direct member inbox remain outside this slice.
 
 `20261119000801_btp08_private_hint_initplan.sql` wraps policy lookups in scalar subqueries to avoid per-row authorization-function evaluation. It preserves the same private topic and live identity predicates.
 

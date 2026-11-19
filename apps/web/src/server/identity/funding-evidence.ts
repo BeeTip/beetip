@@ -12,7 +12,10 @@ export function fundingStorageConfigured() {
 }
 
 export function fundingBucket() {
-  const key = process.env.BEETIP_FUNDING_STORAGE_SECRET;
+  return privateEvidenceBucket("funding-evidence", process.env.BEETIP_FUNDING_STORAGE_SECRET);
+}
+
+export function privateEvidenceBucket(bucket: string, key: string | undefined) {
   if (!key?.startsWith("sb_secret_")) throw new Error("UNAVAILABLE");
   return createClient(identityConfig().url, key, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
@@ -20,7 +23,7 @@ export function fundingBucket() {
       const timeout = AbortSignal.timeout(15000);
       return fetch(input, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout });
     } },
-  }).storage.from("funding-evidence");
+  }).storage.from(bucket);
 }
 
 export async function validatedFundingImage(request: Request) {

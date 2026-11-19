@@ -27,6 +27,7 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
     let older: number | null = null;
     let displayed = 0;
     const sending = new Set<string>();
+    const unconfirmed = new Map<string, string>();
     const controllers = new Set<AbortController>();
     const client = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
     const channel = client.channel(`member:${memberId}`, { config: { private: true } });
@@ -57,6 +58,11 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
       displayed = Math.max(displayed, ...rows.map(row => row.sequence));
       setMessages(previous => mergeChat(previous, rows));
       setAttempts(previous => previous.filter(attempt => !rows.some(row => row.senderId === memberId && row.clientId === attempt.id)));
+      for (const row of rows) {
+        if (row.senderId !== memberId || unconfirmed.get(row.clientId) !== row.body) continue;
+        unconfirmed.delete(row.clientId);
+        setDraft(previous => previous.trim() === row.body ? "" : previous);
+      }
     }
     async function refresh() {
       if (disposed || blocked || document.visibilityState !== "visible") return;
@@ -95,6 +101,7 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
     async function send(attempt: Attempt) {
       if (disposed || blocked || sending.has(attempt.id)) return;
       sending.add(attempt.id);
+      unconfirmed.set(attempt.id, attempt.body);
       setAttempts(previous => [...previous.filter(row => row.id !== attempt.id), { ...attempt, status: "sending" }]);
       try {
         const data = await request(undefined, { action: "send", clientId: attempt.id, body: attempt.body });
@@ -102,7 +109,6 @@ export function ConnectedChat({ orderId, memberId }: { orderId: string; memberId
         const row = data.message as ChatMessage;
         if (!row?.id || row.clientId !== attempt.id || row.senderId !== memberId || row.body !== attempt.body || !Number.isSafeInteger(row.sequence)) throw new Error("Hasil belum dapat dipastikan. Coba lagi dengan pesan yang sama.");
         merge([row]);
-        setDraft(previous => previous.trim() === attempt.body ? "" : previous);
         void refresh();
       } catch (cause) {
         if (!disposed && !blocked) setAttempts(previous => previous.map(row => row.id === attempt.id ? { ...row, status: "failed", error: cause instanceof Error ? cause.message : "Hasil belum diketahui. Coba lagi." } : row));

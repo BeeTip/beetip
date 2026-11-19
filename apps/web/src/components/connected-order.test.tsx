@@ -6,6 +6,7 @@ import { ConnectedOrderDetail } from "./connected-order";
 import { connectedOrderState } from "./connected-order-state";
 
 vi.mock("./connected-amendments", () => ({ ConnectedAmendments: () => null }));
+vi.mock("./connected-purchase", () => ({ ConnectedPurchase: () => null }));
 
 let root: Root;
 let host: HTMLDivElement;
