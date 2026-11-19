@@ -1,5 +1,12 @@
 -- Test-only platform stand-ins for an isolated plain PostgreSQL database.
 -- These do not validate GoTrue, Storage or PostgREST behavior.
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname='service_role') then
+    create role service_role;
+  end if;
+end;
+$$;
 create schema auth;
 create schema storage;
 create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,is_anonymous boolean default false,raw_user_meta_data jsonb default '{}');

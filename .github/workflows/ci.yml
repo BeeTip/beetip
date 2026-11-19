@@ -60,3 +60,4 @@ jobs:
       - run: node scripts/test-btp09-support.mjs
       - run: node scripts/test-btp12-funding.mjs
       - run: node scripts/test-btp13-amendments.mjs
+      - run: node scripts/test-transactional-email-db.mjs
