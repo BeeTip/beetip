@@ -141,6 +141,8 @@ try {
   await funding(finance, "verify", initial, "TESTBASE13", 25000);
   assert.equal((await funds(order)).outstandingAmount, 10000);
   assert.equal((await funds(order)).purchaseReady, false);
+  assert.equal((await first(provider.client, "select public.read_order($1)", [order])).state, "awaiting_top_up");
+  assert.equal((await first(customer.client, "select public.browse_orders()", [])).find(row => row.id === order)?.state, "awaiting_top_up");
   assert.equal(await amend(customer, order, "approve", { id: live, key }), live);
   assert.deepEqual(await first(owner, "select terms from public.order_terms where order_id=$1", [order]), original);
   await assert.rejects(owner.query("update public.order_terms set terms='{}' where order_id=$1", [order]), /immutable/i);
@@ -171,6 +173,7 @@ try {
   assert.equal((await funds(order)).purchaseReady, false);
   await funding(finance, "verify", topup, "TESTTOPUP13", 14000);
   assert.equal((await funds(order)).purchaseReady, true);
+  assert.equal((await first(provider.client, "select public.read_order($1)", [order])).state, "funding_verified");
   assert.equal(await first(owner, "select private.funding_purchase_ready($1)", [order]), true);
   const sameCost = await amend(provider, order, "propose", { version: 3, items: item(34000,"Nasi lain"), reason: "Varian habis" });
   assert.equal((await funds(order)).purchaseReady, false);

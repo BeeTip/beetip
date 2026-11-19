@@ -33,7 +33,6 @@ function Proposal({ items, disabled, propose }: { items: AmendmentItem[]; disabl
   }
 
   return <form onSubmit={submit}><fieldset className="stack min-w-0" disabled={disabled}>
-    <h3>Usulkan perubahan barang atau biaya</h3>
     {rows.map((item, index) => <fieldset key={item.key} className="stack min-w-0">
       <legend>Barang {index + 1}</legend>
       <label>Nama barang<input value={item.name} required maxLength={100} onChange={event => edit(item.key, { name: event.target.value })} /></label>
@@ -152,7 +151,10 @@ export function ConnectedAmendments({ orderId, memberId, refreshKey, onChange }:
         </>}
       </div>}
       {view.editable && view.provider && !pending &&
-        <Proposal key={view.version} items={view.items} disabled={busy || retry} propose={(items, reason) => command({ action: "propose", items, reason })} />}
+        <details key={view.version} className="stack">
+          <summary>Usulkan perubahan barang atau biaya</summary>
+          <Proposal items={view.items} disabled={busy || retry} propose={(items, reason) => command({ action: "propose", items, reason })} />
+        </details>}
       {view.history.filter(entry => entry.state !== "pending").map(entry => <details key={entry.id}>
         <summary>Usulan {entry.revision} · {labels[entry.state]}</summary>
         <p className="break-words">{entry.reason}</p>

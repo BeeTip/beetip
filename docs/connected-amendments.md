@@ -16,6 +16,8 @@ The audit event and `amendment_action` in-app and email intents commit in the sa
 
 The required total is the current approved item budget plus the original fee. The outstanding amount is that total less all verified submissions, floored at zero. A pending amendment blocks purchase eligibility. An approved increase stays blocked until verified funding covers the new total. Rejection restores eligibility if the already-approved total is covered. A future purchase command must take the BTP-07 listing/order/reservation lock before checking `private.funding_purchase_ready(order_id)` in its transaction.
 
+When prior funding preserved the reservation and a balance is still due, both the order list and detail show **Menunggu tambahan dana**. The detail shows an unpaid reservation deadline while the initial payment is still due. The provider opens the proposal editor on demand, and the customer can review a pending proposal directly on the order.
+
 A customer can open one draft or pending submission at a time. A new proof must equal the exact outstanding amount at draft creation and submission. If approval changes that amount while a draft is open, the customer discards it and starts a new draft. Submitted evidence remains reviewable for its exact submitted amount. When that proof is verified, the reservation is preserved and the customer can submit the exact remaining balance, including after the original unpaid deadline. Each top-up uses its own synthetic reference and independently checked MFA review. Lower budgets retain existing verified evidence and can reduce the balance to zero. Handling any excess funds belongs to a separate reconciliation workflow.
 
 ## Verification commands
@@ -42,3 +44,5 @@ rtk proxy node scripts/test-btp12-funding-sessions.mjs --amendments
 ```
 
 Email transport and scheduling, hosted migration/application, and real-money operating approval remain integration gates. This flow uses synthetic references and sample images.
+
+Local acceptance covered separate provider, customer, unrelated and finance sessions on a production Next.js build with disposable Supabase. At 390 px, the proposal editor opened on demand, exact retry after a lost response saved one proposal, and both order views showed the top-up status before reverting to verified after MFA review. The database suite checked capacity lock races, recipient authorization and immutable history. Generated public database types matched the applied schema structurally.

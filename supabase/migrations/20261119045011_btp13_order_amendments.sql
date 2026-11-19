@@ -201,6 +201,42 @@ returns bigint language sql stable set search_path='' as $$
 $$;
 revoke all on function private.funding_outstanding(uuid) from public,anon,authenticated;
 
+create function private.btp13_order_state(p_order public.orders,p_reservation public.reservations)
+returns text language sql volatile set search_path='' as $$
+  select case when p_order.state='awaiting_payment' and p_order.terms_version>1
+    and p_reservation.funding_verified_at is not null and private.funding_outstanding(p_order.id)>0
+    then 'awaiting_top_up'
+    else private.btp07_order_state(p_order.state,p_reservation.expires_at,p_reservation.released_at,p_reservation.funding_verified_at) end;
+$$;
+revoke all on function private.btp13_order_state(public.orders,public.reservations) from public,anon,authenticated;
+
+create or replace function private.read_order(p_id uuid) returns jsonb language plpgsql volatile security definer set search_path='' as $$
+declare v_result jsonb;
+begin
+  if not private.is_active_member() then raise exception 'PERMISSION: Confirmed active account required'; end if;
+  select jsonb_build_object('id',o.id,'state',private.btp13_order_state(o,r),'conversationId',o.conversation_id,
+      'terms',t.terms,'reservationUntil',r.expires_at)
+    into v_result from public.orders o join public.order_terms t on t.order_id=o.id join public.reservations r on r.order_id=o.id
+    where o.id=p_id and auth.uid() in (o.customer_id,o.provider_id);
+  if v_result is null then raise exception 'PERMISSION: Order unavailable'; end if;
+  return v_result;
+end;
+$$;
+
+create or replace function private.browse_orders(p_before timestamptz,p_before_id uuid) returns jsonb language plpgsql volatile security definer set search_path='' as $$
+begin
+  if not private.is_active_member() then raise exception 'PERMISSION: Confirmed active account required'; end if;
+  if (p_before is null)<>(p_before_id is null) then raise exception 'VALIDATION: Incomplete cursor'; end if;
+  return (select coalesce(jsonb_agg(row_data order by created_at desc,id desc),'[]'::jsonb) from (
+    select o.id,o.created_at,jsonb_build_object('id',o.id,'created_at',o.created_at,'title',t.terms->>'title',
+      'state',private.btp13_order_state(o,r)) row_data
+    from public.orders o join public.order_terms t on t.order_id=o.id join public.reservations r on r.order_id=o.id
+    where auth.uid() in (o.customer_id,o.provider_id) and (p_before is null or (o.created_at,o.id)<(p_before,p_before_id))
+    order by o.created_at desc,o.id desc limit 21
+  ) rows);
+end;
+$$;
+
 create or replace function private.funding_purchase_ready(p_order uuid)
 returns boolean language sql stable set search_path='' as $$
   select exists (

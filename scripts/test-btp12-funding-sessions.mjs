@@ -105,6 +105,10 @@ async function amendments(customer, provider, operator, unrelated, order, image)
   await checked(await unrelated.context.request.get(`${amendmentPath}?id=${order}`), 403);
   const providerPage = provider.page, customerPage = customer.page;
   await providerPage.goto(`${origin}/orders/${order}`);
+  const proposalToggle = providerPage.getByText("Usulkan perubahan barang atau biaya", { exact: true });
+  await expect(proposalToggle).toBeVisible();
+  await expect(providerPage.getByLabel("Alasan perubahan")).toBeHidden();
+  await proposalToggle.click();
   await providerPage.getByLabel("Nama barang").fill("Nasi pengganti");
   await providerPage.getByLabel("Batas harga per barang (Rp)").fill("30000");
   await providerPage.getByLabel("Alasan perubahan").fill("Stok habis");
@@ -140,6 +144,11 @@ async function amendments(customer, provider, operator, unrelated, order, image)
   await customerPage.getByRole("button", { name: "Setujui perubahan" }).click();
   await expect(customerPage.getByText("Rincian yang berlaku · Versi 2")).toBeVisible();
   await expect(customerPage.getByText("Kekurangan dana terverifikasi", { exact: false })).toBeVisible();
+  await expect(customerPage.getByText("Menunggu tambahan dana", { exact: true })).toBeVisible();
+  await expect(customerPage.getByText("Reservasi sampai", { exact: false })).toHaveCount(0);
+  const ordersPage = await provider.context.newPage();
+  await ordersPage.goto(`${origin}/account/orders`);
+  await expect(ordersPage.getByText("Menunggu tambahan dana", { exact: true })).toBeVisible();
   assert.equal((await view(provider, order)).data.outstandingAmount, 10000);
   assert.equal((await view(provider, order)).data.purchaseReady, false);
   await checked(await customer.context.request.post(amendmentPath, { data: approve, headers: headers(customer) }), 409);
@@ -175,8 +184,13 @@ async function amendments(customer, provider, operator, unrelated, order, image)
   await operator.page.getByRole("button", { name: "Verifikasi dana" }).click();
   await expect(operator.page.getByText("Pemeriksaan selesai. Dana terverifikasi.")).toBeVisible();
   assert.equal((await view(provider, order)).data.purchaseReady, true);
+  await ordersPage.reload();
+  await expect(ordersPage.getByText("Dana telah diverifikasi", { exact: true })).toBeVisible();
+  await ordersPage.close();
 
   await providerPage.reload();
+  await expect(providerPage.getByText("Dana telah diverifikasi", { exact: true })).toBeVisible();
+  await proposalToggle.click();
   await providerPage.getByLabel("Nama barang").fill("Nasi varian lain");
   await providerPage.getByLabel("Alasan perubahan").fill("Varian habis");
   await providerPage.getByRole("button", { name: "Kirim usulan" }).click();
