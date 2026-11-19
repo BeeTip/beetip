@@ -38,12 +38,14 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [failed, setFailed] = useState(false);
-  const [orderHistory, setOrderHistory] = useState<{ data: History; refresh: number } | null>(null);
+  const [orderHistory, setOrderHistory] = useState<{ data: History; refresh: number; version: number } | null>(null);
   const [orderError, setOrderError] = useState("");
   const heading = useRef<HTMLHeadingElement>(null);
   const attempt = useRef<{ body: string; id: string } | null>(null);
+  const pageRequest = useRef<{ controller: AbortController; order: boolean } | null>(null);
 
   function forget() {
+    pageRequest.current?.controller.abort();
     setThread(null);
     setDraft("");
     setReason("");
@@ -59,7 +61,8 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
     void call<{ thread: Thread }>(`?case=${id}`, undefined, controller.signal).then(({ thread: latest }) => {
       if (controller.signal.aborted) return;
       setThread(previous => combine(previous, latest));
-      setOrderHistory(previous => previous && latest.orderAccess ? { ...previous, refresh } : null);
+      setOrderHistory(previous => previous && latest.orderAccess && previous.version === latest.version
+        ? { ...previous, refresh } : null);
       setOrderError("");
       setLoadError("");
     }).catch(error => {
@@ -68,11 +71,16 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
       else { setThread(null); setOrderHistory(null); }
       setLoadError(error.message);
     });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      pageRequest.current?.controller.abort();
+    };
   }, [call, id, refresh]);
 
   async function page(before: number | null, order: boolean) {
-    if (paging) return;
+    if (pageRequest.current) return;
+    const controller = new AbortController();
+    pageRequest.current = { controller, order };
     setPaging(true);
     if (order) setOrderError("");
     else setError("");
@@ -80,11 +88,18 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
       const query = new URLSearchParams({ case: id });
       if (before !== null) query.set("before", String(before));
       if (order) query.set("history", "order");
-      const { thread: result } = await call<{ thread: Thread }>(`?${query}`);
+      const { thread: result } = await call<{ thread: Thread }>(`?${query}`, undefined, controller.signal);
+      if (controller.signal.aborted) return;
       if (order) {
+        if (result.version !== thread?.version) {
+          setOrderHistory(null);
+          onChange();
+          return;
+        }
         setOrderHistory(previous => ({
           data: { messages: [...result.messages, ...(before !== null && previous?.refresh === refresh ? previous.data.messages : [])], older: result.older },
           refresh,
+          version: result.version,
         }));
       } else {
         setThread(previous => previous ? {
@@ -93,6 +108,7 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
         } : null);
       }
     } catch (error) {
+      if (controller.signal.aborted) return;
       const message = error instanceof Error ? error.message : "Riwayat belum dapat dimuat.";
       if (order) {
         setOrderHistory(null);
@@ -101,7 +117,15 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
         forget();
         setLoadError(message);
       } else setError(message);
-    } finally { setPaging(false); }
+    } finally {
+      pageRequest.current = null;
+      setPaging(false);
+    }
+  }
+
+  function hideOrderHistory() {
+    if (pageRequest.current?.order) pageRequest.current.controller.abort();
+    setOrderHistory(null);
   }
 
   async function run(command: object, success: string) {
@@ -142,7 +166,8 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
     if (done) setReason("");
   }
 
-  const order = orderHistory?.refresh === refresh && thread?.orderAccess ? orderHistory.data : null;
+  const order = orderHistory?.refresh === refresh && orderHistory.version === thread?.version && thread.orderAccess
+    ? orderHistory.data : null;
   const lastMessage = thread?.messages.at(-1);
   return <section className="panel stack" aria-labelledby="support-thread-title">
     <h2 id="support-thread-title" ref={heading} tabIndex={-1}>{thread ? supportCategories[thread.category] : "Percakapan bantuan"}</h2>
@@ -181,7 +206,7 @@ export function SupportThread({ id, memberId, refresh, call, onChange, onBack }:
         <h3>Chat pesanan terkait</h3>
         <p>Akses baca untuk kasus ini dicatat.</p>
         {order ? <>
-          <Button variant="secondary" onClick={() => setOrderHistory(null)}>Sembunyikan chat pesanan</Button>
+          <Button variant="secondary" onClick={hideOrderHistory}>Sembunyikan chat pesanan</Button>
           {order.older !== null && <Button variant="secondary" disabled={paging} onClick={() => void page(order.older, true)}>Muat pesan pesanan sebelumnya</Button>}
           <HistoryMessages rows={order.messages} memberId={memberId} requester={false} order />
         </> : <Button variant="secondary" disabled={paging} onClick={() => void page(null, true)}>Baca chat pesanan</Button>}
