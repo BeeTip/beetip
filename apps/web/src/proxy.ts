@@ -7,6 +7,7 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if (path === "/api/jobs/transactional-email" || path === "/api/webhooks/brevo") return NextResponse.next();
   const connected = path === "/account/funding"
+    || path === "/account/order-cases"
     || path === "/account/email-operations"
     || path === "/" || ["/drink.svg", "/food.svg", "/bag.svg"].includes(path) || /^\/listings\/[^/]+$/.test(path) || path === "/account" || path === "/account/affiliation" || path === "/support" || path === "/login"
     || /^\/(orders|chat)\/[^/]+$/.test(path) || path === "/chat" || path === "/account/orders" || path === "/account/listings" || path === "/account/offers" || path === "/account/notifications" || path === "/api/listings" || path.startsWith("/auth/") || path.startsWith("/api/identity/");

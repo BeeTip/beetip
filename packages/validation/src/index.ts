@@ -70,6 +70,8 @@ export { acceptanceCommandSchema, orderQuerySchema, ordersPageSchema } from "./c
 export type { AcceptanceCommand, ConnectedOrder } from "./connected-orders";
 export { amendmentCommandSchema } from "./connected-amendments";
 export { purchaseCommandSchema, purchaseEvidenceQuery, purchaseViewSchema } from "./connected-purchase";
+export { orderCaseCommandSchema, orderCaseEvidenceQuery, orderCaseQuerySchema, orderCaseQueueSchema, orderCaseViewSchema } from "./order-cases";
+export type { OrderCaseCommand, OrderCaseQueue, OrderCaseView } from "./order-cases";
 export { handoverCommandSchema, handoverCodePattern, issuedHandoverSchema, type HandoverCommand } from "./connected-handover";
 export type { PurchaseCommand, PurchaseView } from "./connected-purchase";
 export type { AmendmentCommand, AmendmentItem, AmendmentRecord, AmendmentView } from "./connected-amendments";

@@ -885,6 +885,23 @@ export type Database = {
         Args: { p_body: string; p_operation_id: string }
         Returns: string
       }
+      order_case_command: {
+        Args: {
+          p_action: string
+          p_operation_id: string
+          p_order: string
+          p_payload: Json
+        }
+        Returns: string
+      }
+      order_case_evidence: {
+        Args: { p_key: string; p_order: string; p_upload: boolean }
+        Returns: string
+      }
+      order_case_queue: {
+        Args: { p_after?: string; p_order?: string }
+        Returns: Json
+      }
       purchase_evidence_path: {
         Args: { p_key: string; p_order: string; p_upload: boolean }
         Returns: string
@@ -892,6 +909,7 @@ export type Database = {
       read_amendments: { Args: { p_order: string }; Returns: Json }
       read_notification: { Args: { p_id: string }; Returns: undefined }
       read_order: { Args: { p_id: string }; Returns: Json }
+      read_order_cases: { Args: { p_order: string }; Returns: Json }
       read_purchase: { Args: { p_order: string }; Returns: Json }
       record_purchase: {
         Args: {

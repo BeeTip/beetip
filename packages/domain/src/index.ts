@@ -17,6 +17,8 @@ export type Funding = { id: string; amount: number; reference: string; status: "
 export type Transfer = { id: string; kind: "payout" | "refund"; amount: number; reference: string; status: "review" | "ready" | "ambiguous" | "completed"; createdBy: string; reviewedBy?: string };
 export type Receipt = { key: string; reference: string; line: string; amount: number };
 export type Amendment = { item: string; budget: number; reason: string; status: "pending" | "approved" | "rejected" };
+type CancellationAmounts = { purchase: number; fee: number; refund: number };
+type CancellationProposal = CancellationAmounts & { id: string; proposedBy: string; reason: string };
 export type Order = {
   id: string; listingId: string; customerId: string; providerId: string;
   terms: Readonly<{ title: string; item: string; quantity: number; budget: number; fee: number; destination: string; window: string; items?: ShoppingItem[] }>;
@@ -26,6 +28,8 @@ export type Order = {
   confirmation?: { code: string; expiresAt: number; attempts: number; used: boolean };
   retiredCodes?: string[];
   confirmedBy?: string; confirmedAt?: number; cancellationRequested?: string;
+  cancellationProposal?: CancellationProposal;
+  cancellationAllocation?: CancellationAmounts & { reviewedBy?: string; reason: string };
   ratings: { authorId: string; score: number; feedback: string }[];
 };
 export type Message = { id: string; orderId: string; authorId: string; text: string; at: number };
@@ -53,7 +57,8 @@ export type Command =
   | { type: "dispute"; orderId: string; reason: string }
   | { type: "resolveDispute"; orderId: string; reason: string }
   | { type: "cancel"; orderId: string; reason: string }
-  | { type: "resolveCancellation"; orderId: string; reason: string }
+  | ({ type: "resolveCancellation"; orderId: string; reason: string } & CancellationAmounts)
+  | { type: "approveCancellation"; orderId: string; proposalId: string; reason: string }
   | { type: "createTransfer"; orderId: string; kind: "payout" | "refund"; reference: string }
   | { type: "reviewTransfer"; orderId: string; transferId: string }
   | { type: "recordTransfer"; orderId: string; transferId: string; outcome: "completed" | "ambiguous" | "not_sent" }
@@ -103,8 +108,11 @@ export function totals(order: Order) {
   const cost = order.receipts.reduce((a, r) => a + r.amount, 0);
   const paidOut = order.transfers.filter(t => t.kind === "payout" && t.status === "completed").reduce((a, t) => a + t.amount, 0);
   const refunded = order.transfers.filter(t => t.kind === "refund" && t.status === "completed").reduce((a, t) => a + t.amount, 0);
-  const entitlement = order.state === "cancelled" ? cost : order.state === "delivery_confirmed" ? cost + order.terms.fee : 0;
-  const refundDue = order.state === "cancelled" ? Math.max(0, received - cost) : order.state === "delivery_confirmed" ? Math.max(0, received - cost - order.terms.fee) : 0;
+  const cancellation = order.cancellationAllocation;
+  const entitlement = order.state === "cancelled" ? (cancellation ? cancellation.purchase + cancellation.fee : cost)
+    : order.state === "delivery_confirmed" ? cost + order.terms.fee : 0;
+  const refundDue = order.state === "cancelled" ? cancellation?.refund ?? Math.max(0, received - cost)
+    : order.state === "delivery_confirmed" ? Math.max(0, received - cost - order.terms.fee) : 0;
   return { received, cost, paidOut, refunded, entitlement, refundDue, outstanding: received - paidOut - refunded, settled: ["cancelled", "delivery_confirmed"].includes(order.state) && !order.dispute && !order.funding.some(f => f.status === "pending") && received === paidOut + refunded };
 }
 
@@ -258,7 +266,10 @@ export class DemoService implements ApplicationService {
     const t = totals(order);
     const permission = () => fail("PERMISSION", "Peran ini tidak dapat melakukan tindakan tersebut.");
     const invalid = () => fail("INVALID_STATE", "Tindakan tidak tersedia pada status pesanan ini.");
-    if (order.cancellationRequested && ["startPurchase", "amend", "purchase", "deliver", "generateCode", "confirm"].includes(c.type)) return invalid();
+    if (order.cancellationRequested && ["submitFunding", "startPurchase", "amend", "purchase", "deliver", "generateCode", "confirm"].includes(c.type)) return invalid();
+    const validCancellation = ({ purchase, fee, refund }: CancellationAmounts) =>
+      [purchase, fee, refund].every(money) && purchase <= t.cost && fee <= order.terms.fee
+      && (order.receipts.length > 0 || fee === 0) && purchase + fee + refund === t.received;
     const receiptStates = ["purchasing", "ready_to_purchase", "approval_required"];
     switch (c.type) {
       case "submitFunding":
@@ -334,13 +345,27 @@ export class DemoService implements ApplicationService {
         order.dispute = undefined; break;
       case "cancel":
         if (!customer && !provider) return permission();
-        if (["cancelled", "delivery_confirmed"].includes(order.state) || !text(c.reason)) return invalid();
+        if (["cancelled", "delivery_confirmed"].includes(order.state) || order.cancellationRequested || order.dispute
+          || order.funding.some(f => f.status === "pending") || !text(c.reason)) return invalid();
         if (["purchasing", "purchased", "delivering"].includes(order.state) || order.receipts.length) { order.cancellationRequested = c.reason; break; }
+        order.cancellationAllocation = { purchase: 0, fee: 0, refund: t.received, reason: c.reason.trim() };
         order.state = "cancelled"; order.confirmation = undefined; break;
       case "resolveCancellation":
-        if (!admin) return permission();
+        if (!admin || customer || provider) return permission();
         if (!order.cancellationRequested || !text(c.reason)) return invalid();
+        if (!validCancellation(c)) return fail("VALIDATION", "Alokasi harus sesuai struk, ongkos yang disepakati, dan dana terverifikasi.");
+        order.cancellationProposal = { id, purchase: c.purchase, fee: c.fee, refund: c.refund, reason: c.reason.trim(), proposedBy: this.actorId };
+        return success(id);
+      case "approveCancellation": {
+        if (!admin || customer || provider) return permission();
+        const proposal = order.cancellationProposal;
+        if (!order.cancellationRequested || !proposal || proposal.id !== c.proposalId || !text(c.reason)
+          || order.funding.some(f => f.status === "pending") || !validCancellation(proposal)) return invalid();
+        if (proposal.proposedBy === this.actorId) return fail("PERMISSION", "Administrator lain harus meninjau alokasi.");
+        order.cancellationAllocation = { purchase: proposal.purchase, fee: proposal.fee, refund: proposal.refund,
+          reviewedBy: this.actorId, reason: c.reason.trim() };
         order.state = "cancelled"; order.confirmation = undefined; order.cancellationRequested = undefined; break;
+      }
       case "createTransfer": {
         if (!admin) return permission();
         if (order.dispute || order.funding.some(f => f.status === "pending") || !["delivery_confirmed", "cancelled"].includes(order.state)) return invalid();
