@@ -14,7 +14,12 @@ function fixture(change = () => undefined) {
     if (!options.headers["x-vercel-protection-bypass"]) return new Response("<title>Authentication Required</title>", { status: 401, headers: { "Content-Type": "text/html" } });
     assert.equal(options.headers["x-vercel-protection-bypass"], bypass);
     if (url.pathname === "/login") return new Response("<h1>Masuk ke BeeTip</h1>", { headers: privateHeaders });
-    if (url.pathname === "/api/identity/support") return Response.json({ ok: false }, { status: 401, headers: privateHeaders });
+    if (url.pathname === "/api/identity/orders") {
+      assert.match(url.searchParams.get("id"), /^[0-9a-f-]{36}$/);
+    }
+    if (["/api/identity/support", "/api/identity/orders", "/api/identity/notifications"].includes(url.pathname)) {
+      return Response.json({ ok: false }, { status: 401, headers: privateHeaders });
+    }
     if (url.pathname === "/api/identity/auth") {
       assert.equal(options.headers.Origin, "https://unrelated.invalid");
       return Response.json({ ok: false, code: "PERMISSION" }, { status: 403, headers: privateHeaders });
@@ -103,6 +108,19 @@ test("fails if an invalid callback redirects to another origin", async () => {
   await assert.rejects(checkStaging({ origin, bypass, request: fixture(url => {
     if (url.pathname === "/auth/callback") return new Response(null, { status: 307, headers: { Location: "https://unrelated.invalid/login?error=confirmation" } });
   }) }));
+});
+
+test("fails if anonymous connected order or inbox data is exposed or cached", async () => {
+  for (const path of ["/api/identity/orders", "/api/identity/notifications"]) {
+    for (const response of [
+      Response.json({ ok: true }, { headers: privateHeaders }),
+      Response.json({ ok: false }, { status: 401, headers: { "Cache-Control": "public" } }),
+    ]) {
+      await assert.rejects(checkStaging({ origin, bypass, request: fixture(url => {
+        if (url.pathname === path) return response;
+      }) }));
+    }
+  }
 });
 
 test("fails if cross-origin Auth is accepted", async () => {
