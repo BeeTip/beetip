@@ -68,6 +68,8 @@ export { offerCommandSchema, offerQuerySchema } from "./connected-offers";
 export type { OfferCommand, ConnectedOffer, OfferListing } from "./connected-offers";
 export { acceptanceCommandSchema, orderQuerySchema, ordersPageSchema } from "./connected-orders";
 export type { AcceptanceCommand, ConnectedOrder } from "./connected-orders";
+export { amendmentCommandSchema } from "./connected-amendments";
+export type { AmendmentCommand, AmendmentItem, AmendmentRecord, AmendmentView } from "./connected-amendments";
 export { chatCommandSchema, chatQuerySchema, mergeChat } from "./connected-chat";
 export type { ChatMessage, ChatPage } from "./connected-chat";
 export { supportCaseActions, supportCategories, supportCommandSchema, supportQuerySchema, supportReferenceSchema } from "./connected-support";

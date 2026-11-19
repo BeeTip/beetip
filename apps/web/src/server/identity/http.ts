@@ -7,13 +7,13 @@ export function reply(value: unknown, status = 200) {
   return NextResponse.json(value, { status, headers: { "Cache-Control": "private, no-store" } });
 }
 
-export async function mutationBody(request: Request) {
+export async function mutationBody(request: Request, limit = 8192) {
   if (mode() !== "connected") throw new Error("UNAVAILABLE");
   const { origin } = identityConfig();
   if (!acceptsMutation(request.headers.get("origin"), origin, request.headers.get("content-type"))) throw new Error("PERMISSION");
-  if (Number(request.headers.get("content-length") ?? "0") > 8192) throw new Error("VALIDATION");
+  if (Number(request.headers.get("content-length") ?? "0") > limit) throw new Error("VALIDATION");
   const text = await request.text();
-  if (Buffer.byteLength(text) > 8192) throw new Error("VALIDATION");
+  if (Buffer.byteLength(text) > limit) throw new Error("VALIDATION");
   try { return JSON.parse(text); } catch { throw new Error("VALIDATION"); }
 }
 

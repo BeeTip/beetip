@@ -5,6 +5,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { ConnectedOrderDetail } from "./connected-order";
 import { connectedOrderState } from "./connected-order-state";
 
+vi.mock("./connected-amendments", () => ({ ConnectedAmendments: () => null }));
+
 let root: Root;
 let host: HTMLDivElement;
 const order = { id: "order", state: "awaiting_payment", reservationUntil: "2000-01-01T00:00:00Z", terms: { title: "Pesanan uji", items: [], budget: 20000, fee: 5000, destination: "Kampus", start: "2026-11-19T00:00:00Z", end: "2026-11-19T01:00:00Z" } };

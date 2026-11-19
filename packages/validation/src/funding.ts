@@ -35,13 +35,15 @@ export type FundingView = {
   purchaseReady: boolean;
   customer: boolean;
   requiredAmount: number;
+  outstandingAmount: number;
+  amendmentPending: boolean;
   accounts: { id: string; label: string }[];
   submission: {
-    id: string; accountId: string; reference: string; uploaded: boolean; reason: keyof typeof fundingReasons | null;
+    id: string; accountId: string; reference: string; amount: number; uploaded: boolean; reason: keyof typeof fundingReasons | null;
   } | null;
 };
 
 export type FundingQueueItem = {
   id: string; orderId: string; accountId: string; accountLabel: string; reference: string;
-  amount: number; submittedAt: string; expiresAt: string;
+  amount: number; submittedAt: string; expiresAt: string | null;
 };
