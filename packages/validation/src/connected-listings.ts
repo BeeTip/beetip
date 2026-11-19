@@ -1,6 +1,13 @@
 import { z } from "zod";
 
 const rupiah = z.number().int().min(0).max(150000);
+export const connectedShoppingItems = z.array(z.object({
+  name: z.string().trim().min(1).max(100),
+  specification: z.string().trim().max(200),
+  quantity: z.number().int().min(1).max(50),
+  unitBudget: rupiah.min(1000),
+}).strict()).min(1).max(20);
+
 export const connectedListingSchema = z.object({
   type: z.enum(["request", "trip"]),
   title: z.string().trim().min(4).max(100),
@@ -8,7 +15,7 @@ export const connectedListingSchema = z.object({
   category: z.enum(["Makanan", "Minuman", "Belanja"]),
   area: z.string().trim().min(2).max(100),
   destination: z.string().trim().min(2).max(200),
-  items: z.array(z.object({ name: z.string().trim().min(1).max(100), specification: z.string().trim().max(200), quantity: z.number().int().min(1).max(50), unitBudget: rupiah.min(1000) }).strict()).min(1).max(20),
+  items: connectedShoppingItems,
   fee: rupiah,
   bound: rupiah,
   negotiable: z.boolean(),

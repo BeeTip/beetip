@@ -40,6 +40,7 @@ export const notificationRegistrySeed = {
 
 export const notificationRegistry = {
   ...notificationRegistrySeed,
+  amendment_action: { ...notificationRegistrySeed.amendment_action, implemented: true },
   funding_review: { ...notificationRegistrySeed.funding_review, implemented: true },
   support_opened: { ...notificationRegistrySeed.support_opened, email: "in_app_only" },
   support_message: { ...notificationRegistrySeed.support_message, implemented: true },

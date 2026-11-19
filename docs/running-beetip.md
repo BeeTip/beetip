@@ -1,6 +1,6 @@
 # Run and demonstrate BeeTip
 
-For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support and synthetic incoming funding with separate test accounts. Connected purchasing, handover and settlement remain release work.
+For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support, amendments and synthetic incoming funding with separate test accounts. Connected purchasing, handover and settlement remain release work.
 
 ## Start the full synthetic demo
 
@@ -67,6 +67,7 @@ Use separate browser profiles for two confirmed synthetic accounts. Do not use r
 5. Open **Chat pesanan** from the order, send text in both accounts and refresh to confirm saved history. Disconnect one account, send from the other and reconnect to recover missed messages. Follow [private-chat acceptance](connected-chat.md) for response-loss retry, revoked access and logout checks. Follow [reservation expiry](connected-expiry.md) to verify a disposable unpaid order expires with all tabs closed and retains read-only chat history. Use the guarded synthetic harness rather than altering retained support.
 6. Open **Hubungi bantuan** as a member, then claim the case from an MFA-enabled support account. Reply, resolve, and reopen it. Use a separate lead account to rehearse reassignment. [Private support walkthrough](connected-support.md).
 7. In a disposable funding rehearsal, upload synthetic evidence from the customer’s order and review it with an assigned finance account using MFA. Confirm the order shows funding verified only after the bank review. [Incoming funding walkthrough and configuration](connected-funding.md).
+8. As the provider, open **Perubahan pesanan** and propose an increased shopping budget. As the customer, compare the original and proposed amounts, then approve the exact proposal. Confirm purchasing remains blocked until an assigned finance operator verifies the synthetic top-up. [Order amendment walkthrough](connected-amendments.md).
 
 ## UX acceptance for each slice
 
@@ -78,6 +79,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 | Failed fetch | A clear error and retry control without displaying another account's cached data. |
 | Slow or uncertain mutation | A pending state that prevents duplicate submission; retry reuses the original identity and payload. |
 | Stale terms or exhausted capacity | A conflict message requiring a refreshed review before acceptance. |
+| Proposed order change | Both parties can distinguish the original order, proposed terms and current approved total. The customer sees the amount still due after approval. |
 | Offline message | Preserve the in-memory attempt and explain whether it is pending, failed or committed. |
 | Expired reservation | Use server-derived status and show the recovery action; do not imply a verified payment. |
 | Funding review | Show clearly whether evidence is still a draft, awaiting review or verified. Keep the next step and any amount still due visible on the order. |

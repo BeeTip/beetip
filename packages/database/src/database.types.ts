@@ -546,6 +546,7 @@ export type Database = {
           provider_id: string
           request_id: string | null
           state: string
+          terms_version: number
           trip_id: string | null
         }
         Insert: {
@@ -558,6 +559,7 @@ export type Database = {
           provider_id: string
           request_id?: string | null
           state?: string
+          terms_version?: number
           trip_id?: string | null
         }
         Update: {
@@ -570,6 +572,7 @@ export type Database = {
           provider_id?: string
           request_id?: string | null
           state?: string
+          terms_version?: number
           trip_id?: string | null
         }
         Relationships: [
@@ -739,6 +742,18 @@ export type Database = {
         }
         Returns: string
       }
+      amend_order: {
+        Args: {
+          p_action: string
+          p_amendment?: string
+          p_items?: Json
+          p_operation_id: string
+          p_order: string
+          p_reason?: string
+          p_version: number
+        }
+        Returns: string
+      }
       browse_listings: {
         Args: {
           p_before?: string
@@ -826,6 +841,7 @@ export type Database = {
         Args: { p_body: string; p_operation_id: string }
         Returns: string
       }
+      read_amendments: { Args: { p_order: string }; Returns: Json }
       read_notification: { Args: { p_id: string }; Returns: undefined }
       read_order: { Args: { p_id: string }; Returns: Json }
       save_listing: {

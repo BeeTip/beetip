@@ -132,7 +132,7 @@ try {
   await expect(author.page.getByRole("link", { name: "Lihat pesanan", exact: true })).toBeVisible();
   assert.deepEqual(attempts[0], attempts[1]);
   await author.page.getByRole("link", { name: "Lihat pesanan", exact: true }).click();
-  await expect(author.page.getByRole("heading", { name: "Rincian yang disepakati", exact: true })).toBeVisible();
+  await expect(author.page.getByRole("heading", { name: "Kesepakatan awal", exact: true })).toBeVisible();
   for (const width of [390, 768, 1440]) {
     await author.page.setViewportSize({ width, height: 900 });
     assert(await author.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Overflow at ${width}`);
@@ -143,7 +143,7 @@ try {
   const logout = await author.context.newPage();
   await logout.goto(`${origin}/account`);
   await logout.getByRole("button", { name: "Keluar", exact: true }).click();
-  await expect(author.page.getByRole("heading", { name: "Rincian yang disepakati", exact: true })).toHaveCount(0);
+  await expect(author.page.getByRole("heading", { name: "Kesepakatan awal", exact: true })).toHaveCount(0);
   checks.push("fixed-price UI acceptance, committed response loss and original-command retry, private detail at three widths, cross-tab logout clearing");
   console.log(JSON.stringify({ result: "PASS", checks, boundary: "Dedicated development synthetic orders only; no email, funding, payment or production release evidence" }));
 } finally {

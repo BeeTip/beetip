@@ -107,16 +107,21 @@ export function ConnectedFunding({ orderId, memberId, refreshKey }: { orderId: s
     {readError && <div role="alert"><p>{readError}</p><Button onClick={update}>Coba lagi</Button></div>}
     {!view && !readError && <p role="status">Memuat status dana...</p>}
     {view && <>
-      <p role="status">{statuses[view.state]}. {view.purchaseReady ? "Syarat dana untuk belanja terpenuhi." : "Belanja menunggu dana yang terverifikasi."}</p>
-      {view.state === "unpaid" && (!view.payable || !available || view.accounts.length === 0) && view.customer &&
+      <p role="status">{statuses[view.state]}. {view.amendmentPending ? "Belanja menunggu keputusan perubahan." : view.purchaseReady ? "Syarat dana untuk belanja terpenuhi." : "Belanja menunggu dana yang terverifikasi."}</p>
+      <p>Total dana yang diperlukan {money.format(view.requiredAmount)}.</p>
+      {view.outstandingAmount > 0 && view.outstandingAmount < view.requiredAmount &&
+        <p>Kekurangan dana terverifikasi {money.format(view.outstandingAmount)}.</p>}
+      {view.customer && view.outstandingAmount > 0 && view.state !== "draft" && view.state !== "pending" &&
+        (!view.payable || !available || view.accounts.length === 0) &&
         <p>Pengiriman dana belum tersedia untuk pesanan ini.</p>}
       {view.state === "pending" && !view.payable && <p>Reservasi berakhir. <Link href="/support">Hubungi bantuan</Link> jika bukti masih perlu ditangani.</p>}
       {view.submission?.reason && <p>{fundingReasons[view.submission.reason]}.</p>}
       {view.submission?.uploaded && available && <a href={evidenceUrl(view.submission.id)} download>Unduh bukti saya</a>}
-      {view.payable && available && view.accounts.length > 0 && (view.state === "unpaid" || view.state === "rejected") &&
-        <form className="stack" onSubmit={event => begin(event, view.requiredAmount)}>
+      {view.customer && view.payable && available && view.accounts.length > 0 && view.outstandingAmount > 0 &&
+        view.state !== "draft" && view.state !== "pending" &&
+        <form className="stack" onSubmit={event => begin(event, view.outstandingAmount)}>
           <p>Simulasi. Gunakan bukti dan referensi contoh. Jangan transfer uang.</p>
-          <p>Total dana yang diperlukan {money.format(view.requiredAmount)}.</p>
+          <p>Nominal bukti yang perlu dikirim {money.format(view.outstandingAmount)}.</p>
           <label>Akun penampung uji<select name="account" required defaultValue=""><option value="" disabled>Pilih akun</option>
             {view.accounts.map(account => <option key={account.id} value={account.id}>{account.label}</option>)}
           </select></label>
@@ -124,16 +129,17 @@ export function ConnectedFunding({ orderId, memberId, refreshKey }: { orderId: s
           <Button type="submit" disabled={mutation.busy}>{mutation.busy ? "Menyimpan..." : "Lanjut unggah bukti"}</Button>
         </form>}
       {view.state === "draft" && view.submission && (() => {
-        const { id, accountId, reference, uploaded } = view.submission;
-        const canSubmit = view.payable && available && view.accounts.some(account => account.id === accountId);
+        const { id, accountId, reference, uploaded, amount } = view.submission;
+        const stale = amount !== view.outstandingAmount;
+        const canSubmit = !stale && view.payable && available && view.accounts.some(account => account.id === accountId);
         return <div className="stack" key={id}>
-          <p>Referensi <span className="break-all">{reference}</span>. Total {money.format(view.requiredAmount)}.</p>
+          <p>Referensi <span className="break-all">{reference}</span>. Nominal draf {money.format(amount)}.</p>
           {canSubmit && <form className="stack" onSubmit={event => submit(event, id)}>
             {uploaded ? <p>Gambar tersimpan dan siap dikirim.</p> :
               <label>Bukti transfer uji (JPG atau PNG, maks. 2 MB)<input name="evidence" type="file" accept="image/png,image/jpeg" required /></label>}
             <Button type="submit" disabled={mutation.busy}>{mutation.busy ? "Memproses..." : "Kirim untuk diperiksa"}</Button>
           </form>}
-          {!canSubmit && <p>Draf ini sudah tidak dapat dikirim.</p>}
+          {!canSubmit && <p>{stale ? "Nominal berubah. Buang draf ini untuk menggunakan nominal terbaru." : "Draf ini sudah tidak dapat dikirim."}</p>}
           <Button variant="secondary" disabled={mutation.busy} onClick={() => void mutation.run(async () => {
             await mutation.command({ action: "discard", id });
             update();
@@ -217,7 +223,7 @@ function FundingReview({ row, memberId, available, onDecision }: {
   return <article className="panel stack">
     <h2>{row.accountLabel}</h2>
     <p>Pengajuan <span className="break-all">{row.reference}</span> sebesar {money.format(row.amount)}.</p>
-    <p>Batas pemeriksaan {wib.format(new Date(row.expiresAt))} WIB.</p>
+    {row.expiresAt && <p>Batas pemeriksaan {wib.format(new Date(row.expiresAt))} WIB.</p>}
     {available && <>
       <a href={evidenceUrl(row.id)} download>Unduh bukti transfer</a>
       <form className="stack" onSubmit={verify}>

@@ -23,6 +23,7 @@ const admin = createClient(stack.API_URL, stack.SECRET_KEY, options);
 const sql = new pg.Client({ connectionString: db.href, statement_timeout: 10000 });
 const password = randomBytes(24).toString("base64url");
 const fundingPath = `${origin}/api/identity/funding`;
+const amendmentPath = `${origin}/api/identity/amendments`;
 const account = randomUUID(), unusedAccount = randomUUID();
 const reference = `TEST${randomUUID().replaceAll("-", "").toUpperCase()}`;
 let browser;
@@ -99,6 +100,111 @@ async function createOrder(customer, provider) {
   return (await response.json()).orderId;
 }
 
+async function amendments(customer, provider, operator, unrelated, order, image) {
+  const headers = member => ({ Origin: origin, "X-Beetip-Member": member.id });
+  await checked(await unrelated.context.request.get(`${amendmentPath}?id=${order}`), 403);
+  const providerPage = provider.page, customerPage = customer.page;
+  await providerPage.goto(`${origin}/orders/${order}`);
+  const proposalToggle = providerPage.getByText("Usulkan perubahan barang atau biaya", { exact: true });
+  await expect(proposalToggle).toBeVisible();
+  await expect(providerPage.getByLabel("Alasan perubahan")).toBeHidden();
+  await proposalToggle.click();
+  await providerPage.getByLabel("Nama barang").fill("Nasi pengganti");
+  await providerPage.getByLabel("Batas harga per barang (Rp)").fill("30000");
+  await providerPage.getByLabel("Alasan perubahan").fill("Stok habis");
+  const attempts = [];
+  await providerPage.route(amendmentPath, async route => {
+    if (route.request().method() !== "POST") return route.continue();
+    attempts.push(route.request().postData());
+    if (attempts.length > 1) return route.continue();
+    const response = await route.fetch();
+    assert.equal(response.status(), 200);
+    await route.abort();
+  });
+  await providerPage.getByRole("button", { name: "Kirim usulan" }).click();
+  await providerPage.getByRole("button", { name: "Ulangi permintaan terakhir" }).click();
+  await expect(providerPage.getByText("Usulan 1 · Menunggu persetujuan")).toBeVisible();
+  assert.equal(attempts.length, 2);
+  assert.equal(attempts[0], attempts[1]);
+  await providerPage.unroute(amendmentPath);
+  const getAmendments = async member =>
+    (await (await checked(await member.context.request.get(`${amendmentPath}?id=${order}`), 200)).json()).amendment;
+  const amendmentId = (await getAmendments(customer)).history[0].id;
+  const approve = { operationId: randomUUID(), orderId: order, version: 1, action: "approve", amendmentId };
+  for (const actor of [provider, unrelated]) {
+    await checked(await actor.context.request.post(amendmentPath, { data: approve, headers: headers(actor) }), 403);
+  }
+  await checked(await customer.context.request.post(amendmentPath, {
+    data: approve, headers: { ...headers(customer), Origin: "https://wrong.invalid" },
+  }), 403);
+  await checked(await customer.context.request.post(amendmentPath, { data: approve, headers: headers(provider) }), 403);
+  assert.equal((await view(customer, order)).data.purchaseReady, false);
+  await customerPage.reload();
+  await expect(customerPage.getByText("Nasi pengganti", { exact: false })).toBeVisible();
+  await customerPage.getByRole("button", { name: "Setujui perubahan" }).click();
+  await expect(customerPage.getByText("Rincian yang berlaku · Versi 2")).toBeVisible();
+  await expect(customerPage.getByText("Kekurangan dana terverifikasi", { exact: false })).toBeVisible();
+  await expect(customerPage.getByText("Menunggu tambahan dana", { exact: true })).toBeVisible();
+  await expect(customerPage.getByText("Reservasi sampai", { exact: false })).toHaveCount(0);
+  const ordersPage = await provider.context.newPage();
+  await ordersPage.goto(`${origin}/account/orders`);
+  await expect(ordersPage.getByText("Menunggu tambahan dana", { exact: true })).toBeVisible();
+  assert.equal((await view(provider, order)).data.outstandingAmount, 10000);
+  assert.equal((await view(provider, order)).data.purchaseReady, false);
+  await checked(await customer.context.request.post(amendmentPath, { data: approve, headers: headers(customer) }), 409);
+  const inboxPath = `${origin}/api/identity/notifications`;
+  for (const actor of [provider, customer]) {
+    const inbox = await (await checked(await actor.context.request.get(inboxPath), 200)).json();
+    const entries = inbox.items.filter(entry => entry.event_type === "amendment_action");
+    assert.equal(entries.length, 1);
+    const target = await (await checked(await actor.context.request.get(`${inboxPath}/${entries[0].id}/target`), 200)).json();
+    assert.equal(target.target, `/orders/${order}`);
+    assert(await actor.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "Amendment viewport overflows");
+  }
+
+  await sql.query("update public.reservations set expires_at=now()-interval '1 minute' where order_id=$1", [order]);
+  const topupReference = `TEST${randomUUID().replaceAll("-", "").toUpperCase()}`;
+  await customerPage.reload();
+  await customerPage.getByLabel("Akun penampung uji").selectOption(account);
+  await customerPage.getByLabel("Referensi transfer uji").fill(topupReference);
+  await customerPage.getByRole("button", { name: "Lanjut unggah bukti" }).click();
+  const draftMessage = customerPage.getByText("Nominal draf", { exact: false });
+  await expect(draftMessage).toContainText("10.000");
+  await customerPage.getByLabel("Bukti transfer uji", { exact: false })
+    .setInputFiles({ name: "sintetis.png", mimeType: "image/png", buffer: image });
+  await customerPage.getByRole("button", { name: "Kirim untuk diperiksa" }).click();
+  await expect(customerPage.getByText("Menunggu pemeriksaan bank", { exact: false })).toBeVisible();
+
+  await operator.page.goto(`${origin}/account/funding?order=${order}`);
+  await expect(operator.page.getByText(topupReference, { exact: true })).toBeVisible();
+  await operator.page.getByLabel("Akun pada catatan bank").selectOption(account);
+  await operator.page.getByLabel("Referensi pada catatan bank").fill(topupReference);
+  await operator.page.getByLabel("Nominal pada catatan bank").fill("10000");
+  await operator.page.getByLabel("Saya sudah memeriksa catatan bank uji.").check();
+  await operator.page.getByRole("button", { name: "Verifikasi dana" }).click();
+  await expect(operator.page.getByText("Pemeriksaan selesai. Dana terverifikasi.")).toBeVisible();
+  assert.equal((await view(provider, order)).data.purchaseReady, true);
+  await ordersPage.reload();
+  await expect(ordersPage.getByText("Dana telah diverifikasi", { exact: true })).toBeVisible();
+  await ordersPage.close();
+
+  await providerPage.reload();
+  await expect(providerPage.getByText("Dana telah diverifikasi", { exact: true })).toBeVisible();
+  await proposalToggle.click();
+  await providerPage.getByLabel("Nama barang").fill("Nasi varian lain");
+  await providerPage.getByLabel("Alasan perubahan").fill("Varian habis");
+  await providerPage.getByRole("button", { name: "Kirim usulan" }).click();
+  await expect(providerPage.getByText("Usulan 2 · Menunggu persetujuan")).toBeVisible();
+  await customerPage.reload();
+  await customerPage.getByRole("button", { name: "Tolak perubahan" }).click();
+  await expect(customerPage.getByText("Usulan 2 · Ditolak")).toBeVisible();
+  const final = await getAmendments(customer);
+  assert.equal(final.version, 2);
+  assert.equal(final.items[0].name, "Nasi pengganti");
+  assert.equal((await view(provider, order)).data.purchaseReady, true);
+  console.log("PASS BTP-13 actual Auth, mobile proposal and decisions, lost-response replay, stale and unauthorized commands, counterpart inbox and MFA/Storage top-up after original deadline");
+}
+
 try {
   await sql.connect();
   browser = await chromium.launch({ executablePath: process.env.BEETIP_BROWSER_EXECUTABLE });
@@ -166,6 +272,7 @@ try {
   assert.equal((await view(provider, order)).data.purchaseReady, true);
   const notification = await checked(await customer.context.request.get(`${origin}/api/identity/notifications`), 200);
   assert.match(await notification.text(), /funding_review/);
+  if (process.argv.includes("--amendments")) await amendments(customer, provider, operator, unrelated, order, image);
   await sql.query("update public.staff_roles set revoked_at=now() where member_id=$1", [operator.id]);
   await checked(await operator.context.request.get(`${fundingPath}?view=queue`), 403);
   await download(operator, id, 403);
