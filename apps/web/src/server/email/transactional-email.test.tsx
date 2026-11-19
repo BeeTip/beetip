@@ -18,6 +18,8 @@ const rpc = (name: string) => `${supabaseUrl}/rest/v1/rpc/btp11_${name}`;
 const claim = { id: dispatchId, lease_token: "f0000000-0000-4000-8000-000000000002" };
 
 function config() {
+  vi.stubEnv("BEETIP_MODE", "connected");
+  vi.stubEnv("VERCEL_ENV", "");
   vi.stubEnv("APP_ORIGIN", localOrigin);
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", supabaseUrl);
   vi.stubEnv("BEETIP_EMAIL_SUPABASE_SECRET_KEY", "sb_secret_fixture");

@@ -28,7 +28,7 @@ const hash = address => createHash("sha256").update(address).digest("hex");
 
 try {
   await admin.connect();
-  for (const role of ["anon", "authenticated", "service_role"]) {
+  for (const role of ["anon", "authenticated"]) {
     await admin.query(`do $$ begin if not exists(select 1 from pg_roles where rolname='${role}') then create role ${role}; end if; end $$`);
   }
   await admin.query(`create database ${name} encoding 'UTF8' template template0`);
