@@ -36,10 +36,10 @@ function ConnectedOrderContent({ id, memberId }: { id: string; memberId: string 
   const time = (value: string) => new Date(value).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) + " WIB";
   if (error) return <div role="alert"><p>{error}</p><Button onClick={() => { setError(""); setAttempt(attempt + 1); }}>Coba lagi</Button></div>;
   if (!order) return <p role="status">Memuat pesanan...</p>;
-  const completed = ["purchased", "purchase_partial", "purchase_unavailable"].includes(order.state);
+  const completed = ["purchased", "purchase_partial", "purchase_unavailable", "delivering", "delivery_confirmed"].includes(order.state);
   const refresh = () => setAttempt(value => value + 1);
   const actions = <>
-    <ConnectedPurchase orderId={id} memberId={memberId} refreshKey={attempt} closed={["expired", "cancelled"].includes(order.state)} onChange={refresh} />
+    <ConnectedPurchase orderId={id} memberId={memberId} refreshKey={attempt} orderState={order.state} closed={["expired", "cancelled"].includes(order.state)} onChange={refresh} />
     <ConnectedAmendments orderId={id} memberId={memberId} refreshKey={attempt} completed={completed} onChange={refresh} />
     <ConnectedFunding orderId={id} memberId={memberId} refreshKey={attempt} />
     <Link className="button button-secondary" href={`/chat/${id}`}>Pesan pesanan</Link><Link href="/account/orders">Kembali ke daftar pesanan</Link>

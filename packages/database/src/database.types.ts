@@ -846,6 +846,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      confirm_handover: {
+        Args: { p_digest: string; p_order: string }
+        Returns: string
+      }
       funding_command: {
         Args: {
           p_account?: string
@@ -867,6 +871,10 @@ export type Database = {
         Returns: Json
       }
       funding_view: { Args: { p_order: string }; Returns: Json }
+      issue_handover_code: {
+        Args: { p_checked: boolean; p_order: string }
+        Returns: Json
+      }
       notification_inbox: {
         Args: { p_before?: string; p_before_id?: string }
         Returns: Json
@@ -930,6 +938,7 @@ export type Database = {
         }
         Returns: string
       }
+      start_delivery: { Args: { p_order: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

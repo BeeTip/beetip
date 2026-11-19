@@ -146,6 +146,8 @@ Normalize receipts into receipt headers, lines, discounts, and order allocations
 
 [Connected purchase progress](connected-purchases.md) implements private receipts and allocations on the payable-order lock. The provider can reuse remaining lines across a trip. Customers see per-order gross, discount and net, while the provider retains access to the shared original. Recorded purchases pin the affected approved item rows during subsequent amendments.
 
+[Connected handover](connected-handover.md) lets the assigned provider start delivery after a full or partial purchase with goods to hand over. The customer inspects the goods and generates a 60-second code. The provider scans the QR or enters the backup code to confirm receipt. Confirmation records fulfillment in the synthetic pilot.
+
 Index board filters by active state, kind, cutoff, and ID. Index participant orders separately by customer and provider with created time and ID. Index active reservations by listing/trip and expiry, offers by listing and author, receipts by normalized external reference, and transfers by order and status. Use keyset pagination. Messaging and outbox indices are specified in [messaging contracts](messaging.md).
 
 ### Atomic commands and single ownership

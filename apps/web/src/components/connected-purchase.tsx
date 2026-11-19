@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import type { PurchaseCommand, PurchaseView } from "@beetip/validation";
 import { connectedOrderState } from "./connected-order-state";
+import { ConnectedHandover } from "./connected-handover";
 import { Button } from "./ui";
 
 const endpoint = "/api/identity/purchases";
@@ -83,8 +84,8 @@ function AllocationForm({ items, receipt, save, disabled }: {
   </form>;
 }
 
-export function ConnectedPurchase({ orderId, memberId, refreshKey, closed, onChange }: {
-  orderId: string; memberId: string; refreshKey: number; closed: boolean; onChange: () => void;
+export function ConnectedPurchase({ orderId, memberId, refreshKey, orderState, closed, onChange }: {
+  orderId: string; memberId: string; refreshKey: number; orderState: string; closed: boolean; onChange: () => void;
 }) {
   const [view, setView] = useState<PurchaseView>();
   const [loadError, setLoadError] = useState("");
@@ -147,7 +148,7 @@ export function ConnectedPurchase({ orderId, memberId, refreshKey, closed, onCha
   const receipt = view.receipts.find(row => row.id === receiptId);
   const locked = Boolean(pending || busy);
   const base = () => ({ orderId, version: view.version, operationId: crypto.randomUUID() });
-  return <section className="stack" aria-label="Progres belanja">
+  return <><section className="stack" aria-label="Progres belanja">
     <h2>Progres belanja</h2>
     {view.customerName && <p>Pesanan untuk {view.customerName}</p>}
     {loadError && <p role="alert">{loadError} <Button variant="secondary" onClick={() => setAttempt(attempt + 1)}>Muat ulang progres</Button></p>}
@@ -204,5 +205,9 @@ export function ConnectedPurchase({ orderId, memberId, refreshKey, closed, onCha
         <Link href={`/orders/${order.id}`}>{order.name} <span>({order.id.slice(0, 8)})</span></Link> · {connectedOrderState(order.state)}
       </li>)}</ul>
     </nav>}
-  </section>;
+  </section>
+    {(["delivering", "delivery_confirmed"].includes(orderState) || view.provider && ["purchased", "purchase_partial"].includes(orderState)) &&
+      <ConnectedHandover key={orderState === "delivery_confirmed" ? "confirmed" : "pending"}
+        orderId={orderId} memberId={memberId} orderState={orderState} provider={view.provider} onChange={onChange} />}
+  </>;
 }
