@@ -1,6 +1,6 @@
 # Messaging and notification contracts
 
-This reference specifies the connected pilot. The implementation records describe the actual contracts for [private order chat](connected-chat.md), [private support operations](connected-support.md), and [in-app notifications](notifications.md). Grouped application email and retention jobs remain proposed under their owning issues. The synthetic demo uses browser-local records.
+This reference specifies the connected pilot. The implementation records describe [private order chat](connected-chat.md), [private support operations](connected-support.md), [in-app notifications](notifications.md), and [transactional email](transactional-email.md). Retention jobs remain proposed under their owning issues. The synthetic demo uses browser-local records.
 
 ## Conversation ownership
 
@@ -82,13 +82,13 @@ In-app notification read state is independent of message read state. Read marker
 
 The owning business transaction writes both the durable change and its notification rows. Email intents exist before commit returns. Do not perform an email send or network call inside the database transaction. Notification failure after commit never rolls back an order or hides its in-app notification.
 
-Supabase Cron wakes a protected bounded Vercel job endpoint once per minute. The worker claims at most 25 due deliveries using row locks with skip-locked semantics, a lease token, and a 2-minute lease. Keep each run within the configured function limit and email request timeouts. Update status only when the lease token still matches. Another worker can reclaim an expired lease. The endpoint accepts no caller-selected SQL, RPC names, recipients, or message bodies. Its code invokes only fixed job RPCs, whose execution grants exclude ordinary users.
+Supabase Cron wakes a protected bounded Vercel job endpoint once per minute. The worker claims at most 10 due deliveries using row locks with skip-locked semantics, a lease token, and a 2-minute lease. An expired claim can be reclaimed before submission begins. An expired in-flight submission goes to reconciliation. Updates require the current lease token. The endpoint uses fixed job RPCs, recipients and copy derived by the service, and grants that exclude ordinary users.
 
-The proposed Supabase secret is broadly privileged at the database level. Keep its client factory in the server-only job module, prohibit imports from member-command modules, and verify the boundary in CI. This application restriction does not turn the key into a narrow database credential. A dedicated database role can replace it if deployment hardening requires stricter isolation.
+The Supabase secret is broadly privileged at the database level. Its server-only client exposes only the fixed RPCs for email jobs. Lint restricts imports to the worker and webhook routes. The replay interface uses the operator's member session and requires a current platform-admin role and verified MFA.
 
-Retry transient errors with jittered delays of 1, 5, 15, and 60 minutes, up to 5 attempts including the initial attempt. Respect provider retry hints. Permanent address or policy failures enter `dead_letter` and suppression. Operators can inspect sanitized outcomes and authorize replay. Missed scheduler runs leave durable work pending and trigger a heartbeat alert after 5 minutes.
+Retry explicit Brevo rate-limit responses with jittered delays of 1, 5, 15, and 60 minutes, up to 5 attempts including the initial attempt. Apply bounded provider retry hints. Verified permanent bounce and policy events suppress the destination. Operators can inspect sanitized outcomes and authorize replay. Missed scheduler runs leave durable work pending and trigger a heartbeat alert after 5 minutes.
 
-Use a stable email idempotency key per delivery. The proposed Resend provider documents a 24-hour key lifetime. An uncertain send older than that window requires operator reconciliation before replay, because an automatic retry can duplicate an already accepted email. A crash after provider acceptance and before database acknowledgment is explicitly ambiguous. Record provider IDs when available and verify signed delivery/bounce webhooks with deduplication by provider event ID. [Resend send API](https://resend.com/docs/api-reference/emails/send-email).
+Each Brevo dispatch generation has a stable UUID idempotency key. Ambiguous transport or worker outcomes wait for a provider callback or operator reconciliation. Operator replay of an uncertain dispatch requires a 30-minute wait and confirmation that the earlier request was not accepted. Webhooks use Brevo bearer authentication and a BeeTip-signed dispatch tag bound to the destination. Receipts are unique by dispatch, provider message ID, and normalized outcome. See [transactional email](transactional-email.md) for provider limits and the staged confirmation checklist.
 
 Provider acceptance, recipient-server delivery, bounce, and opened tracking are distinct outcomes. Avoid open tracking for pilot mail. Display an in-app record even when email fails. Do not claim exactly-once email delivery.
 
