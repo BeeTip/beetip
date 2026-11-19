@@ -3,7 +3,8 @@ import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import pg from "pg";
 
-const status = JSON.parse(execFileSync("rtk", ["proxy", "supabase", "status", "-o", "json"], {
+const workdir = process.env.BEETIP_TEST_LOCAL_STACK;
+const status = JSON.parse(execFileSync("rtk", ["proxy", "supabase", "status", "-o", "json", ...(workdir ? ["--workdir", workdir] : [])], {
   encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
 }));
 const api = new URL(status.API_URL);
