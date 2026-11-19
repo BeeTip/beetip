@@ -1,6 +1,6 @@
 # Run and demonstrate BeeTip
 
-For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support, amendments and synthetic incoming funding with separate test accounts. Connected purchasing, handover and settlement remain release work.
+For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support, amendments, synthetic incoming funding and receipt allocation with separate test accounts. Connected handover and settlement remain release work.
 
 ## Start the full synthetic demo
 
@@ -68,6 +68,7 @@ Use separate browser profiles for two confirmed synthetic accounts. Use dedicate
 6. Open **Hubungi bantuan** as a member, then claim the case from an MFA-enabled support account. Reply, resolve, and reopen it. Use a separate lead account to rehearse reassignment. [Private support walkthrough](connected-support.md).
 7. In a disposable funding rehearsal, upload synthetic evidence from the customer’s order and review it with an assigned finance account using MFA. Confirm the order shows funding verified only after the bank review. [Incoming funding walkthrough and configuration](connected-funding.md).
 8. As the provider, open **Perubahan pesanan** and propose an increased shopping budget. As the customer, compare the original and proposed amounts, then approve the exact proposal. Confirm purchasing remains blocked until an assigned finance operator verifies the synthetic top-up. [Order amendment walkthrough](connected-amendments.md).
+9. Once the order shows **Siap belanja**, open **Progres belanja** as the provider. Add a synthetic receipt, allocate quantities to the order and verify gross, discount and net in both accounts. For a shared trip, open the sibling order and allocate the remaining quantities. Finish shopping after marking any missing items and providing a reason. [Purchase progress walkthrough and receipt Storage configuration](connected-purchases.md).
 
 ## UX acceptance for each slice
 
@@ -84,6 +85,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 | Offline message | Preserve the in-memory attempt and explain whether it is pending, failed or committed. |
 | Expired reservation | Use server-derived status and show the recovery action; do not imply a verified payment. |
 | Funding review | Show clearly whether evidence is still a draft, awaiting review or verified. Keep the next step and any amount still due visible on the order. |
+| Shared receipt | Show the provider which customer's order is open and how much of each receipt line remains. Show the customer their own item charges, discount and unavailable quantities. |
 | Logout, account change or suspension | Clear private data and stop protected reads and sends. |
 | Narrow viewport or keyboard use | Readable content, reachable controls and focus, labeled fields, no horizontal overflow. |
 
@@ -117,4 +119,4 @@ Record the source commit, last migration, target environment and validation resu
 | Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
 | Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
 
-Production readiness requires connected fulfillment and settlement, [staged verification of transactional email and scheduling](transactional-email.md), funding evidence retention and late-money reconciliation, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track release validation and promotion. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate.
+Production readiness requires connected handover and settlement, [staged verification of transactional email and scheduling](transactional-email.md), evidence retention and late-money reconciliation, staging acceptance, real-device checks, backup/restore and compatible rollback rehearsal, and approved operating and financial arrangements. [BTP-21](https://github.com/BeeTip/beetip/issues/23), [BTP-23](https://github.com/BeeTip/beetip/issues/25) and [BTP-24](https://github.com/BeeTip/beetip/issues/26) track release validation and promotion. Use the [deployment runbook](vercel-deployment.md) when promoting a verified candidate.
