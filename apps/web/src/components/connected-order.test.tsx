@@ -22,7 +22,7 @@ it("uses server state even with an old deadline and refreshes expiry without a b
   let orderReads = 0;
   const fetch = vi.fn((url: string, options: RequestInit) => {
     expect(options.cache).toBe("no-store");
-    return Promise.resolve(url.includes("/funding")
+    return Promise.resolve(url.includes("/funding") || url.includes("/order-cases")
       ? { ok: true, json: async () => ({ memberId: "member", data: null }) }
       : response(orderReads++ === 0 ? "awaiting_payment" : "expired"));
   });
@@ -56,4 +56,38 @@ it("rejects a mismatched account response and labels unknown states honestly", a
   expect(host.textContent).toContain("Sesi berubah"); expect(host.textContent).not.toContain("Pesanan uji");
   expect(connectedOrderState("future_state")).toBe("Status belum tersedia");
   expect(connectedOrderState("funding_verified")).toBe("Dana telah diverifikasi");
+});
+
+it("submits cancellation from the connected order and reloads the amount on hold", async () => {
+  const allocation = { purchase: 0, fee: 5000, refund: 20000 };
+  const empty = { purchase: 0, fee: 0, refund: 0 };
+  let opened = false;
+  const fetch = vi.fn(async (url: string, options: RequestInit) => {
+    if (url.includes("/funding")) return { ok: true, json: async () => ({ memberId: "member", data: null }) };
+    if (!url.includes("/order-cases")) return response("funding_verified");
+    if (options.method === "POST") {
+      expect(options.headers).toMatchObject({ "X-Beetip-Member": "member" });
+      expect(JSON.parse(String(options.body))).toMatchObject({
+        orderId: "order", action: "open", payload: { kind: "cancellation", reason: "Barang tidak diperlukan" },
+      });
+      opened = true;
+      return { ok: true, json: async () => ({ ok: true }) };
+    }
+    return { ok: true, json: async () => ({ memberId: "member", orderId: "order", storageAvailable: true, data: {
+      verified: 25000, held: opened ? allocation : empty, allocation, unheld: opened ? empty : allocation,
+      access: "member", canCancel: !opened, canDispute: false, items: [],
+      case: opened ? { id: "case", kind: "cancellation", state: "open", reason: "Barang tidak diperlukan", evidence: [], proposal: null } : null,
+    } }) };
+  });
+  vi.stubGlobal("fetch", fetch);
+  await act(async () => root.render(<ConnectedOrderDetail id="order" memberId="member" />));
+  const button = [...host.querySelectorAll("button")].find(element => element.textContent === "Ajukan pembatalan");
+  expect(button).toBeDefined();
+  const form = button!.closest("form")!;
+  form.querySelector("textarea")!.value = "Barang tidak diperlukan";
+  await act(async () => form.requestSubmit());
+  expect(host.textContent).toContain("Pembatalan sedang ditinjau");
+  expect(host.textContent).toContain("Dana ditahan");
+  expect(host.textContent).toContain("Rp");
+  expect([...host.querySelectorAll("button")].some(element => element.textContent === "Ajukan pembatalan")).toBe(false);
 });

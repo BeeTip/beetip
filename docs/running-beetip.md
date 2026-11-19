@@ -1,6 +1,6 @@
 # Run and demonstrate BeeTip
 
-For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode to demonstrate real sign-in, orders, private chat, support, amendments, synthetic incoming funding, receipt allocation and handover with separate test accounts. Connected settlement remains release work.
+For a presentation, start with the synthetic demo. It runs without Supabase credentials and covers shopping, handover and settlement end to end. Use connected mode with separate test accounts to demonstrate sign-in, orders, private chat, support, amendments, synthetic incoming funding, receipt allocation, handover, cancellation and dispute review. Connected settlement remains release work.
 
 ## Start the full synthetic demo
 
@@ -72,6 +72,7 @@ Use separate browser profiles for two confirmed synthetic accounts. Use dedicate
 8. As the provider, open **Perubahan pesanan** and propose an increased shopping budget. As the customer, compare the original and proposed amounts, then approve the exact proposal. Confirm purchasing remains blocked until an assigned finance operator verifies the synthetic top-up. [Order amendment walkthrough](connected-amendments.md).
 9. Once the order shows **Siap belanja**, open **Progres belanja** as the provider. Add a synthetic receipt, allocate quantities to the order and verify gross, discount and net in both accounts. For a shared trip, open the sibling order and allocate the remaining quantities. Finish shopping after marking any missing items and providing a reason. [Purchase progress walkthrough and receipt Storage configuration](connected-purchases.md).
 10. As the provider, start delivery for the completed purchase. As the customer, inspect the goods and generate a handover code. In the provider session, scan the QR or enter the backup code within 60 seconds. Refresh both sessions and confirm the order shows delivery confirmed. [Connected handover walkthrough and device checks](connected-handover.md).
+11. Use a separate synthetic order to rehearse cancellation or a partial dispute under **Pembatalan dan sengketa**. Attach a test photo for a dispute. Have one scoped finance operator propose the purchase, service fee and refund amounts, then have a second scoped operator review them. Refresh the order as both participants and verify the decision and held amount. [Case walkthrough and private Storage configuration](connected-order-cases.md).
 
 ## UX acceptance for each slice
 
@@ -89,6 +90,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 | Expired reservation | Use server-derived status and show the recovery action; do not imply a verified payment. |
 | Funding review | Show clearly whether evidence is still a draft, awaiting review or verified. Keep the next step and any amount still due visible on the order. |
 | Shared receipt | Show the provider which customer's order is open and how much of each receipt line remains. Show the customer their own item charges, discount and unavailable quantities. |
+| Cancellation or dispute | Show the case status and affected amount. Distinguish a proposed allocation from an approved decision and keep the order history available. |
 | Logout, account change or suspension | Clear private data and stop protected reads and sends. |
 | Narrow viewport or keyboard use | Readable content, reachable controls and focus, labeled fields, no horizontal overflow. |
 

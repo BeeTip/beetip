@@ -4,7 +4,7 @@ export const notificationEventTypes = [
   "affiliation_decided", "offer_received", "offer_changed", "offer_withdrawn", "listing_changed",
   "support_opened", "support_assigned", "support_message", "staff_role_changed",
   "order_accepted", "order_expired", "order_cancelled", "funding_review", "amendment_action",
-  "delivery_confirmed", "order_message", "dispute_opened", "dispute_resolved", "transfer_review", "transfer_outcome",
+  "delivery_confirmed", "order_message", "dispute_opened", "dispute_resolved", "order_case_activity", "transfer_review", "transfer_outcome",
 ] as const;
 export type NotificationEventType = typeof notificationEventTypes[number];
 type Rule = {
@@ -36,12 +36,17 @@ export const notificationRegistrySeed = {
   dispute_resolved: { recipients: "parties_and_assignees", target: "order", template: "dispute_resolved.v1", title: "Sengketa diselesaikan", email: "summary", implemented: false },
   transfer_review: { recipients: "parties_and_assignees", target: "order", template: "transfer_review.v1", title: "Transfer perlu diperiksa", email: "summary", implemented: false },
   transfer_outcome: { recipients: "parties_and_assignees", target: "order", template: "transfer_outcome.v1", title: "Status transfer diperbarui", email: "summary", implemented: false },
-} as const satisfies Record<NotificationEventType, Rule>;
+} as const satisfies Record<Exclude<NotificationEventType, "order_case_activity">, Rule>;
 
 export const notificationRegistry = {
   ...notificationRegistrySeed,
   amendment_action: { ...notificationRegistrySeed.amendment_action, implemented: true },
   funding_review: { ...notificationRegistrySeed.funding_review, implemented: true },
+  order_cancelled: { ...notificationRegistrySeed.order_cancelled, implemented: true },
+  dispute_opened: { ...notificationRegistrySeed.dispute_opened, implemented: true },
+  dispute_resolved: { ...notificationRegistrySeed.dispute_resolved, implemented: true },
+  order_case_activity: { recipients: "parties_and_assignees", target: "order", template: "order_case_activity.v1",
+    title: "Kasus pesanan diperbarui", email: "in_app_only", implemented: true },
   support_opened: { ...notificationRegistrySeed.support_opened, email: "in_app_only" },
   support_message: { ...notificationRegistrySeed.support_message, implemented: true },
 } as const satisfies Record<NotificationEventType, Rule>;

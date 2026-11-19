@@ -151,8 +151,17 @@ describe("handover and settlement", () => {
     const h = setup(); h.must("customer2", { type: "cancel", orderId: "BTP-002", reason: "Tidak jadi" });
     expect(totals(h.state.orders[1])).toMatchObject({ refundDue: 70000, entitlement: 0 });
     h.must("customer", { type: "cancel", orderId: "BTP-001", reason: "Tidak bisa hadir" });
-    expect(h.state.orders[0].state).toBe("delivering"); h.must("admin1", { type: "resolveCancellation", orderId: "BTP-001", reason: "Biaya item tetap disetujui, ongkos dikembalikan" });
-    expect(totals(h.state.orders[0])).toMatchObject({ refundDue: 15000, entitlement: 55000 });
+    expect(h.state.orders[0].state).toBe("delivering");
+    const proposal = { type: "resolveCancellation", orderId: "BTP-001", reason: "Pemeriksaan struk dan pekerjaan selesai",
+      purchase: 52000, fee: 3000, refund: 15000 } as const;
+    expect(h.run("admin1", { ...proposal, purchase: 56000, refund: 11000 })).toMatchObject({ code: "VALIDATION" });
+    const proposalId = h.must("admin1", proposal);
+    expect(h.state.orders[0].state).toBe("delivering");
+    const approve = { type: "approveCancellation", orderId: "BTP-001", proposalId, reason: "Alokasi dan bukti diperiksa" } as const;
+    expect(h.run("admin1", approve)).toMatchObject({ code: "PERMISSION" });
+    h.must("admin2", approve);
+    expect(totals(h.state.orders[0])).toMatchObject({ cost: 55000, refundDue: 15000, entitlement: 55000 });
+    expect(h.state.orders[0].cancellationAllocation).toMatchObject({ purchase: 52000, fee: 3000, refund: 15000, reviewedBy: "admin2" });
   });
 });
 

@@ -7,12 +7,22 @@ describe("notification boundary and registry", () => {
     const migration = readFileSync(new URL("../../../supabase/migrations/20261119000000_notification_inbox.sql", import.meta.url), "utf8");
     const region = migration.split("-- registry:start")[1].split("-- registry:end")[0];
     expect(Object.keys(notificationRegistry).sort()).toEqual([...notificationEventTypes].sort());
-    expect(region.match(/^  \('/gm)).toHaveLength(notificationEventTypes.length);
+    expect(region.match(/^  \('/gm)).toHaveLength(Object.keys(notificationRegistrySeed).length);
     for (const [event, rule] of Object.entries(notificationRegistrySeed)) {
       expect(region).toContain(`('${event}','${rule.recipients}','${rule.target}','${rule.template}','${rule.title}','${rule.email}',${rule.implemented})`);
     }
     const funding = readFileSync(new URL("../../../supabase/migrations/20261119001000_btp12_incoming_funding.sql", import.meta.url), "utf8");
     expect(funding).toContain(`update private.notification_rules set implemented=${notificationRegistry.funding_review.implemented} where event_type='funding_review';`);
+  });
+  it("exposes case lifecycle notifications and keeps ordinary case activity in app", () => {
+    const cases = readFileSync(new URL("../../../supabase/migrations/20261119141454_btp16_order_cases.sql", import.meta.url), "utf8");
+    expect(notificationRegistry).toMatchObject({
+      order_case_activity: { email: "in_app_only", implemented: true },
+      order_cancelled: { implemented: true },
+      dispute_opened: { implemented: true },
+      dispute_resolved: { implemented: true },
+    });
+    expect(cases).toContain("('order_case_activity','parties_and_assignees','order','order_case_activity.v1','Kasus pesanan diperbarui','in_app_only',true)");
   });
   it("offers email preferences for support replies, with queue alerts delivered in app", () => {
     expect(notificationRegistry.support_opened.email).toBe("in_app_only");

@@ -30,6 +30,7 @@ const id = z.string().min(1);
 const items = z.array(z.object({ name: id, specification: z.string(), quantity: z.number().int().positive().max(50), unitBudget: amount })).min(1).max(20);
 const schedule = z.object({ start: timestamp, end: timestamp });
 const terms = z.object({ title: id, item: id, quantity: z.number().int().positive(), budget: amount, fee: amount, destination: id, window: id, items: items.optional() });
+const cancellationAmounts = z.object({ purchase: amount, fee: amount, refund: amount, reason: id });
 const orderSchema = z.object({
   id, listingId: id, customerId: id, providerId: id, terms,
   budget: amount, approvedItem: id,
@@ -43,6 +44,8 @@ const orderSchema = z.object({
   confirmation: z.object({ code: z.string().regex(/^\d{6}$/), expiresAt: timestamp, attempts: z.number().int().nonnegative(), used: z.boolean() }).optional(),
   retiredCodes: z.array(z.string().regex(/^\d{6}$/)).optional(),
   confirmedBy: id.optional(), confirmedAt: timestamp.optional(), cancellationRequested: id.optional(),
+  cancellationProposal: cancellationAmounts.extend({ id, proposedBy: id }).optional(),
+  cancellationAllocation: cancellationAmounts.extend({ reviewedBy: id.optional() }).optional(),
   ratings: z.array(z.object({ authorId: id, score: z.number().int().min(1).max(5), feedback: id })),
 });
 
@@ -70,6 +73,8 @@ export { acceptanceCommandSchema, orderQuerySchema, ordersPageSchema } from "./c
 export type { AcceptanceCommand, ConnectedOrder } from "./connected-orders";
 export { amendmentCommandSchema } from "./connected-amendments";
 export { purchaseCommandSchema, purchaseEvidenceQuery, purchaseViewSchema } from "./connected-purchase";
+export { orderCaseCommandSchema, orderCaseEvidenceQuery, orderCaseQuerySchema, orderCaseQueueSchema, orderCaseViewSchema } from "./order-cases";
+export type { OrderCaseCommand, OrderCaseQueue, OrderCaseView } from "./order-cases";
 export { handoverCommandSchema, handoverCodePattern, issuedHandoverSchema, type HandoverCommand } from "./connected-handover";
 export type { PurchaseCommand, PurchaseView } from "./connected-purchase";
 export type { AmendmentCommand, AmendmentItem, AmendmentRecord, AmendmentView } from "./connected-amendments";
