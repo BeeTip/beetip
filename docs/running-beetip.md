@@ -22,7 +22,7 @@ Stop the server before switching modes. Clear the shell override with `Remove-It
 
 Follow [development setup](development.md) to configure the ignored `apps/web/.env.local` from `.env.example`. All four settings are required: `BEETIP_MODE=connected`, the exact `APP_ORIGIN`, the dedicated development project's Supabase URL and its publishable key. User requests do not need a service credential. Apply and verify the repository migrations in order against the dedicated development database before running the corresponding feature.
 
-You can also rehearse against a disposable Supabase stack with Docker and the Supabase CLI. In a fresh directory, copy `supabase/config.toml`, `supabase/migrations`, `supabase/functions` and `supabase/templates` under `supabase/`. Give the copy a unique `project_id`, choose free ports and set the Auth site URL and callback URLs to match the local app origin below. Run `rtk proxy supabase start --workdir $stack`, where `$stack` is the absolute path to the fresh directory. Use that stack's API URL and publishable key in the app. Use the stack's own server-only key for the [synthetic funding storage rehearsal](connected-funding.md#evidence-and-notification-access). Stop the copy with `rtk proxy supabase stop --workdir $stack` when finished.
+You can also rehearse against a disposable Supabase stack with Docker and the Supabase CLI. In a fresh directory, copy `supabase/config.toml`, `supabase/migrations`, `supabase/functions` and `supabase/templates` under `supabase/`. Give the copy a unique `project_id`, choose free ports and set the Auth site URL and callback URLs to match the local app origin below. Set `enabled = false` under `[db.seed]` in the copy because this walkthrough creates its own synthetic records. Run `rtk proxy supabase start --workdir $stack`, where `$stack` is the absolute path to the fresh directory. Read the API URL and publishable key with `rtk proxy supabase status --workdir $stack` and set them as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` before building. Use the stack's own server-only key for the [synthetic funding storage rehearsal](connected-funding.md#evidence-and-notification-access). Stop the copy with `rtk proxy supabase stop --workdir $stack` when finished.
 
 ```powershell
 $env:BEETIP_MODE = 'connected'
@@ -58,7 +58,7 @@ Set `$stack` in the terminal running the test. The test creates a synthetic acco
 
 ## Connected walkthrough
 
-Use separate browser profiles for two confirmed synthetic accounts. Do not use retained operator accounts as customer fixtures.
+Use separate browser profiles for two confirmed synthetic accounts. Use dedicated synthetic accounts for customer, provider and operator actions. Start with the anonymous smoke test before adding fixtures so a failure can be traced to configuration or migrations.
 
 1. Browse `/` without signing in. The public board must exclude private destination and owner fields. An empty board should explain that there are no listings and keep filters and creation discoverable.
 2. Sign in as the requester, publish a future request with its budget, service fee, WIB cutoff and delivery window, and review it under **Listing saya**. Optional affiliation must not block ordinary confirmed accounts.
@@ -75,6 +75,7 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 
 | Situation | Expected experience |
 | --- | --- |
+| Order opened on mobile | The order status, amounts and next available action are easy to find together. Secondary details stay accessible without competing with the primary action. |
 | Loading or empty history | A visible status or empty state, with navigation still available. |
 | Failed fetch | A clear error and retry control without displaying another account's cached data. |
 | Slow or uncertain mutation | A pending state that prevents duplicate submission; retry reuses the original identity and payload. |
