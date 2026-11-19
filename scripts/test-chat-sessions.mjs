@@ -151,7 +151,10 @@ try {
   checks.push("two actual browser contexts receive a committed message before the 30-second fallback poll");
 
   let loseResponse = true;
+  let pauseCatchUp = true;
   const attempts = [];
+  await customer.page.route("**/api/identity/chat?*", route =>
+    pauseCatchUp ? route.abort("failed") : route.continue());
   await customer.page.route("**/api/identity/chat", async route => {
     const input = route.request().postDataJSON();
     if (input?.action !== "send") return route.continue();
@@ -164,10 +167,22 @@ try {
   const retry = customer.page.getByRole("button", { name: "Coba kirim pesan ini lagi", exact: true });
   await expect(retry).toBeVisible();
   await retry.click();
+  pauseCatchUp = false;
   await expect(retry).toHaveCount(0);
+  await expect(customer.page.getByLabel("Pesan", { exact: true })).toHaveValue("");
   assert.deepEqual(attempts[0], attempts[1]);
   assert.equal((await history(provider, order)).page.messages.filter(row => row.body === attempts[0].body).length, 1);
   checks.push("rendered failed attempt retries the original body/client ID after a lost committed response without duplicating the message");
+
+  loseResponse = true;
+  const recoveredBody = "Riwayat mengonfirmasi pesan yang tersimpan";
+  await customer.page.getByLabel("Pesan", { exact: true }).fill(recoveredBody);
+  await customer.page.getByRole("button", { name: "Kirim pesan", exact: true }).click();
+  await expect(customer.page.getByRole("list", { name: "Pesan tersimpan" }).getByText(recoveredBody, { exact: true })).toBeVisible({ timeout: 35000 });
+  await expect(customer.page.getByLabel("Pesan", { exact: true })).toHaveValue("");
+  await expect(retry).toHaveCount(0);
+  assert.equal(attempts.filter(attempt => attempt.body === recoveredBody).length, 1);
+  checks.push("automatic catch-up confirms a committed send and clears its composer without another submission");
 
   await provider.context.setOffline(true);
   await command(customer, "chat", { action: "send", order, clientId: randomUUID(), body: "Pesan saat penerima terputus" });
