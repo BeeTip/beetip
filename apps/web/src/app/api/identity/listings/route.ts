@@ -27,6 +27,8 @@ export async function POST(request: Request) {
     const { client, user } = await protectedClient();
     if (request.headers.get("X-Beetip-Member") !== user.id) throw new Error("PERMISSION");
     const input = parsed.data;
+    if (input.version === 0 && input.listing.status !== "active") throw new Error("VALIDATION");
+    if (input.listing.status !== "closed" && input.listing.negotiable) throw new Error("VALIDATION");
     const { data, error } = await client.rpc("save_listing", { p_operation_id: input.operationId, p_listing_id: input.listingId, p_version: input.version, p_listing: input.listing });
     if (error) return commandFailure(error);
     return reply({ ok: true, listingId: data });

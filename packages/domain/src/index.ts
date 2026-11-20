@@ -8,7 +8,7 @@ export type Listing = {
   id: string; ownerId: string; type: "request" | "trip"; title: string; shop: string;
   category: "Makanan" | "Minuman" | "Belanja"; area: string; window: string; cutoff: number;
   budget: number; fee: number; negotiable: boolean; bound: number; capacity: number;
-  spendingCapacity: number; item: string; quantity: number; closed: boolean;
+  spendingCapacity: number; item: string; quantity: number; closed: boolean; cancelled?: boolean;
   items?: ShoppingItem[]; schedule?: Schedule; destination?: string; moderation?: "active" | "paused" | "closed" | "removed";
 };
 export type Offer = { id: string; listingId: string; authorId: string; fee: number; budget: number; item: string; quantity: number; destination: string; window: string; items?: ShoppingItem[]; status: "active" | "withdrawn" | "accepted" };
@@ -36,7 +36,8 @@ export type Message = { id: string; orderId: string; authorId: string; text: str
 export type Audit = { operationId: string; actorId: string; type: string; targetId: string; resultId?: string; at: number; detail: string };
 export type State = { version: 1 | 2; support?: SupportThread[]; members: Member[]; listings: Listing[]; offers: Offer[]; orders: Order[]; messages: Message[]; audit: Audit[]; operations: string[] };
 export type Command =
-  | { type: "createListing"; listing: Omit<Listing, "id" | "ownerId" | "closed"> }
+  | { type: "createListing"; listing: Omit<Listing, "id" | "ownerId" | "closed" | "cancelled"> }
+  | { type: "cancelListing"; listingId: string }
   | { type: "offer"; listingId: string; fee: number; budget: number; item: string; quantity: number; destination: string; window: string; items?: ShoppingItem[] }
   | { type: "withdraw"; offerId: string }
   | { type: "accept"; offerId: string }
@@ -89,6 +90,7 @@ export function listingAvailability(listing: Listing, orders: Order[], now: numb
   if (listing.moderation === "removed") return "Dihapus";
   if (listing.moderation === "paused") return "Dijeda administrator";
   if (listing.moderation === "closed") return "Ditutup administrator";
+  if (listing.cancelled) return "Dibatalkan pemilik";
   if (listing.closed) return "Sudah diterima";
   if (listing.cutoff <= now) return "Waktu berakhir";
   const active = orders.filter(o => o.listingId === listing.id && o.state !== "cancelled");
@@ -203,6 +205,12 @@ export class DemoService implements ApplicationService {
       }
       listing.moderation = c.status; return success(listing.id);
     }
+    if (c.type === "cancelListing") {
+      const listing = this.state.listings.find(l => l.id === c.listingId && l.ownerId === this.actorId);
+      if (!listing) return fail("PERMISSION", "Hanya pemilik dapat membatalkan listing.");
+      listing.cancelled = true;
+      return success(listing.id);
+    }
     if (c.type === "takeRequest") {
       const listing = this.state.listings.find(l => l.id === c.listingId);
       if (!listing || listing.type !== "request" || listing.negotiable) return fail("INVALID_STATE", "Permintaan ini memerlukan penawaran dan persetujuan peminta.");
@@ -224,9 +232,8 @@ export class DemoService implements ApplicationService {
       if (l.items && (!validItems(l.items) || itemBudget(l.items) !== l.budget || itemSummary(l.items) !== l.item || l.items.reduce((n, i) => n + i.quantity, 0) !== l.quantity)) return fail("VALIDATION", "Total rincian barang tidak sesuai.");
       if (l.schedule && (!Number.isFinite(l.schedule.start) || !Number.isFinite(l.schedule.end) || l.schedule.start <= l.cutoff || l.schedule.end <= l.schedule.start || l.schedule.end - l.schedule.start > 86400000)) return fail("VALIDATION", "Waktu penerimaan harus sebelum pengantaran.");
       if (l.destination !== undefined && !text(l.destination)) return fail("VALIDATION", "Isi petunjuk serah terima.");
-      if (l.negotiable && (l.type === "request" ? l.bound < l.fee : l.bound > l.fee)) return fail("VALIDATION", "Batas negosiasi bertentangan dengan ongkos.");
-      if (l.fee > 150000 || l.bound > 150000) return fail("VALIDATION", "Ongkos jasa maksimal Rp150.000.");
-      this.state.listings.push({ ...structuredClone(l), id, ownerId: this.actorId, closed: false, moderation: "active" }); return success(id);
+      if (l.fee > 150000) return fail("VALIDATION", "Ongkos jasa maksimal Rp150.000.");
+      this.state.listings.push({ ...structuredClone(l), id, ownerId: this.actorId, negotiable: false, bound: l.fee, closed: false, cancelled: false, moderation: "active" }); return success(id);
     }
     if (c.type === "offer") {
       const l = this.state.listings.find(l => l.id === c.listingId);

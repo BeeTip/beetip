@@ -35,10 +35,10 @@ function Proposal({ items, disabled, propose }: { items: AmendmentItem[]; disabl
   return <form onSubmit={submit}><fieldset className="stack min-w-0" disabled={disabled}>
     {rows.map((item, index) => <fieldset key={item.key} className="stack min-w-0">
       <legend>Barang {index + 1}</legend>
-      <label>Nama barang<input value={item.name} required maxLength={100} onChange={event => edit(item.key, { name: event.target.value })} /></label>
-      <label>Spesifikasi<input value={item.specification} maxLength={200} onChange={event => edit(item.key, { specification: event.target.value })} /></label>
-      <label>Jumlah<input type="number" inputMode="numeric" value={item.quantity || ""} required min={1} max={50} onChange={event => edit(item.key, { quantity: Number(event.target.value) })} /></label>
-      <label>Batas harga per barang (Rp)<input type="number" inputMode="numeric" value={item.unitBudget || ""} required min={1000} max={150000} onChange={event => edit(item.key, { unitBudget: Number(event.target.value) })} /></label>
+      <label>Nama barang<input placeholder="Contoh: Nasi ayam" value={item.name} required maxLength={100} onChange={event => edit(item.key, { name: event.target.value })} /></label>
+      <label>Spesifikasi<input placeholder="Contoh: Sambal dipisah" value={item.specification} maxLength={200} onChange={event => edit(item.key, { specification: event.target.value })} /></label>
+      <label>Jumlah<input type="number" inputMode="numeric" placeholder="Contoh: 2" value={item.quantity || ""} required min={1} max={50} onChange={event => edit(item.key, { quantity: Number(event.target.value) })} /></label>
+      <label>Batas harga per barang (Rp)<input type="number" inputMode="numeric" placeholder="Contoh: 25000" value={item.unitBudget || ""} required min={1000} max={150000} onChange={event => edit(item.key, { unitBudget: Number(event.target.value) })} /></label>
       {rows.length > 1 && <Button type="button" variant="secondary" onClick={() => setRows(current => current.filter(row => row.key !== item.key))}>Hapus barang {index + 1}</Button>}
     </fieldset>)}
     {rows.length < 20 && <Button type="button" variant="secondary" onClick={() => {

@@ -21,13 +21,14 @@ test("multi-item creation, fixed acceptance, role dashboard and persisted suppor
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/");
   await page.locator(".create-fab").click(); await page.getByRole("button", { name: "Minta dibelikan", exact: false }).click();
   await page.getByLabel("Judul listing").fill("Kopi dan roti untuk kelas"); await page.getByLabel("Toko / lokasi belanja").fill("Kafe kampus");
+  await expect(page.getByLabel("Nama barang 1")).toHaveAttribute("placeholder", "Contoh: Nasi ayam");
   await page.getByLabel("Nama barang 1").fill("Kopi"); await page.getByLabel("Jumlah barang 1").fill("2"); await page.getByLabel("Maksimal harga per barang 1").fill("20000");
   await page.getByRole("button", { name: "Tambah barang" }).click(); await page.getByLabel("Nama barang 2").fill("Roti");
   await expect(page.getByText("Maksimal total belanja:", { exact: false })).toContainText("50.000");
   await page.reload(); await page.getByRole("button", { name: "Minta dibelikan", exact: false }).click(); await expect(page.getByLabel("Nama barang 2")).toHaveValue("Roti");
-  await page.getByRole("button", { name: "Lanjut", exact: true }).click(); await page.getByLabel("Petunjuk serah terima (privat)").fill("Meja resepsionis gedung A");
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click(); await page.getByLabel("Alamat tujuan").fill("Meja resepsionis gedung A");
   const audit = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze(); expect(audit.violations).toEqual([]);
-  await page.getByRole("button", { name: "Lanjut", exact: true }).click(); await expect(page.getByLabel("Ongkos maksimal yang saya setujui", { exact: false })).toHaveCount(0);
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click(); await expect(page.getByRole("checkbox", { name: /nego/i })).toHaveCount(0);
   await page.getByRole("button", { name: "Terbitkan listing" }).click(); await expect(page).toHaveURL(/\/listings\/demo-/); const listing = page.url();
   await persona(page, "provider"); await page.goto(listing); await expect(page.getByText("Meja resepsionis gedung A", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Saya bisa belikan", exact: true }).click(); await page.getByRole("button", { name: "Setujui dan ambil titipan", exact: true }).click();

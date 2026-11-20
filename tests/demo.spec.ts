@@ -72,6 +72,7 @@ test("provider trip accepts three customers independently", async ({ page }) => 
   await page.getByLabel("Judul listing").fill("Belanja sore");
   await page.getByLabel("Toko / lokasi belanja").fill("AEON");
   await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await page.getByLabel("Alamat tujuan").fill("Lobi kampus");
   await page.getByRole("button", { name: "Lanjut", exact: true }).click();
   await page.getByRole("button", { name: "Terbitkan listing" }).click();
   await expect(page).toHaveURL(/\/listings\/demo-/);
@@ -79,7 +80,7 @@ test("provider trip accepts three customers independently", async ({ page }) => 
   for (const customer of ["customer", "customer2", "customer3"]) {
     await persona(page, customer); await page.goto(listingURL);
     await page.getByLabel("Nama barang 1").fill("Teh susu");
-    await page.getByLabel("Petunjuk serah terima (privat)").fill("Lobby kampus");
+    await page.getByLabel("Alamat tujuan").fill("Lobby kampus");
     await page.getByRole("button", { name: "Kirim / revisi penawaran" }).click();
     await persona(page, "provider"); await page.goto(listingURL);
     await page.getByRole("button", { name: "Terima penawaran" }).click();
@@ -145,7 +146,7 @@ for (const width of [360, 375, 390, 768, 1280, 1440]) {
     for (let step = 0; step < 3; step++) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
       if (step === 0) await page.screenshot({ path: `test-results/creation-${width}.png`, fullPage: true });
-      if (step === 1) await page.getByLabel("Petunjuk serah terima (privat)").fill("Lobby kampus");
+      if (step === 1) await page.getByLabel("Alamat tujuan").fill("Lobby kampus");
       if (step < 2) await page.getByRole("button", { name: "Lanjut", exact: true }).click();
     }
   });
