@@ -128,6 +128,8 @@ rtk pnpm test:e2e
 
 The demo browser suite builds and runs its own production server. Rebuild in connected mode before connected browser acceptance. Hosted session harnesses require `BEETIP_TEST_PROJECT_REF=rgiptdfjlmwldngapojq`, the local candidate URL and authorized development test access. For the local chat and funding harnesses, set `BEETIP_TEST_LOCAL_STACK` to the disposable work directory and `BEETIP_TEST_URL` to the app's loopback origin. See [order acceptance](connected-orders.md), [listing acceptance](connected-listings.md), [offer acceptance](connected-offers.md) and [notifications](notifications.md) for their exact commands and evidence.
 
+For BTP-17, use the [synthetic transfer rehearsal](connected-manual-transfers.md) to run the disposable PostgreSQL checks and two-staff local Auth/MFA workflow.
+
 For the isolated database checks, point `BEETIP_LOCAL_DATABASE_URL` at a disposable loopback PostgreSQL 18 instance whose test user can create databases and roles. The database job in [CI](../.github/workflows/ci.yml) lists the current commands. These checks apply fresh migrations and run role and concurrency assertions with local platform stubs. Use the connected acceptance procedures to verify real Supabase Auth, Storage, Realtime and Cron behavior where applicable.
 
 ## Release boundary
