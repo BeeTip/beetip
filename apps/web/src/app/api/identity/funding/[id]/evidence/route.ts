@@ -1,6 +1,7 @@
 import { acceptsMutation, fundingIdSchema } from "@beetip/validation";
 import { identityConfig } from "../../../../../../server/identity/config";
-import { fundingBucket, fundingImageHash, validatedFundingImage } from "../../../../../../server/identity/funding-evidence";
+import { validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
+import { fundingBucket, fundingImageHash } from "../../../../../../server/identity/funding-evidence";
 import { boundaryFailure, reply } from "../../../../../../server/identity/http";
 import { protectedClient } from "../../../../../../server/identity/protected";
 
@@ -35,7 +36,7 @@ export async function PUT(request: Request, context: Context) {
     if (!acceptsMutation(request.headers.get("origin"), identityConfig().origin, "application/json")) throw new Error("PERMISSION");
     const member = request.headers.get("X-Beetip-Member");
     const id = await evidence(context, true, member);
-    const { bytes, contentType } = await validatedFundingImage(request);
+    const { bytes, contentType } = await validatedEvidenceImage(request);
     await evidence(context, true, member);
     const bucket = fundingBucket();
     const { error } = await bucket.upload(id, bytes, { contentType, upsert: false });

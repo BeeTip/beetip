@@ -1,6 +1,7 @@
 import { acceptsMutation, orderCaseEvidenceQuery } from "@beetip/validation";
 import { identityConfig } from "../../../../../server/identity/config";
-import { fundingImageHash, privateEvidenceBucket, validatedFundingImage } from "../../../../../server/identity/funding-evidence";
+import { validatedEvidenceImage } from "../../../../../server/identity/evidence-image";
+import { fundingImageHash, privateEvidenceBucket } from "../../../../../server/identity/funding-evidence";
 import { boundaryFailure, reply } from "../../../../../server/identity/http";
 import { protectedClient } from "../../../../../server/identity/protected";
 
@@ -22,7 +23,7 @@ export async function PUT(request: Request) {
   try {
     if (!acceptsMutation(request.headers.get("origin"), identityConfig().origin, "application/json")) throw new Error("PERMISSION");
     const prefix = await authorizedPath(request, true);
-    const image = await validatedFundingImage(request);
+    const image = await validatedEvidenceImage(request);
     if (await authorizedPath(request, true) !== prefix) throw new Error("PERMISSION");
     const imageHash = fundingImageHash(image.bytes);
     const storage = bucket();

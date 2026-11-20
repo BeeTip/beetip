@@ -261,6 +261,30 @@ try {
   assert.equal(await value(owner, "select count(*)::int result from private.audit_events where target_id=$1 and event_type like 'email_%'", [rateId]), 3);
   pass("capped retries respect provider hints, audited replay uses a fresh key, late acceptance cancels a queued replay, and hard bounce blocks future mail");
 
+  const corrected = await member("corrected");
+  const correctedId = await idForEvent(await summary(corrected));
+  const [originalJob] = await claim(worker);
+  assert.equal(originalJob.id, correctedId);
+  const originalSubmission = await prepare(originalJob);
+  assert.equal(await finish(originalJob, "transport_uncertain"), true);
+  await owner.query("update private.email_deliveries set updated_at=clock_timestamp()-interval '31 minutes' where id=$1", [correctedId]);
+  const newAddress = "btp11-corrected-new@example.invalid";
+  await owner.query("update auth.users set email=$2 where id=$1", [corrected.id, newAddress]);
+  await action(originalJob, originalSubmission.dispatchId, "reconciled_replay");
+  const [correctedReplay] = await claim(worker);
+  assert.equal(correctedReplay.id, correctedId);
+  await hook(originalSubmission.dispatchId, corrected, "old-address@example.invalid", "hard_bounce");
+  await hook(originalSubmission.dispatchId, corrected, "old-address@example.invalid", "hard_bounce");
+  assert.equal(await status(correctedReplay), "leased", "the old address's bounce must leave the corrected replay claim intact");
+  assert.equal(await value(owner, "select count(*)::int result from private.email_webhook_receipts where dispatch_id=$1 and event_type='hard_bounce'", [originalSubmission.dispatchId]), 1);
+  assert.equal(await value(owner, "select reason result from private.email_suppressions where address_hash=$1", [hash(corrected.address)]), "hard_bounce");
+  const correctedSubmission = await prepare(correctedReplay, [hash(newAddress)]);
+  assert.equal(correctedSubmission.address, newAddress);
+  assert.notEqual(correctedSubmission.dispatchId, originalSubmission.dispatchId);
+  assert.equal(await finish(correctedReplay, "accepted", "new-address@example.invalid"), true);
+  assert.equal(await status(correctedReplay), "accepted");
+  pass("duplicate late hard bounces suppress the original address while an authorized replay reaches the corrected address");
+
   await owner.query("update private.email_budget set submissions=100");
   await summary(support);
   const [budget] = await claim(worker);
