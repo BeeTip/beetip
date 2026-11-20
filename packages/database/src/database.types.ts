@@ -853,6 +853,14 @@ export type Database = {
         Args: { p_digest: string; p_order: string }
         Returns: string
       }
+      claim_affiliation_upload: {
+        Args: { p_digest: string; p_member: string; p_request: string }
+        Returns: string
+      }
+      export_reconciliation: {
+        Args: { p_id: string; p_scope: string }
+        Returns: Json
+      }
       funding_command: {
         Args: {
           p_account?: string
@@ -921,6 +929,10 @@ export type Database = {
       read_manual_transfers: { Args: { p_before?: string; p_order: string }; Returns: Json }
       read_order_cases: { Args: { p_order: string }; Returns: Json }
       read_purchase: { Args: { p_order: string }; Returns: Json }
+      read_reconciliation: {
+        Args: { p_id: string; p_scope: string }
+        Returns: Json
+      }
       record_purchase: {
         Args: {
           p_action: string

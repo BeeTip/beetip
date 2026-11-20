@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import AccountPage from "./page";
 import LoginPage from "../login/page";
 import OrderPage from "../orders/[id]/page";
+import ChatPage from "../chat/[orderId]/page";
 import { ConnectedAffiliation } from "../../components/connected-affiliation";
 
 const identity = vi.hoisted(() => ({ configured: vi.fn(), member: vi.fn() }));
@@ -46,6 +47,19 @@ it("lets visitors browse when account services are unavailable", async () => {
     expect(page).toContain('href="/"');
     expect(page).not.toContain("Konfigurasi layanan");
   }
+});
+
+it("offers a retry on the same order or chat when the service is unavailable", async () => {
+  identity.configured.mockReturnValue(false);
+  const id = "00000000-0000-4000-8000-000000000001";
+  const order = renderToStaticMarkup(await OrderPage({ params: Promise.resolve({ id }) }));
+  const chat = renderToStaticMarkup(await ChatPage({ params: Promise.resolve({ orderId: id }) }));
+
+  expect(order).toContain("Pesanan belum dapat dimuat");
+  expect(order).toContain(`href="/orders/${id}">Coba lagi</a>`);
+  expect(chat).toContain("Pesan pesanan belum dapat dimuat");
+  expect(chat).toContain(`href="/chat/${id}">Coba lagi</a>`);
+  for (const page of [order, chat]) expect(page).toContain('href="/">Jelajahi titipan</a>');
 });
 
 it("keeps the linked order when a signed-out customer is asked to sign in", async () => {

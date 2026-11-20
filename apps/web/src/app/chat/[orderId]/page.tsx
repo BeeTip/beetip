@@ -4,11 +4,12 @@ import { PrivateListings } from "../../../components/connected-listings";
 import { currentMember } from "../../../server/identity/client";
 import { identityConfigured, mode } from "../../../server/identity/config";
 import { redirect } from "next/navigation";
+import { AccountUnavailable } from "../../../components/account-unavailable";
 
 export default async function Page({ params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
   if (mode() === "demo") return <Chat id={orderId} />;
-  if (!identityConfigured()) return <p>Layanan belum tersedia.</p>;
+  if (!identityConfigured()) return <AccountUnavailable title="Pesan pesanan belum dapat dimuat" retryHref={`/chat/${encodeURIComponent(orderId)}`} />;
   const member = await currentMember();
   if (!member) redirect(`/login?next=${encodeURIComponent(`/chat/${orderId}`)}`);
   if (member.status === "suspended") return <p>Akses akun dibatasi.</p>;
