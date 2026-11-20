@@ -51,7 +51,8 @@ try {
   const provider = await actor(), customer = await actor(), outsider = await actor();
   const account = uuid();
   await owner.query("insert into private.funding_accounts(id,label) values($1,'Akun simulasi')", [account]);
-  async function order({ buyer = customer, fund = true } = {}) {
+  const simulate = (actor, orderId) => first(actor.client, "select public.confirm_booth_payment($1)", [orderId]);
+  async function order({ buyer = customer, paid = true } = {}) {
     const listing = uuid(), offer = uuid();
     await owner.query(`insert into public.listings(id,owner_id,type,title,shop,category,area,destination,items,budget,fee,bound,negotiable,capacity,spending_capacity,start_at,end_at,cutoff_at,status)
       values($1,$2,'trip','Uji serah terima','Warung','Makanan','Alam Sutera','Kampus',$3,40000,5000,5000,false,2,100000,
@@ -59,11 +60,7 @@ try {
     [listing, provider.id, JSON.stringify([{ name: "Nasi", specification: "", quantity: 2, unitBudget: 20000 }])]);
     await buyer.client.query("select public.save_offer($1,$2,$3,0,1,5000,'save')", [uuid(), offer, listing]);
     const id = await first(provider.client, "select public.accept_order($1,$2,1,$3,1)", [uuid(), listing, offer]);
-    if (fund) {
-      await owner.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
-        select $1,$2,$3,private.funding_required($1),'verified',now(),now(),$4`, [id, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, outsider.id]);
-      await owner.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
-    }
+    if (paid) await simulate(buyer, id);
     return id;
   }
   async function finish(id, quantity = 1, imageHash) {
@@ -93,9 +90,9 @@ try {
   assert.equal(await state(customer, id), "purchase_partial");
   await assert.rejects(start(customer, id), /PERMISSION/);
   await assert.rejects(start(outsider, id), /PERMISSION/);
-  await owner.query("update public.reservations set funding_verified_at=null where order_id=$1", [id]);
+  await owner.query("update private.booth_payments set confirmed_at=null where order_id=$1", [id]);
   await assert.rejects(start(provider, id), /CONFLICT/);
-  await owner.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
+  await simulate(customer, id);
   await start(provider, id);
   assert.equal(await state(customer, id), "delivering");
   await assert.rejects(issue(provider, id), /PERMISSION/);
@@ -121,9 +118,7 @@ try {
   await assert.rejects(consume(outsider, id, issued.code), /PERMISSION/);
   await assert.rejects(consume(provider, uuid(), issued.code), /PERMISSION/);
   const other = await order();
-  const regularImage = createHash("sha256").update("regular receipt").digest("hex");
-  await finish(other, 2, regularImage);
-  await assert.rejects(finish(await order(), 2, regularImage), /Receipt image already recorded/);
+  await finish(other, 2);
   await start(provider, other);
   const otherCode = await issue(customer, other);
   assert.equal(await consume(provider, other, issued.code), "invalid", "Code is bound to its order");
@@ -131,20 +126,13 @@ try {
   await finish(unavailable, 0);
   await assert.rejects(start(provider, unavailable), /CONFLICT/);
 
-  const ordinaryUnpaid = await order({ fund: false });
-  assert.equal(await state(customer, ordinaryUnpaid), "awaiting_payment");
-  await assert.rejects(finish(ordinaryUnpaid), /CONFLICT: Purchase funding/);
   await assert.rejects(customer.client.query("insert into private.booth_members values($1)", [customer.id]), /permission denied/);
-  await owner.query("insert into private.booth_members values($1),($2)", [provider.id, customer.id]);
-  assert.equal(await state(customer, ordinaryUnpaid), "awaiting_payment", "Existing orders keep their payment rules");
-  await assert.rejects(order({ buyer: outsider, fund: false }), /Booth accounts can only order with another booth account/);
-  const booth = await order({ fund: false });
+  await owner.query("insert into private.booth_members values($1)", [provider.id]);
+  const booth = await order({ paid: false });
   assert.equal(await state(customer, booth), "booth_awaiting_payment");
-  const simulate = (actor, orderId) => first(actor.client, "select public.confirm_booth_payment($1)", [orderId]);
   await assert.rejects(finish(booth), /CONFLICT: Purchase funding/);
   await assert.rejects(simulate(provider, booth), /PERMISSION/);
   await assert.rejects(simulate(outsider, booth), /PERMISSION/);
-  await assert.rejects(simulate(customer, ordinaryUnpaid), /PERMISSION/);
   const secondCustomer = { client: await session(customer.claims) };
   await Promise.all([simulate(customer, booth), simulate(secondCustomer, booth)]);
   assert.equal(await state(customer, booth), "booth_ready");
@@ -166,14 +154,14 @@ try {
   await simulate(customer, booth);
   assert.equal(await state(customer, booth), "delivery_confirmed");
   assert.equal(await first(owner, "select count(*)::int from private.funding_submissions where order_id=$1", [booth]), 0);
-  const repeatedBooth = await order({ fund: false });
+  const repeatedBooth = await order({ paid: false });
   await simulate(customer, repeatedBooth);
   await finish(repeatedBooth, 2, sampleImage);
   assert.equal(await state(customer, repeatedBooth), "purchased", "A sample photo can be reused on a new booth listing");
-  const expiredBooth = await order({ fund: false });
+  const expiredBooth = await order({ paid: false });
   await owner.query("update public.reservations set expires_at=clock_timestamp() where order_id=$1", [expiredBooth]);
   await assert.rejects(simulate(customer, expiredBooth), /CONFLICT/);
-  const legacyBooth = await order({ fund: false });
+  const legacyBooth = await order({ paid: false });
   await owner.query("delete from private.booth_payments where order_id=$1", [legacyBooth]);
   assert.equal(await state(customer, legacyBooth), "booth_ready");
   await finish(legacyBooth, 2, sampleImage);

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import { createSeed } from "../packages/domain/src";
 
 test("guest surfaces report missing identity configuration without falling back to demo data", async ({ page }) => {
@@ -72,5 +73,32 @@ test("demo routes and staff authority stay closed on the production server", asy
     expect(response.status()).toBe(503);
     expect(response.headers()["cache-control"]).toBe("private, no-store");
     expect(await response.json()).toMatchObject({ ok: false, code: "UNAVAILABLE" });
+  }
+});
+
+const retiredPages = ["/account/funding", "/account/transfers", "/account/reconciliation"];
+const retiredHandlers = ["/api/identity/funding", "/api/identity/funding/[id]/evidence", "/api/identity/manual-transfers", "/api/identity/reconciliation"];
+
+test("the connected bundle omits retired payment pages and handlers", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../apps/web/.next/server/app-paths-manifest.json", import.meta.url), "utf8"));
+  const retired = [...retiredPages.map(path => `${path}/page`), ...retiredHandlers.map(path => `${path}/route`)];
+  expect(retired.filter(route => Object.hasOwn(manifest, route))).toEqual([]);
+  expect(manifest).toHaveProperty(["/api/identity/orders/demo-payment/route"]);
+});
+
+test("old payment URLs cannot reach a payment surface", async ({ request }) => {
+  for (const path of retiredPages) {
+    const response = await request.get(`${path}?order=11111111-1111-4111-8111-111111111111`, { maxRedirects: 0 });
+    expect(response.status(), path).toBe(307);
+    const destination = new URL(response.headers().location, response.url());
+    expect(destination.pathname + destination.search, path).toBe("/account");
+  }
+
+  for (const route of retiredHandlers) {
+    const path = route.replace("[id]", "11111111-1111-4111-8111-111111111111");
+    const get = await request.get(path, { maxRedirects: 0 });
+    const write = await request.fetch(path, { method: path.endsWith("/evidence") ? "PUT" : "POST", maxRedirects: 0 });
+    expect(get.status(), path).toBe(404);
+    expect(write.status(), path).toBe(404);
   }
 });

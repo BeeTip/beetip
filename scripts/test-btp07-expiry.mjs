@@ -75,6 +75,7 @@ try {
   console.log("PASS delayed-job guards, read/list projections, original receipt recovery and exactly-once release/audit");
 
   const funded = await fixture();
+  await owner.query("update public.orders set booth_demo=false where id=$1", [funded.id]);
   await owner.query("update public.reservations set expires_at=clock_timestamp()+interval '500 milliseconds' where order_id=$1", [funded.id]);
   await verifier.query("begin"); await verifier.query("select private.btp07_preserve_verified_funding($1)", [funded.id]);
   await owner.query("select pg_sleep(0.6)");

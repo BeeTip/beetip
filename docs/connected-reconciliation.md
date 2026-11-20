@@ -1,5 +1,7 @@
 # Connected synthetic reconciliation
 
+Migration `20261121004000` removed connected reconciliation commands. The procedure records [revision f4cb229](https://github.com/BeeTip/beetip/blob/f4cb229/docs/connected-reconciliation.md).
+
 Open **Pemeriksaan dana → Rekonsiliasi dana** from the connected account dashboard. Choose a funded order to see its fulfillment and money status, the amount verified, the receipt cost, the unused item budget, and the amount due and sent for each component. On a trip order, use **Lihat rekonsiliasi trip** for totals and links to the individual orders. Trip totals include the orders visible to that operator.
 
 The last step, **Unduh CSV**, generates a fresh snapshot for the selected order or trip. Each row contains the order and trip IDs, accepted title, both statuses and whole-rupiah amounts. Text cells are quoted, embedded quotes are doubled, and text starting outside ASCII letters or digits receives an apostrophe to prevent spreadsheet formula evaluation. Each successful generation records the actor, scope, order count, timestamp and SHA-256 of the CSV. The response includes the audit ID in `X-Beetip-Export`. The audit records server generation, including when a response is lost before download.

@@ -1,5 +1,13 @@
 # Connected cancellation and dispute cases
 
+## Demo case review
+
+Participants use **Pembatalan dan sengketa** to request cancellation or attach sample evidence to a dispute after shopping. An open cancellation pauses fulfillment. An approved cancellation releases the reservation. Case resolution creates no payment or transfer records.
+
+To rehearse independent review, grant two synthetic reviewer accounts the **Peninjau kasus demo** staff role, enroll each in MFA, and explicitly assign each to the rehearsal order through `private.booth_case_operators(order_id,member_id)` as a database owner. The proposer and the reviewer must be different, and an assigned operator cannot review their own order. The staff review queue uses private, current authorization. Remove the assignments after the rehearsal.
+
+The following sections record the historical funded case behavior. The current app preserves legacy case history and evidence for authorized readers.
+
 Participants open cases under **Pembatalan dan sengketa** on the private order page. Finance staff work from **Pemeriksaan kasus pesanan**. Staff need an active finance grant, a verified MFA factor, an AAL2 session, and an enabled operator grant for every account that verified funds on the order. Participants can submit case evidence and cannot review their own orders under a staff grant.
 
 ## Pilot contract

@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { staffRoles } from "@beetip/validation";
+import { staffRoleLabels } from "../staff-roles";
 import { Button } from "./ui";
 
 type Affiliation = { id: string; member_id: string; institution: string; status: string; decision_code: string | null };
-type Staff = { memberId: string; aal: string; grants: { member_id: string; role: string; revoked_at: string | null }[]; factors: { id: string }[] };
+type Staff = { memberId: string; aal: string; grants: { member_id: string; role: keyof typeof staffRoleLabels; revoked_at: string | null }[]; factors: { id: string }[] };
 const labels: Record<string, string> = { draft: "Draf: unggah bukti lalu kirim", pending: "Menunggu pemeriksaan", approved: "Afiliasi terverifikasi", rejected: "Bukti perlu diperbaiki", withdrawn: "Ditarik", matched: "Bukti sesuai", unreadable: "Bukti tidak terbaca", not_matched: "Bukti belum sesuai" };
 async function call(path: string, body?: unknown) {
   const response = await fetch(`/api/identity/${path}`, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" });
@@ -106,6 +106,11 @@ export function ConnectedAffiliation() {
       event.preventDefault();
       const fields = new FormData(event.currentTarget);
       void run(() => command("staff", { memberId: fields.get("memberId"), role: fields.get("role"), grant: fields.get("grant") === "true", reason: fields.get("reason") }));
-    }}><label className="field">ID akun petugas<input name="memberId" required disabled={busy} /></label><label className="field">Peran<select name="role" disabled={busy}>{staffRoles.map(role => <option key={role}>{role}</option>)}</select></label><label className="field">Tindakan<select name="grant" disabled={busy}><option value="false">Cabut akses</option><option value="true">Berikan akses</option></select></label><label className="field">Alasan<select name="reason" disabled={busy}><option value="access_removed">Akses dicabut</option><option value="owner_approved">Disetujui pemilik</option><option value="duty_changed">Perubahan tugas</option></select></label><Button type="submit" disabled={busy}>Simpan peran petugas</Button></form>{staff.grants.map(grant => <p className="small" key={`${grant.member_id}-${grant.role}`}>{grant.member_id}: {grant.role} ({grant.revoked_at ? "dicabut" : "aktif"})</p>)}</section>}
+    }}><label className="field">ID akun petugas<input name="memberId" required disabled={busy} /></label>
+      <label className="field">Peran<select name="role" disabled={busy}>
+        {Object.entries(staffRoleLabels).map(([role, label]) => <option key={role} value={role}>{label}</option>)}
+      </select></label>
+      <label className="field">Tindakan<select name="grant" disabled={busy}><option value="false">Cabut akses</option><option value="true">Berikan akses</option></select></label><label className="field">Alasan<select name="reason" disabled={busy}><option value="access_removed">Akses dicabut</option><option value="owner_approved">Disetujui pemilik</option><option value="duty_changed">Perubahan tugas</option></select></label><Button type="submit" disabled={busy}>Simpan peran petugas</Button></form>
+      {staff.grants.map(grant => <p className="small" key={`${grant.member_id}-${grant.role}`}>{grant.member_id}: {staffRoleLabels[grant.role]} ({grant.revoked_at ? "dicabut" : "aktif"})</p>)}</section>}
   </>}</section>;
 }

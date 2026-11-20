@@ -57,7 +57,10 @@ export function ConnectedNotifications({ memberId }: { memberId: string }) {
       const response = await fetch(`/api/identity/notifications/${id}/target`, { cache: "no-store" });
       const result = await response.json();
       if (current !== generation.current) return;
-      if (!response.ok) { clear(); throw new Error(result.message); }
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) clear();
+        throw new Error(result.message);
+      }
       window.location.assign(result.target);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Tujuan tidak tersedia."); }
   }

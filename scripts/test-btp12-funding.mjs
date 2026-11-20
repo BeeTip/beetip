@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { historicalPaymentMigrations } from "./historical-payment-migrations.mjs";
 import { setTimeout } from "node:timers/promises";
 import pg from "pg";
 
@@ -29,7 +30,7 @@ try {
   created = true;
   const owner = await connect();
   await owner.query(read("../supabase/tests/local_platform.sql"));
-  const migrations = readdirSync(new URL("../supabase/migrations/", import.meta.url)).filter(file => file.endsWith(".sql")).sort();
+  const migrations = historicalPaymentMigrations(new URL("../supabase/migrations/", import.meta.url));
   for (const migration of migrations) await owner.query(read(`../supabase/migrations/${migration}`));
   const uuid = randomUUID;
   async function actor(aal = "aal1") {

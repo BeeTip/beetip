@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID as uuid } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { historicalPaymentMigrations } from "./historical-payment-migrations.mjs";
 import pg from "pg";
 
 const url = new URL(process.env.BEETIP_LOCAL_DATABASE_URL ?? "postgres://postgres@127.0.0.1:55517/postgres");
@@ -29,7 +30,7 @@ try {
   created = true;
   const owner = await connect();
   await owner.query(read("../supabase/tests/local_platform.sql"));
-  const migrations = readdirSync(new URL("../supabase/migrations/", import.meta.url)).filter(file => file.endsWith(".sql")).sort();
+  const migrations = historicalPaymentMigrations(new URL("../supabase/migrations/", import.meta.url));
   for (const migration of migrations) await owner.query(read(`../supabase/migrations/${migration}`));
 
   async function actor(aal = "aal1") {

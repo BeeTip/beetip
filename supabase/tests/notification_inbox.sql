@@ -51,9 +51,9 @@ select pg_temp.check((select not email_enabled from public.notification_preferen
 select pg_temp.denied($q$select public.set_notification_preference('unknown',true)$q$,'VALIDATION:');
 select pg_temp.denied($q$select public.notification_inbox(now(),null)$q$,'VALIDATION:');
 reset role;
-select pg_temp.check((select count(*)=2 from private.notification_delivery_intents),'One intent per event recipient channel');
-select pg_temp.check(not private.notification_email_allowed((select id from public.notifications)),'Read or opted-out email suppressed');
-create temporary table owner_notification as select id from public.notifications;
+select pg_temp.check((select count(*)=2 from private.notification_delivery_intents where recipient_id='b1000000-0000-4000-8000-000000000001'),'One intent per event recipient channel');
+create temporary table owner_notification as select id from public.notifications where recipient_id='b1000000-0000-4000-8000-000000000001';
+select pg_temp.check(not private.notification_email_allowed((select id from owner_notification)),'Read or opted-out email suppressed');
 grant select on owner_notification to authenticated;
 set local role authenticated;
 select pg_temp.actor(3);

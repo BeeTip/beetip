@@ -861,41 +861,10 @@ export type Database = {
         Args: { p_digest: string; p_member: string; p_request: string }
         Returns: string
       }
-      export_reconciliation: {
-        Args: { p_id: string; p_scope: string }
-        Returns: Json
-      }
-      funding_command: {
-        Args: {
-          p_account?: string
-          p_action: string
-          p_amount?: number
-          p_id: string
-          p_operation_id: string
-          p_reason?: string
-          p_reference?: string
-        }
-        Returns: string
-      }
-      funding_evidence: {
-        Args: { p_id: string; p_upload: boolean }
-        Returns: string
-      }
-      funding_queue: {
-        Args: { p_after?: string; p_after_id?: string; p_order?: string }
-        Returns: Json
-      }
-      funding_view: { Args: { p_order: string }; Returns: Json }
       issue_handover_code: {
         Args: { p_checked: boolean; p_order: string }
         Returns: Json
       }
-      manual_transfer_command: {
-        Args: { p_action: string; p_operation_id: string; p_order: string; p_payload: Json }
-        Returns: string
-      }
-      manual_transfer_operation: { Args: { p_operation_id: string }; Returns: Json }
-      manual_transfer_queue: { Args: { p_after?: string }; Returns: Json }
       notification_inbox: {
         Args: { p_before?: string; p_before_id?: string }
         Returns: Json
@@ -935,14 +904,9 @@ export type Database = {
       read_amendments: { Args: { p_order: string }; Returns: Json }
       read_notification: { Args: { p_id: string }; Returns: undefined }
       read_order: { Args: { p_id: string }; Returns: Json }
-      read_manual_transfers: { Args: { p_before?: string; p_order: string }; Returns: Json }
       read_order_cases: { Args: { p_order: string }; Returns: Json }
       read_order_rating: { Args: { p_order_id: string }; Returns: Json }
       read_purchase: { Args: { p_order: string }; Returns: Json }
-      read_reconciliation: {
-        Args: { p_id: string; p_scope: string }
-        Returns: Json
-      }
       record_purchase: {
         Args: {
           p_action: string

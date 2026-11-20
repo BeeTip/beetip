@@ -79,8 +79,6 @@ try {
   assert.equal(await value(owner, "select id from storage.buckets where id='purchase-receipts' and public=false"), "purchase-receipts");
   browser = await chromium.launch({ executablePath: process.env.BEETIP_BROWSER_EXECUTABLE });
   const provider = await actor(), a = await actor(), b = await actor(), c = await actor();
-  const account = uuid();
-  await owner.query("insert into private.funding_accounts(id,label) values($1,'Akun simulasi struk')", [account]);
 
   async function trip(title) {
     const id = uuid();
@@ -94,16 +92,12 @@ try {
     await member.sql.query("select public.save_offer($1,$2,$3,0,1,5000,'save')", [uuid(), offer, listing]);
     return value(provider.sql, "select public.accept_order($1,$2,1,$3,1)", [uuid(), listing, offer]);
   }
-  async function fund(id) {
-    await owner.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
-      select $1,$2,$3,private.funding_required($1),'verified',now(),now(),$4`, [id, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, c.id]);
-    await owner.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
-  }
+  const confirmDemo = (member, id) => member.sql.query("select public.confirm_booth_payment($1)", [id]);
   const listing = await trip("Belanja bersama"), otherListing = await trip("Belanja terpisah");
   const first = await order(a, listing), second = await order(b, listing), third = await order(c, listing), other = await order(a, otherListing);
   const expired = await order(b, otherListing);
   await owner.query("update public.reservations set expires_at=now()-interval '1 minute' where order_id=$1", [expired]);
-  await Promise.all([fund(first), fund(second), fund(third)]);
+  await Promise.all([confirmDemo(a, first), confirmDemo(b, second), confirmDemo(c, third)]);
   const img = async color => sharp({ create: { width: 24, height: 32, channels: 3, background: color } })
     .png().withMetadata({ exif: { IFD0: { Artist: "SYNTHETIC-EXIF" } } }).toBuffer();
   const image = await img("#fdb900"), different = await img("#445500");
@@ -150,7 +144,7 @@ try {
   assert((await createClient(stack.API_URL, stack.PUBLISHABLE_KEY).storage.from("purchase-receipts").download(
     await value(owner, "select object_name from private.purchase_receipt_evidence where receipt_id=$1", [receipt.id]))).error);
 
-  await fund(other);
+  await confirmDemo(a, other);
   const { imageHash } = await upload(provider, first, draft.operationId, different);
   assert.equal((await upload(provider, first, draft.operationId, different)).imageHash, imageHash);
   await post(provider, { ...draft, orderId: second, payload: { ...base, imageHash } }, 400);

@@ -3,7 +3,6 @@ import sharp from "sharp";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as downloadCase, PUT as uploadCase } from "./order-cases/evidence/route";
 import { GET as downloadPurchase, PUT as uploadPurchase } from "./purchases/evidence/route";
-import { GET as downloadFunding, PUT as uploadFunding } from "./funding/[id]/evidence/route";
 
 const origin = "http://127.0.0.1:3197";
 const id = "00000000-0000-4000-8000-000000000001";
@@ -21,11 +20,8 @@ vi.mock("@supabase/supabase-js", () => ({
   createClient: () => ({ storage: { from: () => storage } }),
 }));
 
-const context = { params: Promise.resolve({ id }) };
 const prefix = `${member}/${id}/${operation}`;
 const routes = [
-  { name: "funding", path: `funding/${id}/evidence`, upload: (request: Request) => uploadFunding(request, context),
-    download: (request: Request) => downloadFunding(request, context), authorizedKey: id },
   { name: "purchase", path: `purchases/evidence?order=${id}&key=${operation}`, upload: uploadPurchase,
     download: downloadPurchase, authorizedKey: prefix },
   { name: "case", path: `order-cases/evidence?order=${id}&key=${operation}`, upload: uploadCase,
@@ -39,11 +35,11 @@ function uploadRequest(path: string, bytes: Uint8Array<ArrayBuffer>, contentType
   });
 }
 
-describe.each(routes)("$name evidence", ({ name, path, upload, download, authorizedKey }) => {
+describe.each(routes)("$name evidence", ({ path, upload, download, authorizedKey }) => {
   beforeEach(() => {
     vi.resetAllMocks();
     rpc.mockResolvedValue({ data: authorizedKey });
-    for (const variable of ["BEETIP_FUNDING_STORAGE_SECRET", "BEETIP_RECEIPT_STORAGE_SECRET", "BEETIP_CASE_STORAGE_SECRET"]) {
+    for (const variable of ["BEETIP_RECEIPT_STORAGE_SECRET", "BEETIP_CASE_STORAGE_SECRET"]) {
       vi.stubEnv(variable, "sb_secret_test");
     }
   });
@@ -79,12 +75,12 @@ describe.each(routes)("$name evidence", ({ name, path, upload, download, authori
     expect(response.status).toBe(200);
     const [key, saved, options] = storage.upload.mock.calls[0];
     const hash = createHash("sha256").update(saved).digest("hex");
-    expect(key).toBe(name === "funding" ? authorizedKey : `${authorizedKey}/${hash}`);
+    expect(key).toBe(`${authorizedKey}/${hash}`);
     expect(options).toEqual({ contentType: "image/png", upsert: false });
     const metadata = await sharp(saved).metadata();
     expect(metadata).toMatchObject({ format: "png", hasAlpha: true });
     expect(metadata.exif).toBeUndefined();
-    expect(await response.json()).toEqual(name === "funding" ? { ok: true } : { imageHash: hash });
+    expect(await response.json()).toEqual({ imageHash: hash });
   });
 
   it("refuses an upload when the session is no longer authorized after validation", async () => {

@@ -8,7 +8,7 @@ import pg from "pg";
 const workdir = process.env.BEETIP_TEST_LOCAL_STACK;
 const origin = process.env.BEETIP_TEST_URL ?? "http://127.0.0.1:3116";
 assert(workdir && /^http:\/\/127\.0\.0\.1:\d+$/.test(origin), "Use a dedicated disposable loopback stack and app");
-const stack = JSON.parse(execFileSync("rtk", ["proxy", "supabase", "status", "--workdir", workdir, "-o", "json"], {
+const stack = JSON.parse(execFileSync("supabase", ["status", "--workdir", workdir, "-o", "json"], {
   encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
 }));
 const db = new URL(stack.DB_URL);
@@ -22,7 +22,6 @@ const sql = new pg.Client({ connectionString: db.href, statement_timeout: 15000 
 const endpoint = `${origin}/api/identity/order-cases`;
 const value = async (client, query, args = []) => Object.values((await client.query(query, args)).rows[0])[0];
 const headers = actor => ({ Origin: origin, "X-Beetip-Member": actor.id });
-const account = uuid();
 let browser;
 
 function totp(secret) {
@@ -42,7 +41,6 @@ async function actor(finance = false) {
   const id = data.user.id;
   if (finance) {
     await sql.query("insert into public.staff_roles(member_id,role) values($1,'finance_operation')", [id]);
-    await sql.query("insert into private.funding_account_operators values($1,$2)", [account, id]);
   }
   async function signIn(destination = "/account") {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -75,7 +73,6 @@ async function checked(response, expected = 200) {
 
 try {
   await sql.connect();
-  await sql.query("insert into private.funding_accounts(id,label) values($1,'Akun bukti kasus sintetis')", [account]);
   browser = await chromium.launch({ executablePath: process.env.BEETIP_BROWSER_EXECUTABLE });
   const customer = await actor(), provider = await actor(), stranger = await actor();
   const proposer = await actor(true), reviewer = await actor(true);
@@ -106,9 +103,10 @@ try {
   await expect(linkedStranger.page.getByRole("heading", { name: "Kasus nasi rusak", exact: true })).toHaveCount(0);
   await linkedStranger.context.close();
   console.log("PASS signing in from an order link resumes the order and preserves participant-only access");
-  await sql.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
-    values($1,$2,$3,25000,'verified',now(),now(),$4)`, [order, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, reviewer.id]);
-  await sql.query("update public.reservations set funding_verified_at=now() where order_id=$1", [order]);
+  await sql.query("insert into private.booth_case_operators(order_id,member_id) values($1,$2),($1,$3)", [order, proposer.id, reviewer.id]);
+  await checked(await customer.context.request.post(`${origin}/api/identity/orders/demo-payment`, {
+    headers: headers(customer), data: { orderId: order },
+  }));
 
   const image = await sharp({ create: { width: 24, height: 32, channels: 3, background: "#fdb900" } })
     .jpeg().withMetadata({ exif: { IFD0: { Artist: "SYNTHETIC CASE" } } }).toBuffer();
@@ -133,16 +131,17 @@ try {
   assert.equal((await view(customer)).data.case, null);
   const region = customer.page.getByRole("region", { name: "Pembatalan dan sengketa" });
   await customer.page.goto(`${origin}/orders/${order}`);
-  await region.getByText("Ajukan sengketa nominal", { exact: true }).click();
-  await region.getByLabel("Bagian yang disengketakan").selectOption("0");
-  await region.getByLabel("Nominal sengketa (Rp)").fill("3000");
+  await region.getByText("Ajukan sengketa pesanan", { exact: true }).click();
+  await expect(region.getByLabel("Nominal sengketa (Rp)")).toHaveCount(0);
   await region.getByLabel("Alasan sengketa").fill("Sebagian nasi rusak");
   await region.getByLabel("Foto bukti (wajib)", { exact: false }).setInputFiles({ name: "nasi.jpg", mimeType: "image/jpeg", buffer: image });
   await region.getByRole("button", { name: "Ajukan sengketa", exact: true }).click();
   await expect(region.getByRole("heading", { name: "Sengketa sedang ditinjau" })).toBeVisible();
   const opened = (await view(provider)).data;
-  assert.deepEqual(opened.held, { purchase: 3000, fee: 0, refund: 0 });
-  assert.deepEqual(opened.unheld, { purchase: 11000, fee: 5000, refund: 6000 });
+  assert.equal(opened.boothDemo, true);
+  const noFunds = { purchase: 0, fee: 0, refund: 0 };
+  assert.deepEqual(opened.held, noFunds);
+  assert.deepEqual(opened.unheld, noFunds);
   const evidenceUrl = `${endpoint}/evidence?order=${order}&key=${opened.case.evidence[0].id}`;
   await checked(await stranger.context.request.get(evidenceUrl), 403);
   const downloaded = await checked(await reviewer.context.request.get(evidenceUrl));
@@ -151,21 +150,21 @@ try {
 
   await proposer.page.goto(`${origin}/account/order-cases`);
   await proposer.page.getByRole("link", { name: /Sengketa.*Kasus nasi rusak/ }).click();
-  await proposer.page.getByText("Ajukan atau perbarui alokasi", { exact: true }).click();
-  await proposer.page.getByLabel("Biaya barang (Rp)").fill("11000");
-  await proposer.page.getByLabel("Pengembalian dana (Rp)").fill("9000");
-  await proposer.page.getByLabel("Dasar alokasi dan bukti yang diperiksa").fill("Foto dan alokasi struk diperiksa");
-  await proposer.page.getByRole("button", { name: "Ajukan alokasi", exact: true }).click();
+  await proposer.page.getByText("Ajukan atau perbarui keputusan", { exact: true }).click();
+  await expect(proposer.page.getByLabel("Biaya barang (Rp)")).toHaveCount(0);
+  await proposer.page.getByLabel("Alasan usulan").fill("Foto dan struk sudah diperiksa");
+  await proposer.page.getByRole("button", { name: "Kirim usulan", exact: true }).click();
   await expect(proposer.page.getByText("Menunggu petugas kedua", { exact: true })).toBeVisible();
   await expect(proposer.page.getByRole("button", { name: "Simpan keputusan" })).toHaveCount(0);
   await reviewer.page.goto(`${origin}/account/order-cases?order=${order}`);
   await reviewer.page.getByLabel("Keputusan tinjauan").selectOption("approve");
-  await reviewer.page.getByLabel("Alasan keputusan petugas kedua").fill("Bagian titipan yang rusak dikembalikan dananya");
+  await reviewer.page.getByLabel("Alasan keputusan petugas kedua").fill("Setuju dengan penyelesaian kasus");
   await reviewer.page.getByRole("button", { name: "Simpan keputusan" }).click();
   await expect(reviewer.page.getByRole("heading", { name: "Sengketa diselesaikan" })).toBeVisible();
   await customer.page.reload();
   await expect(region.getByRole("heading", { name: "Sengketa diselesaikan" })).toBeVisible();
-  assert.deepEqual((await view(customer)).data.allocation, { purchase: 11000, fee: 5000, refund: 9000 });
+  assert.deepEqual((await view(customer)).data.allocation, noFunds);
+  assert.equal(await value(sql, "select count(*)::int from private.funding_submissions where order_id=$1", [order]), 0);
   await provider.page.goto(`${origin}/account/notifications`);
   await expect(provider.page.getByText("Sengketa diselesaikan", { exact: true })).toBeVisible();
 

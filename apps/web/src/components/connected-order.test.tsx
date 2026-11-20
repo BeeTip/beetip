@@ -22,8 +22,8 @@ it("uses server state even with an old deadline and refreshes expiry without a b
   let orderReads = 0;
   const fetch = vi.fn((url: string, options: RequestInit) => {
     expect(options.cache).toBe("no-store");
-    return Promise.resolve(url.includes("/funding") || url.includes("/order-cases")
-      ? { ok: true, json: async () => ({ memberId: "member", data: null }) }
+    return Promise.resolve(url.includes("/order-cases")
+      ? { ok: true, json: async () => ({ memberId: "member", orderId: "order", data: null }) }
       : response(orderReads++ === 0 ? "awaiting_payment" : "expired"));
   });
   vi.stubGlobal("fetch", fetch);
@@ -56,6 +56,7 @@ it("confirms demo payment with one action and recovers after an interrupted requ
       paid = true;
       return { ok: true, json: async () => ({ ok: true }) };
     }
+    if (url.includes("/order-cases")) return { ok: true, json: async () => ({ memberId: "member", orderId: "order", data: null }) };
     return { ok: true, json: async () => ({ memberId: "member", order: {
       ...order, boothDemo: true, canSimulatePayment: !paid, state: paid ? "booth_ready" : "booth_awaiting_payment",
     } }) };
@@ -64,6 +65,7 @@ it("confirms demo payment with one action and recovers after an interrupted requ
   await act(async () => root.render(<ConnectedOrderDetail id="order" memberId="member" />));
   const pay = () => [...host.querySelectorAll("button")].find(button => button.textContent === "Simulasikan pembayaran");
   expect(pay()).toBeDefined();
+  expect(host.textContent).toContain("Tidak ada dana yang ditransfer.");
   await act(async () => pay()!.click());
   expect(host.querySelector('[role="alert"]')?.textContent).toContain("Coba lagi");
   await act(async () => pay()!.click());
@@ -85,13 +87,14 @@ it("rejects a mismatched account response and labels unknown states honestly", a
   expect(connectedOrderState("funding_verified")).toBe("Dana telah diverifikasi");
 });
 
-it("submits cancellation from the connected order and reloads the amount on hold", async () => {
+it("opens cancellation from a connected demo order without showing a financial hold", async () => {
   const allocation = { purchase: 0, fee: 5000, refund: 20000 };
   const empty = { purchase: 0, fee: 0, refund: 0 };
   let opened = false;
   const fetch = vi.fn(async (url: string, options: RequestInit) => {
-    if (url.includes("/funding")) return { ok: true, json: async () => ({ memberId: "member", data: null }) };
-    if (!url.includes("/order-cases")) return response("funding_verified");
+    if (url.includes("/orders?")) return { ok: true, json: async () => ({ memberId: "member", order: {
+      ...order, boothDemo: true, state: "booth_ready",
+    } }) };
     if (options.method === "POST") {
       expect(options.headers).toMatchObject({ "X-Beetip-Member": "member" });
       expect(JSON.parse(String(options.body))).toMatchObject({
@@ -114,7 +117,47 @@ it("submits cancellation from the connected order and reloads the amount on hold
   form.querySelector("textarea")!.value = "Barang tidak diperlukan";
   await act(async () => form.requestSubmit());
   expect(host.textContent).toContain("Pembatalan sedang ditinjau");
-  expect(host.textContent).toContain("Dana ditahan");
-  expect(host.textContent).toContain("Rp");
+  expect(host.textContent).not.toContain("Dana ditahan");
   expect([...host.querySelectorAll("button")].some(element => element.textContent === "Ajukan pembatalan")).toBe(false);
+});
+
+it("shows private ratings and a dispute form without amount fields after demo handover", async () => {
+  const empty = { purchase: 0, fee: 0, refund: 0 };
+  const fetch = vi.fn(async (url: string) => {
+    if (url.includes("/order-ratings")) return { ok: true, json: async () => ({ memberId: "member", rating: { score: 5, feedback: "Rapi" } }) };
+    if (url.includes("/order-cases")) return { ok: true, json: async () => ({ memberId: "member", orderId: "order", storageAvailable: true, data: {
+      boothDemo: true, verified: 0, held: empty, allocation: empty, unheld: empty,
+      access: "member", canCancel: false, canDispute: true, items: [], case: null,
+    } }) };
+    return { ok: true, json: async () => ({ memberId: "member", order: { ...order, state: "delivery_confirmed", boothDemo: true } }) };
+  });
+  vi.stubGlobal("fetch", fetch);
+  await act(async () => root.render(<ConnectedOrderDetail id="order" memberId="member" />));
+  await act(async () => vi.advanceTimersByTimeAsync(0));
+  expect(host.textContent).toContain("Penilaian terkirim: 5 dari 5.");
+  expect(host.textContent).toContain("Ajukan sengketa");
+  expect(host.querySelector('input[type="file"]')).not.toBeNull();
+  expect(host.querySelector('input[name="amount"]')).toBeNull();
+  expect(fetch.mock.calls.some(([url]) => url.includes("/funding"))).toBe(false);
+});
+
+it("keeps legacy case evidence readable and offers support without financial actions", async () => {
+  const allocation = { purchase: 0, fee: 5000, refund: 20000 };
+  const fetch = vi.fn(async (url: string) => {
+    if (!url.includes("/order-cases")) return response("funding_verified");
+    return { ok: true, json: async () => ({ memberId: "member", orderId: "order", storageAvailable: true, data: {
+      boothDemo: false, verified: 25000, held: allocation, allocation, unheld: allocation,
+      access: "reviewer", canCancel: false, canDispute: false, items: [],
+      case: { id: "case", kind: "dispute", state: "open", reason: "Riwayat sengketa", itemIndex: null,
+        evidence: [{ id: "proof", note: "Catatan lama" }],
+        proposal: { id: "proposal", status: "pending", allocation, outcome: "resolve", reason: "Usulan lama", canReview: true },
+      },
+    } }) };
+  });
+  vi.stubGlobal("fetch", fetch);
+  await act(async () => root.render(<ConnectedOrderDetail id="order" memberId="member" />));
+  expect(host.querySelector('a[href="/api/identity/order-cases/evidence?order=order&key=proof"]')).not.toBeNull();
+  expect(host.querySelector('a[href="/support?orderId=order"]')).not.toBeNull();
+  expect(host.textContent).toContain("Usulan lama");
+  expect(host.querySelector('section[aria-label="Pembatalan dan sengketa"] form')).toBeNull();
 });

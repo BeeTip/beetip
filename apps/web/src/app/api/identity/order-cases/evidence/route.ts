@@ -1,7 +1,7 @@
 import { acceptsMutation, orderCaseEvidenceQuery } from "@beetip/validation";
 import { identityConfig } from "../../../../../server/identity/config";
 import { evidenceUploadFailure, validatedEvidenceImage } from "../../../../../server/identity/evidence-image";
-import { fundingImageHash, privateEvidenceBucket } from "../../../../../server/identity/funding-evidence";
+import { evidenceImageHash, privateEvidenceBucket } from "../../../../../server/identity/private-evidence";
 import { boundaryFailure, reply } from "../../../../../server/identity/http";
 import { protectedClient } from "../../../../../server/identity/protected";
 
@@ -25,14 +25,14 @@ export async function PUT(request: Request) {
     const prefix = await authorizedPath(request, true);
     const image = await validatedEvidenceImage(request);
     if (await authorizedPath(request, true) !== prefix) throw new Error("PERMISSION");
-    const imageHash = fundingImageHash(image.bytes);
+    const imageHash = evidenceImageHash(image.bytes);
     const storage = bucket();
     const path = `${prefix}/${imageHash}`;
     const { error } = await storage.upload(path, image.bytes, { contentType: image.contentType, upsert: false });
     if (error) {
       if (error.statusCode !== "400" && error.statusCode !== "409") throw new Error("UNAVAILABLE");
       const { data } = await storage.download(path);
-      if (!data || fundingImageHash(Buffer.from(await data.arrayBuffer())) !== imageHash) throw new Error("UNAVAILABLE");
+      if (!data || evidenceImageHash(Buffer.from(await data.arrayBuffer())) !== imageHash) throw new Error("UNAVAILABLE");
     }
     return reply({ imageHash });
   } catch (error) { return evidenceUploadFailure(error); }
