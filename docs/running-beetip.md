@@ -137,6 +137,8 @@ For BTP-18, run the [reconciliation rehearsal](connected-reconciliation.md) for 
 
 For the isolated database checks, point `BEETIP_LOCAL_DATABASE_URL` at a disposable loopback PostgreSQL 18 instance whose test user can create databases and roles. The database job in [CI](../.github/workflows/ci.yml) lists the current commands. These checks apply fresh migrations and run role and concurrency assertions with local platform stubs. Use the connected acceptance procedures to verify real Supabase Auth, Storage, Realtime and Cron behavior where applicable.
 
+The `fresh-supabase` job in [CI](../.github/workflows/ci.yml) also starts a disposable Supabase database. It checks that every migration applied, public tables have row-level security, the affiliation upload grant is scoped, notification rules match the TypeScript registry, and generated database types match the checked-in schema. Record both database jobs in the release evidence.
+
 ## Release boundary
 
 Record the source commit, last migration, target environment and validation results together before promoting a candidate. Use the following evidence for each target.

@@ -70,3 +70,27 @@ jobs:
       - run: node scripts/test-btp17-transfers.mjs
       - run: node scripts/test-btp18-reconciliation.mjs
       - run: node scripts/test-transactional-email-db.mjs
+  fresh-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BEETIP_LOCAL_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@afb1b15109756ea5cf9d8985a359d9095235ca2b # v2.1.2
+        with:
+          version: 2.114.0
+      - name: Apply migrations on fresh Supabase
+        run: supabase db start > /dev/null
+      - name: Verify migrated authorization and notification rules
+        run: node scripts/test-fresh-supabase.mjs
+      - name: Check generated public schema types
+        run: |
+          supabase gen types --local --schema public > "$RUNNER_TEMP/beetip-database.types.ts"
+          node scripts/check-database-types.mjs "$RUNNER_TEMP/beetip-database.types.ts"
