@@ -1,12 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it, vi } from "vitest";
 import AccountPage from "./page";
+import OrdersPage from "./orders/page";
 import LoginPage from "../login/page";
 import OrderPage from "../orders/[id]/page";
 import ChatPage from "../chat/[orderId]/page";
 import { ConnectedAffiliation } from "../../components/connected-affiliation";
 
-const identity = vi.hoisted(() => ({ configured: vi.fn(), member: vi.fn() }));
+const identity = vi.hoisted(() => ({ configured: vi.fn(), member: vi.fn(), rpc: vi.fn() }));
 vi.mock("../../server/identity/config", () => ({ mode: () => "connected", identityConfigured: identity.configured }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({}),
@@ -21,7 +22,7 @@ vi.mock("../../server/identity/client", () => ({
       is: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({ data: null }),
     };
-    return { from: () => query };
+    return { from: () => query, rpc: identity.rpc };
   },
 }));
 
@@ -49,6 +50,15 @@ it("lets visitors browse when account services are unavailable", async () => {
   }
 });
 
+it("offers a retry and a link to browse when the order list is unavailable", async () => {
+  identity.configured.mockReturnValue(false);
+  const page = renderToStaticMarkup(await OrdersPage({ searchParams: Promise.resolve({}) }));
+
+  expect(page).toContain("Pesanan belum dapat dimuat");
+  expect(page).toContain('href="/account/orders">Coba lagi</a>');
+  expect(page).toContain('href="/">Jelajahi titipan</a>');
+});
+
 it("offers a retry on the same order or chat when the service is unavailable", async () => {
   identity.configured.mockReturnValue(false);
   const id = "00000000-0000-4000-8000-000000000001";
@@ -60,6 +70,17 @@ it("offers a retry on the same order or chat when the service is unavailable", a
   expect(chat).toContain("Pesan pesanan belum dapat dimuat");
   expect(chat).toContain(`href="/chat/${id}">Coba lagi</a>`);
   for (const page of [order, chat]) expect(page).toContain('href="/">Jelajahi titipan</a>');
+});
+
+it("keeps the order history page when retrying a failed load", async () => {
+  identity.configured.mockReturnValue(true);
+  identity.member.mockResolvedValue({ id: "member", status: "active" });
+  identity.rpc.mockResolvedValue({ error: { message: "connection lost" } });
+  const before = "2026-11-20T12:00:00+07:00";
+  const beforeId = "00000000-0000-4000-8000-000000000001";
+  const page = renderToStaticMarkup(await OrdersPage({ searchParams: Promise.resolve({ before, beforeId }) }));
+
+  expect(page).toContain(`href="/account/orders?before=${encodeURIComponent(before)}&amp;beforeId=${beforeId}">Coba lagi</a>`);
 });
 
 it("keeps the linked order when a signed-out customer is asked to sign in", async () => {
