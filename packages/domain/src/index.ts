@@ -47,6 +47,7 @@ export type Command =
   | { type: "supportReply"; threadId: string; text: string }
   | { type: "supportStatus"; threadId: string; status: "open" | "resolved" }
   | { type: "submitFunding"; orderId: string; amount: number; reference: string }
+  | { type: "simulatePayment"; orderId: string }
   | { type: "verifyFunding"; orderId: string; fundingId: string }
   | { type: "startPurchase"; orderId: string }
   | { type: "amend"; orderId: string; item: string; budget: number; reason: string }
@@ -273,7 +274,7 @@ export class DemoService implements ApplicationService {
     const t = totals(order);
     const permission = () => fail("PERMISSION", "Peran ini tidak dapat melakukan tindakan tersebut.");
     const invalid = () => fail("INVALID_STATE", "Tindakan tidak tersedia pada status pesanan ini.");
-    if (order.cancellationRequested && ["submitFunding", "startPurchase", "amend", "purchase", "deliver", "generateCode", "confirm"].includes(c.type)) return invalid();
+    if (order.cancellationRequested && ["submitFunding", "simulatePayment", "startPurchase", "amend", "purchase", "deliver", "generateCode", "confirm"].includes(c.type)) return invalid();
     const validCancellation = ({ purchase, fee, refund }: CancellationAmounts) =>
       [purchase, fee, refund].every(money) && purchase <= t.cost && fee <= order.terms.fee
       && (order.receipts.length > 0 || fee === 0) && purchase + fee + refund === t.received;
@@ -284,6 +285,19 @@ export class DemoService implements ApplicationService {
         if (!["awaiting_payment", "ready_to_purchase", "purchasing", "approval_required"].includes(order.state)) return invalid();
         if (!money(c.amount) || c.amount <= 0 || !text(c.reference) || this.state.orders.some(o => o.funding.some(f => f.reference === c.reference)) || order.funding.reduce((n, f) => n + f.amount, 0) + c.amount > order.budget + order.terms.fee) return fail("VALIDATION", "Jumlah atau referensi pembayaran tidak valid / sudah digunakan.");
         order.funding.push({ id, amount: c.amount, reference: c.reference, status: "pending" }); break;
+      case "simulatePayment": {
+        if (!customer) return permission();
+        if (order.state === "ready_to_purchase") return success(order.id);
+        if (!["awaiting_payment", "approval_required"].includes(order.state) || order.amendment?.status === "pending" || order.dispute) return invalid();
+        const remaining = order.budget + order.terms.fee - order.funding.reduce((sum, funding) => sum + funding.amount, 0);
+        for (const funding of order.funding) if (funding.status === "pending") {
+          funding.status = "verified";
+          funding.verifiedBy = this.actorId;
+        }
+        if (remaining > 0) order.funding.push({ id, amount: remaining, reference: `SIM-${id}`, status: "verified", verifiedBy: this.actorId });
+        order.state = "ready_to_purchase";
+        break;
+      }
       case "verifyFunding": {
         if (!admin) return permission();
         const funding = order.funding.find(f => f.id === c.fundingId);

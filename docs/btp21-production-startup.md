@@ -5,14 +5,22 @@ The release browser suite starts the compiled Next.js app on loopback in connect
 - The guest board and listing detail surface the catalog API's `503 UNAVAILABLE` with private, non-cacheable responses and no demo listings. Login, signup, account, and listing creation display the unavailable state without usable forms.
 - Stale demo administrator state in browser storage grants no controls. Direct demo-only routes redirect to `/account`, seeded order and chat URLs show unavailable states, and staff reads and role changes return `503 UNAVAILABLE`.
 
-CI builds the candidate after the demo browser suite, then starts that build for the release checks. Run these commands from a shell with Node 24.22.1 and the locked dependencies installed.
+The build selects the Next.js route files for the application mode. Connected builds omit the demo layout, demo pages and their browser-storage authority. Shared URLs such as `/orders/[id]` and `/chat/[orderId]` use connected implementations. Keep the same `BEETIP_MODE` when starting a build and rebuild when switching modes.
 
-```sh
-pnpm exec playwright install chromium
-BEETIP_MODE=connected VERCEL_ENV=production NEXT_PUBLIC_SUPABASE_URL='' NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='' APP_ORIGIN='' pnpm build
-pnpm exec playwright test --config playwright.release.config.ts
+CI runs the demo browser suite, builds the connected candidate, checks its emitted artifacts, then starts that build for the release browser checks. Run these commands from PowerShell with Node 24.22.1 and the locked dependencies installed.
+
+```powershell
+rtk pnpm exec playwright install chromium
+$env:BEETIP_MODE = 'connected'
+$env:VERCEL_ENV = 'production'
+$env:NEXT_PUBLIC_SUPABASE_URL = ''
+$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = ''
+$env:APP_ORIGIN = ''
+rtk pnpm build
+rtk proxy node scripts/check-connected-build.mjs
+rtk pnpm exec playwright test --config playwright.release.config.ts
 ```
 
-For the local negative check, temporarily allowing `/admin` past the proxy guard caused the route test to fail with HTTP 500 instead of the required 307. The guard was restored before validation.
+The artifact check reads the app route manifest and scans emitted client and server JavaScript and source maps for demo authority markers. On base `695b811` it failed on all five demo-only route entries and the `beetip-demo-v2` marker in browser JavaScript, server JavaScript and a server source map. The browser suite also checks redirects and fail-closed behavior on the production server.
 
-Bundle exclusion remains open for issue #23. Inspection on base `22b27c2acc09d2882a027e29dea041751ae8f507` found the `beetip-demo-v2` marker in a built JavaScript chunk under `apps/web/.next/static/chunks` and `/admin/page` and `/profile/page` in `apps/web/.next/server/app-paths-manifest.json`. The browser suite checks runtime enforcement for these surfaces. The broader multi-user rehearsal and device and load evidence remain separate release gates.
+The broader multi-user rehearsal, physical-device checks and pilot load evidence remain release gates for issue #23.

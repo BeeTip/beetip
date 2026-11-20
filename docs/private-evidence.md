@@ -21,4 +21,28 @@ For real local sessions, start a connected app at `http://127.0.0.1:3120` agains
 
 Before the credential and policy switch, the app still normalizes images and writes with the caller's session under the existing draft Storage policy. Once that policy is removed, only the configured server path can create objects.
 
+## Affiliation upload preview
+
+On disposable local Supabase, use the database owner connection to inventory synthetic affiliation objects. Supply a finite UTC cutoff at or before the current time. The preview includes canonical affiliation paths whose creation and update timestamps both precede that cutoff. The cutoff selects an investigation window and sets no retention period.
+
+```sql
+begin read only;
+select object_id, created_at, updated_at, disposition
+from private.preview_affiliation_uploads('2026-01-01T00:00:00Z')
+order by created_at, object_id;
+commit;
+```
+
+Work through `unlinked` rows first when investigating abandoned uploads. The preview reports the first known link in this order:
+
+| Disposition | Meaning |
+| --- | --- |
+| `storage_owned` | Storage has an owner marker. |
+| `linked_request` | The request ID still exists, including drafts with active or retryable uploads and requests in terminal states. |
+| `request_history` | An affiliation command receipt or audit event references the request ID. |
+| `linked_member` | The path's member ID still exists. |
+| `unlinked` | The snapshot shows none of those links. |
+
+The result provides opaque Storage object IDs and timestamps for reconciliation. A stale snapshot or an upload in flight can change the result. Treat every row as inventory only. Cleanup requires an approved hold and retention model, coordination with uploads and submissions through deletion, and a retryable audited Storage API job. Run the rollback-only `supabase/tests/btp20_affiliation_upload_preview.sql` on disposable local Supabase to verify the preview.
+
 [BTP-20](https://github.com/BeeTip/beetip/issues/22) also requires approved retention and access rules before real-data collection, abandoned upload cleanup, expiry, dispute and legal holds, message tombstones that preserve sequence, and audited retryable purges. Account data request, export and deletion require an operator workflow, Auth session revocation and approved financial-retention exceptions. Hosted authorization acceptance, held-case and purge retry checks, and log verification for secrets and private bodies remain open.

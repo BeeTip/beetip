@@ -111,8 +111,8 @@ try {
   await expect(reason).toHaveValue("Hapus setelah pemeriksaan");
   await card.getByRole("button", { name: "Muat ulang listing" }).click();
   await expect(card.getByText("Dijeda oleh operator")).toBeVisible();
-  await card.getByLabel("Status baru").selectOption("removed");
-  await card.getByLabel("Alasan moderasi").fill("Hapus setelah pemeriksaan");
+  await expect(reason).toHaveValue("Hapus setelah pemeriksaan");
+  await expect(card.getByLabel("Status baru")).toHaveValue("removed");
   await card.getByRole("button", { name: "Simpan status" }).click();
   await expect(card.getByText("Dihapus oleh operator")).toBeVisible();
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

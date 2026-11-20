@@ -19,6 +19,8 @@ function ConnectedOrderContent({ id, memberId }: { id: string; memberId: string 
   const [order, setOrder] = useState<ConnectedOrder | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
   useEffect(() => {
     const controller = new AbortController();
     let refresh: ReturnType<typeof setTimeout>;
@@ -40,6 +42,25 @@ function ConnectedOrderContent({ id, memberId }: { id: string; memberId: string 
   if (!order) return <p role="status">Memuat pesanan...</p>;
   const completed = ["purchased", "purchase_partial", "purchase_unavailable", "delivering", "delivery_confirmed"].includes(order.state);
   const refresh = () => setAttempt(value => value + 1);
+  async function simulatePayment() {
+    setPaying(true);
+    setPaymentError("");
+    try {
+      const response = await fetch("/api/identity/orders/demo-payment", {
+        method: "POST", headers: { "Content-Type": "application/json", "X-Beetip-Member": memberId },
+        body: JSON.stringify({ orderId: id }), signal: AbortSignal.timeout(15000),
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok !== true) {
+        setPaymentError(data.message ?? "Pembayaran demo belum dapat dikonfirmasi. Coba lagi.");
+      }
+    } catch {
+      setPaymentError("Koneksi terputus. Coba lagi jika status belum berubah.");
+    } finally {
+      setPaying(false);
+      refresh();
+    }
+  }
   const actions = <>
     <Link className="button button-secondary" href={`/chat/${id}`}>Pesan pesanan</Link>
     <ConnectedPurchase orderId={id} memberId={memberId} refreshKey={attempt} orderState={order.state} closed={["expired", "cancelled"].includes(order.state)} onChange={refresh} />
@@ -53,14 +74,19 @@ function ConnectedOrderContent({ id, memberId }: { id: string; memberId: string 
   </>;
   return <section className="panel stack">
     <h1>{order.terms.title}</h1><p>Pesanan {order.id}</p><p role="status">{connectedOrderState(order.state)}</p>
-    {order.boothDemo && <p>Pesanan demo. Lanjutkan chat, belanja, dan serah terima tanpa pembayaran. Gunakan data dan struk contoh.</p>}
+    {order.state === "booth_awaiting_payment" && (order.canSimulatePayment ? <div className="info-box stack">
+      <h2>Pembayaran demo</h2>
+      <p>Total simulasi: <strong>{money(order.terms.budget + order.terms.fee)}</strong>. Tidak ada dana yang ditransfer.</p>
+      <Button disabled={paying} onClick={simulatePayment}>{paying ? "Mengonfirmasi..." : "Simulasikan pembayaran"}</Button>
+      {paymentError && <p role="alert">{paymentError}</p>}
+    </div> : <p>Setelah pelanggan menyelesaikan pembayaran demo, kamu bisa mulai belanja.</p>)}
     {order.state === "expired" && <p>Reservasi tidak lagi memakai kapasitas. Pesanan ini tidak dapat dilanjutkan. Buka daftar untuk membuat kesepakatan baru.</p>}
     <Button onClick={() => setAttempt(value => value + 1)}>Perbarui status</Button>
     <h2>Kesepakatan awal</h2>
     {order.terms.items.map((item, index) => <p key={index}>{item.name} x {item.quantity}: {item.specification} ({money(item.unitBudget)} per item)</p>)}
     <p>Batas belanja: {money(order.terms.budget)}. Ongkos: {money(order.terms.fee)}.</p><p>Tujuan: {order.terms.destination}</p>
     <p>Pengantaran: {time(order.terms.start)} sampai {time(order.terms.end)}</p>
-    {["awaiting_payment", "booth_ready"].includes(order.state) && <p>Reservasi sampai {time(order.reservationUntil)}.</p>}
+    {["awaiting_payment", "booth_awaiting_payment", "booth_ready"].includes(order.state) && <p>Reservasi sampai {time(order.reservationUntil)}.</p>}
     {actions}
   </section>;
 }

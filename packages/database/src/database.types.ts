@@ -852,6 +852,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      confirm_booth_payment: { Args: { p_order: string }; Returns: undefined }
       confirm_handover: {
         Args: { p_digest: string; p_order: string }
         Returns: string

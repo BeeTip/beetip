@@ -33,6 +33,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ''
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ''
           APP_ORIGIN: ''
+      - name: Verify connected build excludes demo authority
+        run: node scripts/check-connected-build.mjs
       - name: Verify connected production startup without identity configuration
         run: pnpm exec playwright test --config playwright.release.config.ts
       - uses: actions/upload-artifact@v4

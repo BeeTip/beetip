@@ -33,6 +33,6 @@ export function ConnectedAcceptance({ memberId, listingId, listingVersion, offer
       setError(error instanceof Error ? error.message : "Hasil belum diketahui. Coba lagi.");
     } finally { submitting.current = false; setBusy(false); }
   }
-  if (orderId) return <div role="status"><p>Pesanan tersimpan. Belum ada pembayaran terverifikasi.</p><Link className="button button-primary" href={`/orders/${orderId}`}>Lihat pesanan</Link></div>;
+  if (orderId) return <div role="status"><p>Pesanan tersimpan.</p><Link className="button button-primary" href={`/orders/${orderId}`}>Lihat pesanan</Link></div>;
   return <div className="stack"><label className="check-field"><input type="checkbox" checked={consent} disabled={busy || unknown} onChange={event => setConsented(event.target.checked ? consentKey : null)} />{unknown ? "Penerimaan memakai rincian, ongkos, dan jadwal yang disetujui pada permintaan semula." : `Saya menyetujui rincian, ongkos, dan jadwal revisi ${listingVersion} untuk membuat pesanan.`}</label>{error && <p role="alert">{error}</p>}{unknown && <p role="status">Hasil belum diketahui. Coba lagi memakai ID operasi dan rincian semula.</p>}<Button disabled={busy || (!consent && !unknown)} onClick={() => void accept()}>{busy ? "Menyimpan pesanan..." : unknown ? "Coba lagi penerimaan" : offerId ? "Terima penawaran" : "Ambil permintaan harga tetap"}</Button></div>;
 }

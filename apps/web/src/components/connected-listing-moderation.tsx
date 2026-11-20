@@ -8,20 +8,22 @@ import { Button } from "./ui";
 const endpoint = "/api/identity/listing-moderation";
 const statuses = { active: "Aktif", paused: "Dijeda", closed: "Ditutup", removed: "Dihapus" };
 
-function Decision({ listing, memberId, reload }: { listing: ModerationListing; memberId: string; reload: () => Promise<void> }) {
+function Decision({ listing, memberId, reload }: { listing: ModerationListing; memberId: string; reload: (preserveDraft?: boolean) => Promise<void> }) {
   const [status, setStatus] = useState<ModerationListing["status"] | "">("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const pending = useRef<ModerationCommand | null>(null);
+  const availableStatuses = moderationStatuses.filter(value => value !== listing.status || (!listing.moderated && value !== "active"));
+  const nextStatus = status && availableStatuses.includes(status) ? status : "";
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
     const parsed = moderationCommandSchema.safeParse({
       operationId: pending.current?.operationId ?? crypto.randomUUID(),
-      listingId: listing.id, version: listing.version, status, reason,
+      listingId: listing.id, version: listing.version, status: nextStatus, reason,
     });
     if (!parsed.success) { setError("Pilih status dan isi alasan moderasi dengan 3 sampai 500 karakter."); return; }
     pending.current = parsed.data;
@@ -45,16 +47,22 @@ function Decision({ listing, memberId, reload }: { listing: ModerationListing; m
     } finally { setBusy(false); }
   }
 
+  function refresh() {
+    pending.current = null;
+    setUncertain(false);
+    setError("");
+    void reload(true);
+  }
+
   return <article className="panel stack">
     <h2>{listing.title}</h2>
     <p>{statuses[listing.status]}{listing.moderated ? " oleh operator" : ""}</p>
     <p>Batas penawaran: {new Date(listing.cutoff).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB</p>
     <form className="stack" onSubmit={submit}>
       <label className="field">Status baru
-        <select required value={status} disabled={busy || uncertain} onChange={event => setStatus(event.target.value as typeof status)}>
+        <select required value={nextStatus} disabled={busy || uncertain} onChange={event => setStatus(event.target.value as typeof status)}>
           <option value="">Pilih status</option>
-          {moderationStatuses.filter(value => value !== listing.status || (!listing.moderated && value !== "active"))
-            .map(value => <option key={value} value={value}>{statuses[value]}</option>)}
+          {availableStatuses.map(value => <option key={value} value={value}>{statuses[value]}</option>)}
         </select>
       </label>
       <label className="field">Alasan moderasi
@@ -63,7 +71,7 @@ function Decision({ listing, memberId, reload }: { listing: ModerationListing; m
       <Button type="submit" disabled={busy}>{busy ? "Menyimpan..." : "Simpan status"}</Button>
     </form>
     {error && <div className="info-box stack"><p role="alert">{error}</p>
-      <Button variant="secondary" disabled={busy} onClick={() => void reload()}>Muat ulang listing</Button>
+      <Button variant="secondary" disabled={busy} onClick={refresh}>Muat ulang listing</Button>
     </div>}
   </article>;
 }
@@ -78,7 +86,7 @@ export function ConnectedListingModeration({ memberId }: { memberId: string }) {
   const submittedSearch = useRef("");
   const request = useRef<AbortController | null>(null);
 
-  const load = useCallback(async (term: string) => {
+  const load = useCallback(async (term: string, preserveDraft = false) => {
     request.current?.abort();
     const controller = new AbortController();
     request.current = controller;
@@ -93,7 +101,7 @@ export function ConnectedListingModeration({ memberId }: { memberId: string }) {
       if (response.status === 403) setDenied(true);
       if (!response.ok || data.memberId !== memberId) throw new Error(data.message ?? "Sesi berubah. Muat ulang halaman.");
       setListings(data.listings);
-      setGeneration(value => value + 1);
+      if (!preserveDraft) setGeneration(value => value + 1);
     } catch (error) {
       if (!controller.signal.aborted) {
         setListings([]);
@@ -125,7 +133,9 @@ export function ConnectedListingModeration({ memberId }: { memberId: string }) {
       <Button variant="secondary" onClick={() => void load(submittedSearch.current)}>Coba lagi</Button>
     </div>}
     {!loading && !error && listings.length === 0 && <p role="status">Listing tidak ditemukan.</p>}
-    {!loading && listings.map(listing => <Decision key={`${generation}:${listing.id}`} listing={listing}
-      memberId={memberId} reload={() => load(submittedSearch.current)} />)}
+    {listings.length > 0 && <div hidden={loading} className={loading ? undefined : "stack"}>
+      {listings.map(listing => <Decision key={`${generation}:${listing.id}`} listing={listing}
+        memberId={memberId} reload={preserveDraft => load(submittedSearch.current, preserveDraft)} />)}
+    </div>}
   </section>;
 }

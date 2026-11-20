@@ -7,14 +7,14 @@ For the booth, use connected BeeTip with two confirmed booth accounts. The local
 1. Open [BeeTip](https://beetip-campus.vercel.app) in two separate browser profiles and sign in as Nadia Demo and Rizky Demo. The booth laptop's Windows account keeps the credentials in `%LOCALAPPDATA%\BeeTip\booth-credentials.json`. Keep the two sessions open so visitors can start with a listing. Use an inbox you control if showing **Daftar** or **Lupa kata sandi**. The booth accounts use synthetic addresses and are provisioned with confirmed email.
 2. As Nadia, open **Buat listing**, choose **Minta dibelikan**, and publish a fixed-fee request. Prefix the title with `[DEMO]`. Enter a future WIB cutoff and delivery window, a shopping budget, a fee, and a sample campus destination.
 3. As Rizky, open the published request, select **Lanjut ke penawaran**, check the agreement, and choose **Ambil permintaan harga tetap**. For a shopping trip or a negotiable request, submit an offer from the other session and accept it as the listing owner from **Tinjau penawaran**.
-4. Open **Pesanan saya** from both accounts. The order starts at **Siap belanja demo** with a 24-hour reservation. From the order, open **Pesan pesanan**, send a message in each direction, and reload to see saved chat.
+4. Open **Pesanan saya** from both accounts. New demo orders start at **Menunggu pembayaran demo** with a 24-hour reservation. As Nadia, check the total and select **Simulasikan pembayaran**. The order advances to **Siap belanja demo** without a bank transfer or an approval step. As Rizky, select **Perbarui status** to see the update immediately. Open **Pesan pesanan**, send a message in each direction, and reload to verify it was saved.
 5. As Rizky, open **Progres belanja**, add a sample JPEG or PNG receipt with a fresh receipt reference, allocate the items, and select **Selesaikan belanja**. You can reuse the sample image on another booth listing. Start delivery. As Nadia, confirm the goods and generate a handover code. Enter the code in Rizky's session and verify **Diterima** on both sides.
 
-The database marks new orders between the two booth members. Ordinary confirmed users can use listings, offers, chat, and the standard order flow. The payment exception requires both booth accounts. Booth orders record zero incoming funds and continue through the ordinary purchase and handover commands using sample data. Funding, financial dispute review and settlement are outside the booth walkthrough. Support and notifications retain their normal account permissions.
+The simulation requires a new order between two designated booth accounts. Only the customer can confirm it. Retries keep one confirmation and create zero incoming funding records. Orders created before migration `20261121003000` retain their original behavior. Use sample data and receipts. Support and notifications retain their normal account permissions.
 
 To prepare another pair, create two confirmed synthetic Auth users in the dedicated BeeTip development project, verify their active member records, and add their member IDs to `private.booth_members` through the project administrator. Keep credentials in the booth operator's private storage. Removing the IDs disables new booth orders for those accounts. Suspend the accounts after the event when continued access is unnecessary.
 
-The targeted database regression runs with `node scripts/test-btp15-handover.mjs` on disposable loopback PostgreSQL. It verifies purchase, chat, handover, zero financial rows, and separation from regular accounts. Hosted setup and promotion steps are in the [Vercel runbook](vercel-deployment.md).
+The [handover rehearsal](connected-handover.md#verification) verifies the simulation through the SQL and connected-browser harnesses, including an interrupted response, purchase and handover, and zero financial rows. Hosted setup and rollout steps are in the [Vercel runbook](vercel-deployment.md#booth-deployment).
 
 The 20 November hosted rehearsal verified that two separate browser sessions could publish and take a request, exchange messages that survived reload, reuse a private sample receipt from an earlier listing, and confirm delivery with a backup code. A separate temporary account confirmed and replaced its password using generated Auth links. The 18 November [onboarding record](public-onboarding.md) covers actual email delivery. See [BTP-21](https://github.com/BeeTip/beetip/issues/23) for deployment and rehearsal evidence.
 
@@ -34,7 +34,7 @@ Check `node --version` before running the checks below. On Windows, if another N
 
 To rehearse the same demo from a production build, keep `BEETIP_MODE=demo` set and use `rtk pnpm build` followed by `rtk pnpm --filter @beetip/web start`.
 
-Stop the server before switching modes. Clear the shell override with `Remove-Item Env:BEETIP_MODE`. To reset only the demo fixtures, use **Reset data lokal** in the demo interface.
+Stop the server before switching modes and rebuild before starting in the new mode. Clear the shell override with `Remove-Item Env:BEETIP_MODE`. To reset only the demo fixtures, use **Reset data lokal** in the demo interface.
 
 ## Start the connected application
 
@@ -142,6 +142,8 @@ For the isolated database checks, point `BEETIP_LOCAL_DATABASE_URL` at a disposa
 The `fresh-supabase` job in [CI](../.github/workflows/ci.yml) also starts a disposable Supabase database. It checks that every migration applied, public tables have row-level security, the affiliation upload grant is scoped, notification rules match the TypeScript registry, and generated database types match the checked-in schema. Record both database jobs in the release evidence.
 
 ## Release boundary
+
+The current release target is a synthetic demo. The public booth walkthrough uses designated synthetic accounts and one-click simulated payment. Real-data and real-money pilot work remains tracked in the [operating-policy issue](https://github.com/BeeTip/beetip/issues/3) and [pilot promotion issue](https://github.com/BeeTip/beetip/issues/26).
 
 Record the source commit, last migration, target environment and validation results together before promoting a candidate. Use the following evidence for each target.
 
