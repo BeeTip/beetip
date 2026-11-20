@@ -75,7 +75,7 @@ begin
   end if;
   if p_upload then
     if exists(select 1 from public.orders o where o.id=p_order and auth.uid() in (o.customer_id,o.provider_id)
-        and o.state not in ('expired','cancelled') and (o.booth_demo or private.case_funding(p_order)>0)) then
+        and o.booth_demo and o.state not in ('expired','cancelled')) then
       return auth.uid()::text||'/'||p_order::text||'/'||p_key::text;
     end if;
   else
@@ -98,15 +98,11 @@ declare
   v_hash text;
   v_kind text := p_payload->>'kind';
   v_reason text := btrim(p_payload->>'reason');
-  v_held private.case_amounts;
-  v_unheld private.case_amounts;
-  v_entitlement private.case_amounts;
+  v_zero constant private.case_amounts := row(0,0,0);
   v_case private.order_cases%rowtype;
   v_proposal private.order_case_proposals%rowtype;
   v_amounts private.case_amounts;
   v_result uuid;
-  v_item integer;
-  v_amount bigint;
   v_image_hash text := p_payload->>'imageHash';
   v_path text;
   v_evidence_count integer;
@@ -137,6 +133,7 @@ begin
   if p_action in ('propose','review') and (private.has_staff_role('finance_operation') is not true or not private.case_reviewer_for(v_actor,p_order)) then
     raise exception 'PERMISSION: Finance MFA and account scope required';
   end if;
+  if not v_order.booth_demo then raise exception 'PERMISSION: Legacy order cases are read-only'; end if;
   if v_receipt.result_id is not null then return v_receipt.result_id; end if;
   if jsonb_typeof(p_payload->'reason') is distinct from 'string' or coalesce(char_length(v_reason),0) not between 1 and 1000 then
     raise exception 'VALIDATION: Case reason required';
@@ -152,47 +149,21 @@ begin
   end if;
   if p_action='open' then
     if v_kind is null or v_kind not in ('cancellation','dispute') then raise exception 'VALIDATION: Invalid case kind'; end if;
-    if v_order.state in ('expired','cancelled') or (v_kind='cancellation' and v_order.state='delivery_confirmed')
-      or (v_order.booth_demo and not private.booth_case_openable(v_order))
-      or (not v_order.booth_demo and private.case_funding(p_order)=0)
+    if not private.booth_case_openable(v_order) or (v_kind='cancellation' and v_order.state='delivery_confirmed')
       or exists(select 1 from private.order_cases where order_id=p_order and not private.case_closed(id))
       or exists(select 1 from private.funding_submissions where order_id=p_order and state='pending') then
       raise exception 'CONFLICT: New case unavailable';
     end if;
-    v_entitlement := private.case_entitlement(p_order);
-    v_unheld := private.case_unheld(p_order);
-    v_held := v_unheld;
-    if not v_order.booth_demo and v_held=row(0,0,0)::private.case_amounts then raise exception 'CONFLICT: No unsettled amount remains'; end if;
     if v_kind='dispute' then
       if not exists(select 1 from private.purchase_completions where order_id=p_order) then
         raise exception 'CONFLICT: Complete purchase progress before opening a dispute';
       end if;
-      if v_order.booth_demo then
-        if p_payload ?| array['amount','component','itemIndex'] then
-          raise exception 'VALIDATION: Demo disputes do not specify money or an item allocation';
-        end if;
-      elsif jsonb_typeof(p_payload->'amount') is distinct from 'number' or p_payload->>'amount' !~ '^[0-9]+$' then
-        raise exception 'VALIDATION: Disputed amount must be whole IDR';
-      else
-        v_amount := (p_payload->>'amount')::bigint;
-        if p_payload->>'component'='purchase' then
-          if jsonb_typeof(p_payload->'itemIndex') is distinct from 'number' or p_payload->>'itemIndex' !~ '^[0-9]+$' then
-            raise exception 'VALIDATION: Select a purchased item';
-          end if;
-          v_item := (p_payload->>'itemIndex')::integer;
-          if v_amount<=0 or v_amount>least(v_unheld.purchase,private.case_item_unsettled(p_order,v_item)) then
-            raise exception 'VALIDATION: Disputed amount exceeds purchased item entitlement';
-          end if;
-          v_held := row(v_amount,0,0);
-        elsif p_payload->>'component'='fee' and v_amount between 1 and v_unheld.fee then
-          v_held := row(0,v_amount,0);
-        else
-          raise exception 'VALIDATION: Disputed amount exceeds fee entitlement';
-        end if;
+      if p_payload ?| array['amount','component','itemIndex'] then
+        raise exception 'VALIDATION: Demo disputes do not specify money or an item allocation';
       end if;
     end if;
-    insert into private.order_cases(id,order_id,opened_by,kind,reason,item_index,baseline,held)
-      values(gen_random_uuid(),p_order,v_actor,v_kind,v_reason,v_item,v_entitlement,v_held) returning * into v_case;
+    insert into private.order_cases(id,order_id,opened_by,kind,reason,baseline,held)
+      values(gen_random_uuid(),p_order,v_actor,v_kind,v_reason,v_zero,v_zero) returning * into v_case;
     v_result := v_case.id;
   else
     select * into v_case from private.order_cases where id=(p_payload->>'caseId')::uuid and order_id=p_order;
@@ -233,10 +204,8 @@ begin
         values(v_proposal.id,v_actor,p_payload->>'decision',v_reason);
       if p_payload->>'decision'='approve' and v_proposal.outcome='resolve' and v_case.kind='cancellation' then
         update public.orders set state='cancelled' where id=p_order;
-        if v_order.booth_demo then
-          update public.reservations set released_at=clock_timestamp()
-            where order_id=p_order and released_at is null and funding_verified_at is null;
-        end if;
+        update public.reservations set released_at=clock_timestamp()
+          where order_id=p_order and released_at is null and funding_verified_at is null;
       end if;
       v_result := v_proposal.id;
     end if;
@@ -286,7 +255,7 @@ begin
     select jsonb_build_object('id',p.id,'reason',p.reason,'outcome',p.outcome,'allocation',to_jsonb(p.allocation),
       'status',case when r.decision='approve' then 'approved' when r.decision='return' then 'returned'
         when p.evidence_count<>v_count or not private.case_reviewer_for(p.proposed_by,p_order) then 'stale' else 'pending' end,
-      'canReview',not v_party and p.proposed_by<>auth.uid() and r.decision is null
+      'canReview',v_order.booth_demo and not v_party and p.proposed_by<>auth.uid() and r.decision is null
         and p.evidence_count=v_count and private.case_reviewer_for(p.proposed_by,p_order),
       'reviewReason',r.reason) into v_proposal
     from private.order_case_proposals p left join private.order_case_reviews r on r.proposal_id=p.id
@@ -300,14 +269,13 @@ begin
   select coalesce(jsonb_agg(jsonb_build_object('index',n-1,'name',item->>'name','available',
     least(v_unheld.purchase,private.case_item_unsettled(p_order,(n-1)::integer))) order by n),'[]'::jsonb) into v_items
   from jsonb_array_elements(private.purchase_items(p_order)) with ordinality as items(item,n);
-  v_enabled := v_party and not v_open and v_order.state not in ('expired','cancelled')
-    and (not v_order.booth_demo or private.booth_case_openable(v_order))
+  v_enabled := v_order.booth_demo and v_party and not v_open and private.booth_case_openable(v_order)
     and not exists(select 1 from private.funding_submissions where order_id=p_order and state='pending');
   return jsonb_build_object('held',to_jsonb(v_held),'allocation',to_jsonb(v_amounts),
     'unheld',to_jsonb(v_unheld),'verified',private.case_funding(p_order),'case',v_case_data,'items',v_items,
     'boothDemo',v_order.booth_demo,'access',case when v_party then 'member' else 'reviewer' end,
-    'canCancel',v_enabled and v_order.state<>'delivery_confirmed' and (v_order.booth_demo or v_unheld<>row(0,0,0)::private.case_amounts),
-    'canDispute',v_enabled and (v_order.booth_demo or v_unheld.purchase>0 or v_unheld.fee>0)
+    'canCancel',v_enabled and v_order.state<>'delivery_confirmed',
+    'canDispute',v_enabled
       and exists(select 1 from private.purchase_completions where order_id=p_order));
 end;
 $$;

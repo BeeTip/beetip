@@ -207,6 +207,40 @@ try {
   await assert.rejects(evidencePath(reviewer, disputeOrder, evidence, false), /PERMISSION/);
   await assert.rejects(state(reviewer, disputeOrder), /PERMISSION/);
   console.log("PASS demo dispute evidence, review, fulfillment, and zero funding/transfer writes");
+
+  const legacyOrder = await order(), legacyCase = uuid(), legacyProposal = uuid(), legacyEvidence = uuid(), fundingAccount = uuid();
+  const legacyPlace = `${customer.id}/${legacyOrder}/${uuid()}/${imageHash}`;
+  await owner.query("update public.orders set booth_demo=false where id=$1", [legacyOrder]);
+  await owner.query("delete from private.booth_payments where order_id=$1", [legacyOrder]);
+  await owner.query("insert into private.funding_accounts(id,label) values($1,'Riwayat kasus')", [fundingAccount]);
+  await owner.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
+    values($1,$2,$3,20000,'verified',now(),now(),$4)`, [legacyOrder, fundingAccount, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, proposer.id]);
+  await owner.query("update public.reservations set funding_verified_at=now() where order_id=$1", [legacyOrder]);
+  await owner.query("insert into private.funding_account_operators values($1,$2),($1,$3)", [fundingAccount, proposer.id, reviewer.id]);
+  await owner.query(`insert into private.order_cases(id,order_id,opened_by,kind,reason,baseline,held)
+    values($1,$2,$3,'cancellation','Kasus historis',row(0,5000,15000),row(0,5000,15000))`, [legacyCase, legacyOrder, customer.id]);
+  await owner.query(`insert into private.order_case_proposals(id,case_id,proposed_by,outcome,allocation,evidence_count,reason)
+    values($1,$2,$3,'resolve',row(0,0,20000),1,'Usulan historis')`, [legacyProposal, legacyCase, proposer.id]);
+  await owner.query(`insert into private.order_case_evidence(id,case_id,submitted_by,object_name,note)
+    values($1,$2,$3,$4,'Bukti historis')`, [legacyEvidence, legacyCase, customer.id, legacyPlace]);
+  await deposit("order-case-evidence", legacyPlace);
+  const historical = await state(reviewer, legacyOrder);
+  assert.equal(historical.boothDemo, false);
+  assert.equal(historical.verified, 20000);
+  assert.equal(historical.case.id, legacyCase);
+  assert.equal(await evidencePath(reviewer, legacyOrder, legacyEvidence, false), legacyPlace);
+  assert.equal(await evidencePath(provider, legacyOrder, legacyEvidence, false), legacyPlace);
+  await assert.rejects(evidencePath(unscoped, legacyOrder, legacyEvidence, false), /PERMISSION/);
+  await assert.rejects(evidencePath(customer, legacyOrder, uuid(), true), /PERMISSION/);
+  const readOnly = /PERMISSION: Legacy order cases are read-only/;
+  await assert.rejects(command(customer, legacyOrder, "open", cancellation), readOnly);
+  await assert.rejects(command(customer, legacyOrder, "evidence", { caseId: legacyCase, imageHash, reason: "Lampiran baru" }), readOnly);
+  await assert.rejects(command(proposer, legacyOrder, "propose", { ...proposal, caseId: legacyCase, refund: 20000 }), readOnly);
+  await assert.rejects(command(reviewer, legacyOrder, "review", { ...approval, caseId: legacyCase, proposalId: legacyProposal }), readOnly);
+  assert.equal(historical.case.proposal.canReview, false);
+  assert.deepEqual(await state(reviewer, legacyOrder), historical);
+  assert.equal(await value(owner, "select state from public.orders where id=$1", [legacyOrder]), "awaiting_payment");
+  console.log("PASS legacy case commands and uploads blocked; scoped case history and evidence remain readable");
 } finally {
   await Promise.all(clients.map(client => client.end()));
   if (created) await admin.query(`drop database ${database}`);
