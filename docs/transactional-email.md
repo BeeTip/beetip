@@ -26,7 +26,7 @@ Open **Afiliasi opsional dan keamanan petugas**, complete MFA as a current platf
 
 An accepted delivery that still lacks a final callback after 48 hours enters the operator queue for review. Operators can close the case after checking Brevo's result. Replay stays unavailable, and a verified late delivery callback can still record the final outcome.
 
-When a recipient has corrected their address and an operator has already queued a replay, a late failure from the earlier dispatch leaves the replay in place. Permanent failures still suppress the original address.
+When a recipient has corrected their address and an operator has already queued a replay, a late failure from the earlier dispatch leaves the replay in place. Permanent failures still suppress the original address. After a failure is recorded for a dispatch, a later acceptance callback for that dispatch is logged without canceling the replay.
 
 ## Verification and remaining staged gates
 
