@@ -15,7 +15,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
   const order = fundingIdSchema.safeParse((await searchParams).order);
   return <><nav className="stack" aria-label="Operasi dana">
     <Link href="/account/order-cases">Pemeriksaan kasus pesanan</Link>
-    {syntheticTransfersEnabled() && <Link href="/account/transfers">Transfer dan pengembalian dana</Link>}
+    {syntheticTransfersEnabled() && <>
+      <Link href="/account/transfers">Transfer dan pengembalian dana</Link>
+      <Link href="/account/reconciliation">Rekonsiliasi dana</Link>
+    </>}
   </nav>
     <ConnectedFundingQueue key={`${member.id}:${order.data ?? ""}`} memberId={member.id} order={order.data} /></>;
 }
