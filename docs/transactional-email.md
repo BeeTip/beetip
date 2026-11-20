@@ -26,6 +26,8 @@ Open **Afiliasi opsional dan keamanan petugas**, complete MFA as a current platf
 
 An accepted delivery that still lacks a final callback after 48 hours enters the operator queue for review. Operators can close the case after checking Brevo's result. Replay stays unavailable, and a verified late delivery callback can still record the final outcome.
 
+When a recipient has corrected their address and an operator has already queued a replay, a late failure from the earlier dispatch leaves the replay in place. Permanent failures still suppress the original address.
+
 ## Verification and remaining staged gates
 
 Run the following from the repository root. Set `BEETIP_LOCAL_DATABASE_URL` to a disposable loopback PostgreSQL server without pg_cron for the database harness. It creates a fresh database, applies all migrations, exercises job and member roles, and drops its own fixtures. A complete local Supabase stack can separately verify migration application and Data API access. Use a distinct Supabase project ID and unused ports.
