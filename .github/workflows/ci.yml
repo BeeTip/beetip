@@ -68,4 +68,5 @@ jobs:
       - run: node scripts/test-btp15-handover.mjs
       - run: node scripts/test-btp16-cases.mjs
       - run: node scripts/test-btp17-transfers.mjs
+      - run: node scripts/test-btp18-reconciliation.mjs
       - run: node scripts/test-transactional-email-db.mjs

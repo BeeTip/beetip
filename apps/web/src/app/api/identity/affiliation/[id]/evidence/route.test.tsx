@@ -8,6 +8,7 @@ const member = "00000000-0000-4000-8000-000000000002";
 const storage = vi.hoisted(() => ({ upload: vi.fn() }));
 const sessionStorage = vi.hoisted(() => ({ download: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
+const claimUpload = vi.hoisted(() => vi.fn());
 const maybeSingle = vi.hoisted(() => vi.fn());
 
 vi.mock("server-only", () => ({}));
@@ -32,7 +33,8 @@ function upload(bytes: Buffer, contentType: string) {
 beforeEach(() => {
   vi.resetAllMocks();
   vi.stubEnv("BEETIP_AFFILIATION_STORAGE_SECRET", "sb_secret_affiliation_fixture");
-  createClient.mockReturnValue({ storage: { from: () => storage } });
+  createClient.mockReturnValue({ rpc: claimUpload, storage: { from: () => storage } });
+  claimUpload.mockResolvedValue({ data: "first", error: null });
   maybeSingle.mockResolvedValue({ data: { member_id: member, status: "draft" } });
   storage.upload.mockResolvedValue({ error: null });
 });
@@ -83,6 +85,17 @@ it("fails closed when the server write credential is missing", async () => {
   expect(createClient).not.toHaveBeenCalled();
 });
 
+it("rejects a different image once another upload has claimed the draft", async () => {
+  claimUpload.mockResolvedValue({ data: "conflict", error: null });
+  const image = await sharp({ create: { width: 2, height: 2, channels: 3, background: "blue" } }).png().toBuffer();
+
+  expect((await upload(image, "image/png")).status).toBe(409);
+  expect(claimUpload).toHaveBeenCalledWith("claim_affiliation_upload", {
+    p_request: id, p_member: member, p_digest: expect.stringMatching(/^[0-9a-f]{64}$/),
+  });
+  expect(storage.upload).not.toHaveBeenCalled();
+});
+
 it("rejects an unreadable image before saving it as affiliation evidence", async () => {
   const truncated = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
   const response = await upload(truncated, "image/png");
@@ -130,7 +143,7 @@ it("strips metadata and keeps retries compatible with a draft uploaded before no
   const saved = storage.upload.mock.calls[0][1] as Buffer;
   expect((await sharp(saved).metadata()).exif).toBeUndefined();
 
-  storage.upload.mockResolvedValue({ error: { statusCode: "409" } });
+  claimUpload.mockResolvedValue({ data: "existing", error: null });
   sessionStorage.download.mockResolvedValue({ data: new Blob([new Uint8Array(original)]), error: null });
   const replay = await upload(original, "image/png");
   expect(replay.status).toBe(200);

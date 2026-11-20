@@ -94,6 +94,9 @@ try {
   const request = await draft(owner);
   const ownerBucket = owner.client.storage.from(bucket);
   const unrelatedBucket = unrelated.client.storage.from(bucket);
+  assert((await owner.client.rpc("claim_affiliation_upload", {
+    p_request: request.id, p_member: owner.id, p_digest: "0".repeat(64),
+  })).error, "Only the server can claim an upload");
   assert((await ownerBucket.upload(request.path, image, optionsPNG)).error, "Draft owner must be denied direct Storage upload");
   assert((await unrelatedBucket.upload(request.path, image, optionsPNG)).error, "Unrelated account must be denied direct Storage upload");
   assert((await ownerBucket.createSignedUploadUrl(request.path)).error, "Draft owner must be denied signed uploads");
@@ -115,7 +118,7 @@ try {
     const response = await app(owner, request.endpoint, "PUT", 200, image, "image/png");
     return (await response.json()).alreadyUploaded;
   }));
-  assert.deepEqual(uploads.sort(), [false, true], "Concurrent retries must store exactly one object");
+  assert.deepEqual(uploads.sort(), [false, true], "Concurrent matching uploads must share one claim");
 
   const otherImage = await sharp({ create: { width: 24, height: 12, channels: 3, background: "blue" } }).png().toBuffer();
   await app(owner, request.endpoint, "PUT", 409, otherImage, "image/png");
@@ -155,6 +158,17 @@ try {
   const legacyDownload = await app(owner, legacy.endpoint, "GET", 200);
   assert.deepEqual(Buffer.from(await legacyDownload.arrayBuffer()), image);
   await command(owner, "submit", legacy.id);
+  await command(owner, "withdraw", legacy.id);
+  const contested = await draft(owner);
+  const images = [image, otherImage];
+  const responses = await Promise.all(images.map(body => fetch(`${origin}/api/identity/affiliation${contested.endpoint}`, {
+    method: "PUT", body, headers: { Cookie: owner.cookie(), Origin: origin, "Content-Type": "image/png" },
+  })));
+  assert.deepEqual(responses.map(response => response.status).sort(), [200, 409], "Only one image can win a concurrent upload");
+  const winningImage = images[responses.findIndex(response => response.ok)];
+  const contestedDownload = await app(owner, contested.endpoint, "GET", 200);
+  assert.deepEqual(await sharp(Buffer.from(await contestedDownload.arrayBuffer())).raw().toBuffer(),
+    await sharp(winningImage).raw().toBuffer());
   console.log("PASS: local Auth, Storage and affiliation API enforce validated writes, scoped reads and immutable retries.");
 } finally {
   try {

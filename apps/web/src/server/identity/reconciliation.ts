@@ -41,12 +41,12 @@ type ReconciliationReport = {
   next_cursor: string | null;
 };
 type ExportScope = "order" | "trip";
-type Args = { p_scope: "list" | ExportScope; p_id: string | null };
+type ExportArgs = Database["public"]["Functions"]["export_reconciliation"]["Args"];
 type ReconciliationDatabase = {
   public: Omit<Database["public"], "Functions"> & {
     Functions: {
-      read_reconciliation: { Args: Args; Returns: ReconciliationReport };
-      export_reconciliation: { Args: { p_scope: ExportScope; p_id: string }; Returns: { id: string; csv: string } };
+      read_reconciliation: { Args: { p_scope: "list" | ExportScope; p_id: string | null }; Returns: ReconciliationReport };
+      export_reconciliation: { Args: ExportArgs; Returns: { id: string; csv: string } };
     };
   };
 };

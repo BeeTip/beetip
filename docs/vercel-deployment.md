@@ -8,6 +8,8 @@ The booth uses the existing public `beetip-campus` deployment on Vercel and the 
 
 Provision the two synthetic booth accounts and follow the [booth walkthrough](running-beetip.md#hosted-booth-walkthrough) against the hosted alias with separate sessions. Verify guest browsing, anonymous private API denial, publication, acceptance, chat history, sample receipt upload and allocation, and delivery confirmation. Record the exact deployed revision and rehearsal evidence. The booth uses the Vercel project's Production slot for its stable alias. Marketplace launch and payment operations remain under the release plan below.
 
+Roll out server-validated affiliation uploads in order. Apply the additive claim migration `20261121001900`, deploy the matching app revision with its server-only `BEETIP_AFFILIATION_STORAGE_SECRET`, and verify an owner can upload a synthetic image and an assigned reviewer can read it. Then apply `20261121002000` to remove the old draft upload policy. Verify a direct draft Storage insert is denied and repeat the app upload and read checks. Application rollback after policy removal needs a release that supports server-side affiliation uploads. [Private evidence rehearsal](private-evidence.md#verification-and-operating-gates).
+
 ## Establish ownership and cost
 
 1. Record the Vercel team owner, Supabase owner, backup operator, email-domain owner, and two independent financial operators.

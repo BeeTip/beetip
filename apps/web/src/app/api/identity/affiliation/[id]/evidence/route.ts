@@ -1,8 +1,8 @@
 import { acceptsMutation, affiliationIdSchema } from "@beetip/validation";
 import { identityConfig } from "../../../../../../server/identity/config";
 import { evidenceUploadFailure, normalizeEvidenceImage, validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
-import { privateEvidenceBucket } from "../../../../../../server/identity/funding-evidence";
-import { boundaryFailure } from "../../../../../../server/identity/http";
+import { fundingImageHash, privateEvidenceClient } from "../../../../../../server/identity/funding-evidence";
+import { boundaryFailure, reply } from "../../../../../../server/identity/http";
 import { protectedClient } from "../../../../../../server/identity/protected";
 
 type Context = { params: Promise<{ id: string }> };
@@ -15,13 +15,13 @@ async function evidence(context: Context) {
   const { data, error } = await client.from("affiliation_requests").select("member_id,status").eq("id", id).maybeSingle();
   if (error) throw new Error("UNAVAILABLE");
   if (!data) throw new Error("PERMISSION");
-  return { client, user, row: data, path: `${data.member_id}/${id}/evidence` };
+  return { client, user, row: data, id, path: `${data.member_id}/${id}/evidence` };
 }
 
 async function ownedDraft(context: Context) {
-  const { client, user, row, path } = await evidence(context);
+  const { client, user, row, id, path } = await evidence(context);
   if (row.member_id !== user.id || row.status !== "draft") throw new Error("PERMISSION");
-  return { client, path };
+  return { client, user, id, path };
 }
 
 export async function GET(_request: Request, context: Context) {
@@ -38,19 +38,28 @@ export async function PUT(request: Request, context: Context) {
     if (!acceptsMutation(request.headers.get("origin"), identityConfig().origin, "application/json")) throw new Error("PERMISSION");
     await ownedDraft(context);
     const { bytes, contentType } = await validatedEvidenceImage(request);
-    const { client, path } = await ownedDraft(context);
-    const { error } = await privateEvidenceBucket(bucket, process.env.BEETIP_AFFILIATION_STORAGE_SECRET)
-      .upload(path, bytes, { contentType, upsert: false });
-    if (error?.statusCode === "409") {
-      const { data: previous, error: readError } = await client.storage.from(bucket).download(path);
-      if (readError) throw new Error("UNAVAILABLE");
-      const existing = Buffer.from(await previous.arrayBuffer());
-      const normalized = existing.equals(bytes) ? existing : await normalizeEvidenceImage(existing, contentType).catch(() => null);
-      if (!normalized?.equals(bytes)) {
-        return Response.json({ ok: false, message: "Bukti sudah tersimpan. Tarik pengajuan sebelum mengganti bukti." }, { status: 409, headers: { "Cache-Control": "private, no-store" } });
-      }
+    const { client, user, id, path } = await ownedDraft(context);
+    const writer = privateEvidenceClient(process.env.BEETIP_AFFILIATION_STORAGE_SECRET);
+    const { data: claim, error: claimError } = await writer.rpc("claim_affiliation_upload", {
+      p_request: id, p_member: user.id, p_digest: fundingImageHash(bytes),
+    });
+    if (claimError) throw new Error("UNAVAILABLE");
+    if (claim === "denied") throw new Error("PERMISSION");
+    const conflict = () => reply({ ok: false, message: "Gunakan gambar yang sama atau tarik pengajuan untuk mengganti bukti." }, 409);
+    if (claim === "conflict") return conflict();
+
+    if (claim === "first" || claim === "retry") {
+      const { error } = await writer.storage.from(bucket).upload(path, bytes, { contentType, upsert: false });
+      if (!error) return reply({ ok: true, alreadyUploaded: claim === "retry" });
+      if (error.statusCode !== "409" && error.statusCode !== "400") throw new Error("UNAVAILABLE");
+    } else if (claim !== "existing") {
+      throw new Error("UNAVAILABLE");
     }
-    if (error && error.statusCode !== "409") throw new Error("UNAVAILABLE");
-    return Response.json({ ok: true, alreadyUploaded: Boolean(error) }, { headers: { "Cache-Control": "private, no-store" } });
+
+    const { data: previous, error: readError } = await client.storage.from(bucket).download(path);
+    if (readError) throw new Error("UNAVAILABLE");
+    const existing = Buffer.from(await previous.arrayBuffer());
+    const normalized = existing.equals(bytes) ? existing : await normalizeEvidenceImage(existing, contentType).catch(() => null);
+    return normalized?.equals(bytes) ? reply({ ok: true, alreadyUploaded: true }) : conflict();
   } catch (error) { return evidenceUploadFailure(error); }
 }
