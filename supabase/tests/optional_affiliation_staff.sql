@@ -54,7 +54,11 @@ select pg_temp.denied($q$select public.affiliation_command(gen_random_uuid(),'be
 select pg_temp.denied($q$select public.affiliation_command(gen_random_uuid(),'submit','40000000-0000-4000-8000-000000000001','')$q$, 'VALIDATION:');
 select pg_temp.denied($q$select public.affiliation_command(gen_random_uuid(),'approve','40000000-0000-4000-8000-000000000001','matched')$q$, 'PERMISSION:');
 set local storage.operation = 'object.upload';
+select pg_temp.denied($q$insert into storage.objects(bucket_id,name,metadata)
+  values ('affiliation-evidence','00000000-0000-4000-8000-000000000001/40000000-0000-4000-8000-000000000001/evidence','{"size":100,"mimetype":"image/png"}')$q$, 'row-level security');
+set local role service_role;
 insert into storage.objects(bucket_id,name,metadata) values ('affiliation-evidence','00000000-0000-4000-8000-000000000001/40000000-0000-4000-8000-000000000001/evidence','{"size":100,"mimetype":"image/png"}');
+set local role authenticated;
 set local storage.operation = 'object.get_authenticated';
 select pg_temp.check((select count(*) = 1 from storage.objects where bucket_id = 'affiliation-evidence'), 'Owner reads private evidence');
 set local storage.operation = 'object.sign';
@@ -71,7 +75,10 @@ select pg_temp.actor(3,'aal2');
 select pg_temp.check((select count(*) = 0 from public.affiliation_requests), 'Reviewer cannot read draft');
 select pg_temp.actor(1);
 select public.affiliation_command('30000000-0000-4000-8000-000000000003','submit','40000000-0000-4000-8000-000000000001','');
-select pg_temp.check(not private.can_upload_affiliation_evidence('00000000-0000-4000-8000-000000000001/40000000-0000-4000-8000-000000000001/evidence'), 'Submitted evidence is immutable');
+with updated as (
+  update storage.objects set metadata = '{}' where bucket_id = 'affiliation-evidence' returning id
+)
+select pg_temp.check((select count(*) = 0 from updated), 'Submitted evidence is immutable');
 select pg_temp.actor(3);
 select pg_temp.check((select count(*) = 0 from public.affiliation_requests), 'AAL1 reviewer cannot read queue');
 select pg_temp.denied($q$select public.affiliation_command(gen_random_uuid(),'approve','40000000-0000-4000-8000-000000000001','matched')$q$, 'PERMISSION:');
@@ -97,9 +104,9 @@ select pg_temp.denied($q$select public.affiliation_command(gen_random_uuid(),'ap
 select pg_temp.actor(1);
 select pg_temp.check((select status = 'approved' from public.members), 'Rejection leaves ordinary account active');
 select public.affiliation_command('30000000-0000-4000-8000-000000000006','begin','40000000-0000-4000-8000-000000000002','Campus');
-set local storage.operation = 'object.upload';
+set local role service_role;
 insert into storage.objects(bucket_id,name,metadata) values ('affiliation-evidence','00000000-0000-4000-8000-000000000001/40000000-0000-4000-8000-000000000002/evidence','{"size":100,"mimetype":"image/png"}');
-set local storage.operation = 'object.get_authenticated';
+set local role authenticated;
 select public.affiliation_command('30000000-0000-4000-8000-000000000007','submit','40000000-0000-4000-8000-000000000002','');
 select pg_temp.actor(3,'aal2');
 select pg_temp.check(public.affiliation_command('30000000-0000-4000-8000-000000000008','approve','40000000-0000-4000-8000-000000000002','matched') is not null, 'Reviewer approves separate badge');
