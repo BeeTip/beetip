@@ -1,7 +1,7 @@
 import { acceptsMutation, affiliationIdSchema } from "@beetip/validation";
 import { identityConfig } from "../../../../../../server/identity/config";
-import { normalizeEvidenceImage, validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
-import { boundaryFailure, reply } from "../../../../../../server/identity/http";
+import { evidenceUploadFailure, normalizeEvidenceImage, validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
+import { boundaryFailure } from "../../../../../../server/identity/http";
 import { protectedClient } from "../../../../../../server/identity/protected";
 
 type Context = { params: Promise<{ id: string }> };
@@ -29,12 +29,7 @@ export async function PUT(request: Request, context: Context) {
     if (!acceptsMutation(request.headers.get("origin"), identityConfig().origin, "application/json")) throw new Error("PERMISSION");
     const { client, user, row, path } = await evidence(context);
     if (row.member_id !== user.id || row.status !== "draft") throw new Error("PERMISSION");
-    const image = await validatedEvidenceImage(request).catch((error: unknown) => {
-      if (error instanceof Error && error.message === "VALIDATION") return null;
-      throw error;
-    });
-    if (!image) return reply({ ok: false, code: "VALIDATION", message: "Pilih gambar JPG atau PNG yang bisa dibuka, maksimal 2 MB." }, 400);
-    const { bytes, contentType } = image;
+    const { bytes, contentType } = await validatedEvidenceImage(request);
     const { error } = await client.storage.from("affiliation-evidence").upload(path, bytes, { contentType, upsert: false });
     if (error?.statusCode === "409") {
       const { data: previous, error: readError } = await client.storage.from("affiliation-evidence").download(path);
@@ -47,5 +42,5 @@ export async function PUT(request: Request, context: Context) {
     }
     if (error && error.statusCode !== "409") throw new Error("UNAVAILABLE");
     return Response.json({ ok: true, alreadyUploaded: Boolean(error) }, { headers: { "Cache-Control": "private, no-store" } });
-  } catch (error) { return boundaryFailure(error); }
+  } catch (error) { return evidenceUploadFailure(error); }
 }

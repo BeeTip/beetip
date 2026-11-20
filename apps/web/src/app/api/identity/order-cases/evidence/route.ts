@@ -1,6 +1,6 @@
 import { acceptsMutation, orderCaseEvidenceQuery } from "@beetip/validation";
 import { identityConfig } from "../../../../../server/identity/config";
-import { validatedEvidenceImage } from "../../../../../server/identity/evidence-image";
+import { evidenceUploadFailure, validatedEvidenceImage } from "../../../../../server/identity/evidence-image";
 import { fundingImageHash, privateEvidenceBucket } from "../../../../../server/identity/funding-evidence";
 import { boundaryFailure, reply } from "../../../../../server/identity/http";
 import { protectedClient } from "../../../../../server/identity/protected";
@@ -35,7 +35,7 @@ export async function PUT(request: Request) {
       if (!data || fundingImageHash(Buffer.from(await data.arrayBuffer())) !== imageHash) throw new Error("UNAVAILABLE");
     }
     return reply({ imageHash });
-  } catch (error) { return boundaryFailure(error); }
+  } catch (error) { return evidenceUploadFailure(error); }
 }
 
 export async function GET(request: Request) {
