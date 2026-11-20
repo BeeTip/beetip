@@ -53,7 +53,7 @@ try {
 
   async function order() {
     const listing = uuid(), offer = uuid();
-    await owner.query(read("../supabase/tests/booth-rating-cases-fixture.sql"), [listing, provider.id]);
+    await owner.query(read("./booth-rating-cases-fixture.sql"), [listing, provider.id]);
     await customer.client.query("select public.save_offer($1,$2,$3,0,1,5000,'save')", [uuid(), offer, listing]);
     const id = await value(provider.client, "select public.accept_order($1,$2,1,$3,1)", [uuid(), listing, offer]);
     assert.equal(await value(owner, "select booth_demo from public.orders where id=$1", [id]), true);
