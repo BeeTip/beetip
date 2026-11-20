@@ -1,13 +1,11 @@
-import { ListingForm } from "../../../components/marketplace";
 import { ConnectedListingForm, PrivateListings } from "../../../components/connected-listings";
 import { AccountUnavailable } from "../../../components/account-unavailable";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentMember } from "../../../server/identity/client";
-import { identityConfigured, mode } from "../../../server/identity/config";
+import { identityConfigured } from "../../../server/identity/config";
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
-  if (mode() === "demo") return <ListingForm />;
   if (!identityConfigured()) return <AccountUnavailable />;
   const member = await currentMember();
   if (!member) redirect("/login?form=signup&next=%2Flistings%2Fnew");
