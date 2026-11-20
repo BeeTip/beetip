@@ -43,6 +43,33 @@ it("retries a failed status read without a mutation", async () => {
   expect(host.textContent).toContain("Reservasi kedaluwarsa");
   expect(fetch.mock.calls.every(call => call[1].method === undefined)).toBe(true);
 });
+
+it("confirms demo payment with one action and recovers after an interrupted request", async () => {
+  let paid = false;
+  let attempts = 0;
+  const fetch = vi.fn(async (url: string, options: RequestInit) => {
+    if (options.method === "POST") {
+      expect(url).toBe("/api/identity/orders/demo-payment");
+      expect(options.headers).toMatchObject({ "X-Beetip-Member": "member" });
+      expect(JSON.parse(String(options.body))).toEqual({ orderId: "order" });
+      if (++attempts === 1) throw new Error("Connection lost");
+      paid = true;
+      return { ok: true, json: async () => ({ ok: true }) };
+    }
+    return { ok: true, json: async () => ({ memberId: "member", order: {
+      ...order, boothDemo: true, canSimulatePayment: !paid, state: paid ? "booth_ready" : "booth_awaiting_payment",
+    } }) };
+  });
+  vi.stubGlobal("fetch", fetch);
+  await act(async () => root.render(<ConnectedOrderDetail id="order" memberId="member" />));
+  const pay = () => [...host.querySelectorAll("button")].find(button => button.textContent === "Simulasikan pembayaran");
+  expect(pay()).toBeDefined();
+  await act(async () => pay()!.click());
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain("Coba lagi");
+  await act(async () => pay()!.click());
+  expect(host.textContent).toContain("Siap belanja demo");
+  expect(pay()).toBeUndefined();
+});
 it("times out a stalled read and cleans up its timers", async () => {
   const fetch = vi.fn().mockImplementation(() => new Promise(() => {})); vi.stubGlobal("fetch", fetch);
   await act(async () => root.render(<ConnectedOrderDetail id="order" memberId="member" />));

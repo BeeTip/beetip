@@ -55,7 +55,7 @@ try {
   assert.ifError((await providerClient.auth.signInWithPassword(provider)).error);
   const account = uuid();
   await sql.query("insert into private.funding_accounts(id,label) values($1,'Akun simulasi serah terima')", [account]);
-  async function completedOrder() {
+  async function completedOrder({ booth = false } = {}) {
     const listing = uuid(), offer = uuid();
     await sql.query(`insert into public.listings(id,owner_id,type,title,shop,category,area,destination,items,budget,fee,bound,negotiable,capacity,spending_capacity,start_at,end_at,cutoff_at,status)
       values($1,$2,'trip','Uji serah terima','Warung','Makanan','Alam Sutera','Kampus',$3,20000,5000,5000,false,2,40000,
@@ -68,9 +68,38 @@ try {
       p_listing_version: 1, p_offer_id: offer, p_offer_version: 1 });
     assert.ifError(accepted.error);
     const id = accepted.data;
-    await sql.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
-      select $1,$2,$3,private.funding_required($1),'verified',now(),now(),$4`, [id, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, outsider.id]);
-    await sql.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
+    if (booth) {
+      const payment = `${origin}/api/identity/orders/demo-payment`;
+      for (const member of [provider, outsider]) {
+        await checked(await member.context.request.post(payment, { headers: headers(member), data: { orderId: id } }), 403);
+      }
+      await checked(await customer.context.request.post(payment, {
+        headers: { ...headers(customer), Origin: "https://example.invalid" }, data: { orderId: id },
+      }), 403);
+      await Promise.all([provider, customer].map(member => member.page.goto(`${origin}/orders/${id}`)));
+      const action = member => member.page.getByRole("button", { name: "Simulasikan pembayaran" });
+      await expect(provider.page.getByText("Menunggu pembayaran demo", { exact: true })).toBeVisible();
+      await expect(action(provider)).toHaveCount(0);
+      await expect(action(customer)).toBeVisible();
+      await customer.page.route(payment, async route => {
+        const response = await route.fetch({ maxRetries: 0 });
+        assert.equal(response.status(), 200);
+        await route.abort("failed");
+      }, { times: 1 });
+      await action(customer).click();
+      await expect(customer.page.getByText("Siap belanja demo", { exact: true })).toBeVisible();
+      await expect(action(customer)).toHaveCount(0);
+      await provider.page.reload();
+      await expect(provider.page.getByText("Siap belanja demo", { exact: true })).toBeVisible();
+      const stats = await sql.query(`select
+        (select count(*)::int from private.funding_submissions where order_id=$1) funding,
+        (select count(*)::int from private.audit_events where target_id=$1 and event_type='booth_payment_confirmed') confirmations`, [id]);
+      assert.deepEqual(stats.rows[0], { funding: 0, confirmations: 1 });
+    } else {
+      await sql.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
+        select $1,$2,$3,private.funding_required($1),'verified',now(),now(),$4`, [id, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, outsider.id]);
+      await sql.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
+    }
     const operationId = uuid();
     const image = await sharp({ create: { width: 32, height: 32, channels: 3, background: `#${operationId.slice(0, 6)}` } }).png().toBuffer();
     const { imageHash } = await checked(await provider.context.request.put(`${purchase}/evidence?order=${id}&key=${operationId}`,
@@ -195,6 +224,14 @@ try {
   for (const code of [firstCode, replacement, qrCode]) {
     assert(!JSON.stringify([projections, audit.rows]).includes(code) && !logs.includes(code), "Code leaked to a projection, audit, or app log");
   }
+  await sql.query("insert into private.booth_members(member_id) values($1),($2)", [customer.id, provider.id]);
+  const boothOrder = await completedOrder({ booth: true });
+  await post(provider, { action: "start", orderId: boothOrder });
+  const boothCode = await post(customer, { action: "issue", orderId: boothOrder, checked: true });
+  await post(provider, { action: "confirm", orderId: boothOrder, code: boothCode.code });
+  await customer.page.reload();
+  await expect(customer.page.getByText("Diterima", { exact: true })).toBeVisible();
+  console.log("PASS one-button connected demo payment, lost response recovery, role and origin checks, zero funding rows, and handover");
   console.log("PASS BTP-15 real Supabase sessions, mobile axe, role and origin checks, camera denial, manual fallback, replacement, replay, QR software scan, camera teardown, and code redaction");
 } finally {
   await browser?.close();

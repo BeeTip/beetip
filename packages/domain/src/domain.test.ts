@@ -68,6 +68,24 @@ describe("marketplace acceptance", () => {
 });
 
 describe("funding, amendments and receipts", () => {
+  it("simulates the outstanding amount once and unlocks shopping for the provider", () => {
+    const h = requestJourney(); const id = h.orderId;
+    const payment = { type: "simulatePayment" as const, orderId: id };
+    expect(h.run("provider", payment)).toMatchObject({ code: "PERMISSION" });
+    h.must("customer", { type: "submitFunding", orderId: id, amount: 10000, reference: "DEMO-PENDING" });
+    h.must("customer", payment);
+    h.must("customer", payment);
+    const order = h.state.orders.at(-1)!;
+    expect(totals(order).received).toBe(40000);
+    expect(order.funding.map(entry => entry.status)).toEqual(["verified", "verified"]);
+    h.must("provider", { type: "startPurchase", orderId: id });
+    h.must("provider", { type: "amend", orderId: id, item: "Kopi besar", budget: 35000, reason: "Harga berubah" });
+    h.must("customer", { type: "answerAmendment", orderId: id, approve: true });
+    h.must("customer", payment);
+    expect(totals(order).received).toBe(45000);
+    h.must("provider", { type: "startPurchase", orderId: id });
+  });
+
   it("blocks purchase until verification and additional funding", () => {
     const h = requestJourney(); const id = h.orderId;
     expect(h.run("provider", { type: "startPurchase", orderId: id })).toMatchObject({ code: "INVALID_STATE" });

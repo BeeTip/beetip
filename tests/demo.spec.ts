@@ -45,9 +45,8 @@ test("customer request completes from offer to settlement", async ({ page }) => 
   await page.getByRole("button", { name: "Terima penawaran" }).click();
   await expect(page).toHaveURL(/\/orders\/demo-/);
   const url = page.url();
-  await page.getByRole("button", { name: "Catat pembayaran" }).click();
-  await persona(page, "admin1"); await page.goto(url);
-  await page.getByRole("button", { name: "Catat verifikasi dana" }).click();
+  await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+  await expect(page.getByText("Pembayaran demo dikonfirmasi", { exact: true })).toBeVisible();
   await persona(page, "provider"); await page.goto(url);
   await page.getByRole("button", { name: "Mulai pembelian" }).click();
   await page.getByRole("button", { name: "Simpan alokasi struk" }).click();
@@ -95,8 +94,8 @@ test("provider trip accepts three customers independently", async ({ page }) => 
   await page.getByRole("button", { name: "Buka sengketa" }).click();
   await persona(page, "customer"); await page.goto(orders[0]);
   await expect(page.getByText("Sengketa aktif", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Catat pembayaran" }).click();
-  await expect(page.getByText("Menunggu verifikasi", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+  await expect(page.getByText("Pembayaran demo dikonfirmasi", { exact: true })).toBeVisible();
 });
 
 test("private routes, unverified persona, chat persistence and reset", async ({ page }) => {
