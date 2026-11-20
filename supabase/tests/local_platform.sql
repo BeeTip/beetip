@@ -17,7 +17,10 @@ create function auth.uid() returns uuid language sql stable as $$ select (auth.j
 grant usage on schema auth to anon,authenticated;
 grant execute on function auth.uid(),auth.jwt() to anon,authenticated;
 create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
-create table storage.objects(id uuid primary key,bucket_id text,name text,owner_id text,metadata jsonb);
+create table storage.objects(
+  id uuid primary key,bucket_id text,name text,owner_id text,metadata jsonb,
+  owner uuid,created_at timestamptz default now(),updated_at timestamptz default now()
+);
 alter table storage.objects enable row level security;
 create function storage.allow_any_operation(text[]) returns boolean language sql as $$ select true; $$;
 create function storage.allow_only_operation(text) returns boolean language sql as $$ select true; $$;
