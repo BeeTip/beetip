@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { createRequire } from "node:module";
 import { chromium, expect as playwrightExpect } from "@playwright/test";
 import pg from "pg";
+import { rehearseConnectedChatLoad } from "./connected-chat-load.mjs";
 
 const workdir = process.env.BEETIP_TEST_LOCAL_STACK;
 const origin = process.env.BEETIP_TEST_URL ?? "http://127.0.0.1:3196";
@@ -306,6 +307,14 @@ try {
 
   await finishPurchase(provider.page, customer.page, outsider.page, orderPath);
   await assertOrdinary([provider, customer, outsider]);
+  const load = await rehearseConnectedChatLoad({ admin, origin, sql });
+  assert.equal(load.members, 50);
+  assert.equal(load.sessions, 20);
+  assert.equal(load.orders, 10);
+  assert.equal(load.acknowledgments, 60);
+  assert.equal(load.durableMessages, 60);
+  assert(load.p95Ms <= 2000, `Chat send p95 ${load.p95Ms} ms exceeded 2000 ms`);
+  console.log(`PASS connected load ${JSON.stringify(load)}`);
   console.log("PASS connected synthetic demo");
 } finally {
   try {

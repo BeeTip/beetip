@@ -278,12 +278,14 @@ try {
   assert.equal(await status(correctedReplay), "leased", "the old address's bounce must leave the corrected replay claim intact");
   assert.equal(await value(owner, "select count(*)::int result from private.email_webhook_receipts where dispatch_id=$1 and event_type='hard_bounce'", [originalSubmission.dispatchId]), 1);
   assert.equal(await value(owner, "select reason result from private.email_suppressions where address_hash=$1", [hash(corrected.address)]), "hard_bounce");
+  await hook(originalSubmission.dispatchId, corrected, "old-address@example.invalid", "accepted");
+  assert.equal(await status(correctedReplay), "leased", "late acceptance must not cancel a replay after the original dispatch bounced");
   const correctedSubmission = await prepare(correctedReplay, [hash(newAddress)]);
   assert.equal(correctedSubmission.address, newAddress);
   assert.notEqual(correctedSubmission.dispatchId, originalSubmission.dispatchId);
   assert.equal(await finish(correctedReplay, "accepted", "new-address@example.invalid"), true);
   assert.equal(await status(correctedReplay), "accepted");
-  pass("duplicate late hard bounces suppress the original address while an authorized replay reaches the corrected address");
+  pass("a late bounce suppresses the original address once and a later acceptance leaves the corrected replay intact");
 
   await owner.query("update private.email_budget set submissions=100");
   await summary(support);

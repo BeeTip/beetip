@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { handoverCodePattern, issuedHandoverSchema, type HandoverCommand } from "@beetip/validation";
 import { Button } from "./ui";
 
-type Challenge = { code: string; expiresAt: string; qr?: string };
+const handoverLifetimeMs = 60_000;
+type Challenge = { code: string; displayUntil: number; qr?: string };
 type Camera = { stream?: MediaStream; stop?: () => void };
 const closeCamera = (camera?: Camera) => {
   camera?.stop?.();
@@ -37,7 +38,7 @@ export function ConnectedHandover({ orderId, memberId, orderState, provider, onC
     const timer = setTimeout(() => {
       setChallenge(undefined);
       setNotice("Kode sudah berakhir. Buat kode baru untuk melanjutkan.");
-    }, Math.max(0, Date.parse(challenge.expiresAt) - Date.now()));
+    }, Math.max(0, challenge.displayUntil - performance.now()));
     return () => clearTimeout(timer);
   }, [challenge]);
 
@@ -55,6 +56,7 @@ export function ConnectedHandover({ orderId, memberId, orderState, provider, onC
     setBusy(true);
     setError("");
     setNotice("");
+    const displayUntil = performance.now() + handoverLifetimeMs;
     if (command.action === "issue") setChallenge(undefined);
     if (command.action === "confirm") stopCamera();
     try {
@@ -79,8 +81,8 @@ export function ConnectedHandover({ orderId, memberId, orderState, provider, onC
           JSON.stringify({ orderId, code: issued.code }), { width: 220, margin: 4 },
         )).catch(() => undefined);
         if (controller.signal.aborted) return;
-        if (Date.parse(issued.expiresAt) > Date.now()) {
-          setChallenge({ ...issued, qr });
+        if (displayUntil > performance.now()) {
+          setChallenge({ code: issued.code, displayUntil, qr });
           setNotice("Kode siap ditampilkan.");
         } else setNotice("Kode sudah berakhir. Buat kode baru untuk melanjutkan.");
         return;
