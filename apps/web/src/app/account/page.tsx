@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Bell, ChevronRight, Compass, Handshake, LayoutList, LifeBuoy, Package, Plus, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
+import { ArrowRight, Bell, ChevronRight, Compass, Handshake, LayoutList, LifeBuoy, Package, Plus, ShieldCheck, type LucideIcon } from "lucide-react";
 import { SignOut } from "../../components/auth-form";
 import { AccountUnavailable } from "../../components/account-unavailable";
 import { currentMember, identityClient } from "../../server/identity/client";
@@ -46,7 +46,7 @@ export default async function Page() {
       <div className="dashboard-settings">
         <DashboardLink href="/support" label="Hubungi bantuan" icon={LifeBuoy} />
         {member.status !== "suspended" && <DashboardLink href="/account/affiliation" label="Afiliasi dan keamanan akun" icon={ShieldCheck} />}
-        {roles?.data?.some(grant => grant.role === "finance_operation") && <DashboardLink href="/account/funding" label="Pemeriksaan dana" icon={Wallet} />}
+        {roles?.data?.some(grant => grant.role === "finance_operation") && <DashboardLink href="/account/order-cases" label="Pemeriksaan kasus pesanan" icon={ShieldCheck} />}
         {roles?.data?.some(grant => grant.role === "platform_admin") && <DashboardLink href="/account/listing-moderation" label="Moderasi listing" icon={ShieldCheck} />}
       </div>
       <SignOut />
