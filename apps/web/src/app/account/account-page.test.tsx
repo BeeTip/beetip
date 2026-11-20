@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import AccountPage from "./page";
 import LoginPage from "../login/page";
 import OrderPage from "../orders/[id]/page";
+import { ConnectedAffiliation } from "../../components/connected-affiliation";
 
 const identity = vi.hoisted(() => ({ configured: vi.fn(), member: vi.fn() }));
 vi.mock("../../server/identity/config", () => ({ mode: () => "connected", identityConfigured: identity.configured }));
@@ -57,4 +58,11 @@ it("keeps the linked order when a signed-out customer is asked to sign in", asyn
   await expect(OrderPage({ params: Promise.resolve({ id }) })).rejects.toThrow(`/login?next=${destination}`);
   const login = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ next: order }) }));
   expect(login).toContain(`href="/login?form=signup&amp;next=${destination}"`);
+});
+
+it("introduces optional affiliation as a badge application", () => {
+  const page = renderToStaticMarkup(<ConnectedAffiliation />);
+
+  expect(page).toContain("Afiliasi opsional");
+  expect(page).toContain("Ajukan lencana afiliasi untuk mengonfirmasi institusimu.");
 });
