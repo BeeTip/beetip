@@ -135,6 +135,8 @@ For BTP-17, use the [synthetic transfer rehearsal](connected-manual-transfers.md
 
 For BTP-18, run the [reconciliation rehearsal](connected-reconciliation.md) for connected order and trip totals, scoped CSV generation and snapshot consistency. For affiliation uploads, run the [private evidence rehearsal](private-evidence.md#verification-and-operating-gates) with local Auth and Storage.
 
+For BTP-19, use the [moderation and ratings rehearsal](btp19-moderation-ratings.md#verification) to verify staff MFA, listing decisions, and private rating behavior in separate connected sessions.
+
 For the isolated database checks, point `BEETIP_LOCAL_DATABASE_URL` at a disposable loopback PostgreSQL 18 instance whose test user can create databases and roles. The database job in [CI](../.github/workflows/ci.yml) lists the current commands. These checks apply fresh migrations and run role and concurrency assertions with local platform stubs. Use the connected acceptance procedures to verify real Supabase Auth, Storage, Realtime and Cron behavior where applicable.
 
 The `fresh-supabase` job in [CI](../.github/workflows/ci.yml) also starts a disposable Supabase database. It checks that every migration applied, public tables have row-level security, the affiliation upload grant is scoped, notification rules match the TypeScript registry, and generated database types match the checked-in schema. Record both database jobs in the release evidence.

@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 export const notificationEventTypes = [
-  "affiliation_decided", "offer_received", "offer_changed", "offer_withdrawn", "listing_changed",
+  "affiliation_decided", "offer_received", "offer_changed", "offer_withdrawn", "listing_changed", "listing_moderated",
   "support_opened", "support_assigned", "support_message", "staff_role_changed",
   "order_accepted", "order_expired", "order_cancelled", "funding_review", "amendment_action",
   "delivery_confirmed", "order_message", "dispute_opened", "dispute_resolved", "order_case_activity", "transfer_review", "transfer_outcome",
 ] as const;
 export type NotificationEventType = typeof notificationEventTypes[number];
 type Rule = {
-  recipients: "applicant" | "listing_owner" | "offer_authors" | "support_queue" | "support_members" | "member" | "order_parties" | "parties_and_assignees" | "other_participant";
+  recipients: "applicant" | "listing_owner" | "offer_authors" | "listing_owner_and_offer_authors" | "support_queue" | "support_members" | "member" | "order_parties" | "parties_and_assignees" | "other_participant";
   target: "affiliation" | "offer" | "listing" | "support_queue" | "conversation" | "account" | "order";
   template: string;
   title: string;
@@ -36,7 +36,7 @@ export const notificationRegistrySeed = {
   dispute_resolved: { recipients: "parties_and_assignees", target: "order", template: "dispute_resolved.v1", title: "Sengketa diselesaikan", email: "summary", implemented: false },
   transfer_review: { recipients: "parties_and_assignees", target: "order", template: "transfer_review.v1", title: "Transfer perlu diperiksa", email: "summary", implemented: false },
   transfer_outcome: { recipients: "parties_and_assignees", target: "order", template: "transfer_outcome.v1", title: "Status transfer diperbarui", email: "summary", implemented: false },
-} as const satisfies Record<Exclude<NotificationEventType, "order_case_activity">, Rule>;
+} as const satisfies Record<Exclude<NotificationEventType, "order_case_activity" | "listing_moderated">, Rule>;
 
 export const notificationRegistry = {
   ...notificationRegistrySeed,
@@ -49,6 +49,8 @@ export const notificationRegistry = {
     title: "Kasus pesanan diperbarui", email: "in_app_only", implemented: true },
   support_opened: { ...notificationRegistrySeed.support_opened, email: "in_app_only" },
   support_message: { ...notificationRegistrySeed.support_message, implemented: true },
+  listing_moderated: { recipients: "listing_owner_and_offer_authors", target: "listing", template: "listing_moderated.v1",
+    title: "Status moderasi listing berubah", email: "in_app_only", implemented: true },
 } as const satisfies Record<NotificationEventType, Rule>;
 
 export const notificationQuerySchema = z.object({ before: z.iso.datetime({ offset: true }).optional(), beforeId: z.uuid().optional() }).strict()

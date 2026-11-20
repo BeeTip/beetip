@@ -13,6 +13,9 @@ describe("notification boundary and registry", () => {
     }
     const funding = readFileSync(new URL("../../../supabase/migrations/20261119001000_btp12_incoming_funding.sql", import.meta.url), "utf8");
     expect(funding).toContain(`update private.notification_rules set implemented=${notificationRegistry.funding_review.implemented} where event_type='funding_review';`);
+    const moderation = readFileSync(new URL("../../../supabase/migrations/20261121002100_btp19_moderation_ratings.sql", import.meta.url), "utf8");
+    const rule = notificationRegistry.listing_moderated;
+    expect(moderation).toContain(`('listing_moderated','${rule.recipients}','${rule.target}','${rule.template}','${rule.title}','${rule.email}',${rule.implemented})`);
   });
   it("exposes case lifecycle notifications and keeps ordinary case activity in app", () => {
     const cases = readFileSync(new URL("../../../supabase/migrations/20261119141454_btp16_order_cases.sql", import.meta.url), "utf8");

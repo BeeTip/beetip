@@ -9,6 +9,7 @@ import { ConnectedFunding } from "./connected-funding";
 import { ConnectedAmendments } from "./connected-amendments";
 import { ConnectedPurchase } from "./connected-purchase";
 import { ConnectedOrderCases } from "./connected-order-cases";
+import { ConnectedOrderRating } from "./connected-order-rating";
 
 export function ConnectedOrderDetail({ id, memberId }: { id: string; memberId: string }) {
   return <ConnectedOrderContent key={`${memberId}:${id}`} id={id} memberId={memberId} />;
@@ -46,6 +47,7 @@ function ConnectedOrderContent({ id, memberId }: { id: string; memberId: string 
     {!order.boothDemo && <>
       <ConnectedFunding orderId={id} memberId={memberId} refreshKey={attempt} />
       <ConnectedOrderCases orderId={id} memberId={memberId} refreshKey={attempt} onChange={refresh} />
+      {order.state === "delivery_confirmed" && <ConnectedOrderRating orderId={id} memberId={memberId} />}
     </>}
     <Link href="/account/orders">Kembali ke daftar pesanan</Link>
   </>;
