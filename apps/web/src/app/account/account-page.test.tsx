@@ -95,6 +95,17 @@ it("keeps the linked order when a signed-out customer is asked to sign in", asyn
   expect(login).toContain(`href="/login?form=signup&amp;next=${destination}"`);
 });
 
+it("returns signed-out visitors to their order history after authentication", async () => {
+  identity.configured.mockReturnValue(true);
+  identity.member.mockResolvedValue(null);
+  const orders = "/account/orders";
+  const destination = encodeURIComponent(orders);
+
+  await expect(OrdersPage({ searchParams: Promise.resolve({}) })).rejects.toThrow(`/login?next=${destination}`);
+  const login = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ next: orders }) }));
+  expect(login).toContain(`href="/login?form=signup&amp;next=${destination}"`);
+});
+
 it("introduces optional affiliation as a badge application", () => {
   const page = renderToStaticMarkup(<ConnectedAffiliation />);
 

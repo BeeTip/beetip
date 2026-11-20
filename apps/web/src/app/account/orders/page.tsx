@@ -15,7 +15,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   if (mode() === "demo") redirect("/orders");
   if (!identityConfigured()) return <AccountUnavailable title="Pesanan belum dapat dimuat" retryHref="/account/orders" />;
   const member = await currentMember();
-  if (!member) redirect("/login");
+  if (!member) redirect("/login?next=%2Faccount%2Forders");
   if (member.status === "suspended") return <p>Akses akun dibatasi.</p>;
   const parsed = ordersPageSchema.safeParse(await searchParams);
   if (!parsed.success) return <p>Periksa alamat halaman.</p>;
