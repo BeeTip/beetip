@@ -878,6 +878,12 @@ export type Database = {
         Args: { p_checked: boolean; p_order: string }
         Returns: Json
       }
+      manual_transfer_command: {
+        Args: { p_action: string; p_operation_id: string; p_order: string; p_payload: Json }
+        Returns: string
+      }
+      manual_transfer_operation: { Args: { p_operation_id: string }; Returns: Json }
+      manual_transfer_queue: { Args: { p_after?: string }; Returns: Json }
       notification_inbox: {
         Args: { p_before?: string; p_before_id?: string }
         Returns: Json
@@ -912,6 +918,7 @@ export type Database = {
       read_amendments: { Args: { p_order: string }; Returns: Json }
       read_notification: { Args: { p_id: string }; Returns: undefined }
       read_order: { Args: { p_id: string }; Returns: Json }
+      read_manual_transfers: { Args: { p_before?: string; p_order: string }; Returns: Json }
       read_order_cases: { Args: { p_order: string }; Returns: Json }
       read_purchase: { Args: { p_order: string }; Returns: Json }
       record_purchase: {

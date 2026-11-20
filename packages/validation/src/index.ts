@@ -74,6 +74,7 @@ export type { AcceptanceCommand, ConnectedOrder } from "./connected-orders";
 export { amendmentCommandSchema } from "./connected-amendments";
 export { purchaseCommandSchema, purchaseEvidenceQuery, purchaseViewSchema } from "./connected-purchase";
 export { orderCaseCommandSchema, orderCaseEvidenceQuery, orderCaseQuerySchema, orderCaseQueueSchema, orderCaseViewSchema } from "./order-cases";
+export * from "./manual-transfers";
 export type { OrderCaseCommand, OrderCaseQueue, OrderCaseView } from "./order-cases";
 export { handoverCommandSchema, handoverCodePattern, issuedHandoverSchema, type HandoverCommand } from "./connected-handover";
 export type { PurchaseCommand, PurchaseView } from "./connected-purchase";
