@@ -35,7 +35,7 @@ function ReceiptForm({ save, disabled }: { save: (draft: Draft, image: File) => 
       <label>Foto struk (JPEG atau PNG, maks. 2 MB)<input name="image" type="file" accept="image/jpeg,image/png" required /></label>
       {rows.map((id, index) => <fieldset className="stack" key={id}>
         <legend>Baris struk {index + 1}</legend>
-        <label>Nama barang di struk<input name={`line-${id}`} maxLength={100} required /></label>
+        <label>Nama barang di struk<input placeholder="Contoh: Nasi ayam" name={`line-${id}`} maxLength={100} required /></label>
         <div className="form-grid">
           <label>Jumlah di struk<input name={`quantity-${id}`} type="number" min={1} max={1000} defaultValue={1} required /></label>
           <label>Total baris sebelum diskon bersama (Rp)<input name={`gross-${id}`} type="number" min={1} max={100000000} required /></label>

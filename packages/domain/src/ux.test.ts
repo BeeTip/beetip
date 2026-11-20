@@ -56,6 +56,11 @@ describe("UX workflow contracts", () => {
     expect(h.run("provider", { type: "takeRequest", listingId: created.value }).ok).toBe(true);
     h.state.listings.at(-1)!.items![0].name = "Changed";
     expect(h.state.orders.at(-1)?.terms.items?.[0].name).toBe("Kopi");
+    const order = structuredClone(h.state.orders.at(-1));
+    expect(h.run("provider", { type: "cancelListing", listingId: created.value })).toMatchObject({ ok: false, code: "PERMISSION" });
+    expect(h.run("customer", { type: "cancelListing", listingId: created.value }).ok).toBe(true);
+    expect(h.run("customer2", { type: "takeRequest", listingId: created.value }).ok).toBe(false);
+    expect(h.state.orders.at(-1)).toEqual(order);
   });
   it("support permits unverified help, denies unrelated members, and audits replies", () => {
     const h = setup(); const opened = h.run("unverified", { type: "supportOpen", text: "Bagaimana verifikasi?" }, "support-1"); if (!opened.ok) throw new Error(opened.message);

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { Button } from "./ui";
 
 type Action = "login" | "signup" | "recover" | "password";
@@ -31,7 +32,7 @@ export function SignOut() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const router = useRouter();
-  return <><Button variant="secondary" disabled={busy} onClick={async () => {
+  return <><Button className="dashboard-signout" variant="ghost" disabled={busy} onClick={async () => {
     setBusy(true); setError("");
     try {
       const response = await fetch("/api/identity/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signout" }) });
@@ -40,5 +41,5 @@ export function SignOut() {
       router.push("/"); router.refresh();
     } catch { setError("Belum berhasil keluar. Coba lagi."); }
     finally { setBusy(false); }
-  }}>Keluar</Button><p role="status">{error}</p></>;
+  }}><LogOut size={18} aria-hidden="true" />Keluar</Button>{error && <p role="status">{error}</p>}</>;
 }

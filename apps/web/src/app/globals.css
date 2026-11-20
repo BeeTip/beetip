@@ -306,6 +306,35 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { border-color
 .connected-shell .mobile-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; margin: auto; padding: 24px; }
 .connected-shell .mobile-header nav { display: flex; align-items: center; gap: 16px; font-size: 14px; }
 .connected-shell main { max-width: 1200px; padding: 24px 24px 96px; }
+.account-dashboard { display: grid; gap: 28px; max-width: 800px; margin-inline: auto; }
+.dashboard-hero { display: grid; justify-items: start; gap: 14px; padding: clamp(20px, 5vw, 40px); border: 1px solid var(--line-warm); border-radius: var(--radius-card); background: linear-gradient(125deg, var(--sand), var(--canvas-warm) 80%); }
+.dashboard-monogram, .dashboard-icon { display: grid; flex: none; place-items: center; border-radius: var(--radius-control); }
+.dashboard-monogram { width: 48px; height: 48px; background: var(--accent); color: var(--surface); font-size: 22px; font-weight: 700; }
+.dashboard-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dashboard-section { display: grid; gap: 12px; justify-items: start; }
+.dashboard-activity, .dashboard-settings { display: grid; width: 100%; }
+.dashboard-activity { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dashboard-settings { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.dashboard-link { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 10px; font-size: 14px; font-weight: 650; }
+.dashboard-activity .dashboard-link { border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); }
+.dashboard-settings .dashboard-link { margin-inline: 8px; }
+.dashboard-settings .dashboard-link + .dashboard-link { border-top: 1px solid var(--line); }
+.dashboard-link:hover { background: var(--canvas-warm); }
+.dashboard-link > svg { margin-left: auto; color: var(--muted); }
+.dashboard-icon { width: 38px; height: 38px; color: var(--ink-accent); }
+.dashboard-icon-sage { background: var(--sage); }
+.dashboard-icon-honey { background: var(--sand); }
+.dashboard-icon-peach { background: var(--peach); }
+.dashboard-signout { justify-self: start; }
+.listing-editor { max-width: 800px; margin-inline: auto; }
+.listing-section { display: grid; gap: 14px; padding: clamp(14px, 3vw, 24px); }
+.listing-section h2 { display: flex; align-items: center; gap: 9px; margin: 0; }
+.listing-section h2 svg { color: var(--accent); }
+.listing-section .item-row { background: var(--canvas-warm); }
+.listing-editor .field input::placeholder { color: var(--muted); opacity: 1; }
+@media (max-width: 359px) {
+  .dashboard-activity { grid-template-columns: 1fr; }
+}
 .public-bottom-nav { display: none; }
 @media (max-width: 600px) {
   .connected-shell .mobile-header { padding: 16px; }
