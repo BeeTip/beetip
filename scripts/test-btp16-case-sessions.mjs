@@ -44,14 +44,17 @@ async function actor(finance = false) {
     await sql.query("insert into public.staff_roles(member_id,role) values($1,'finance_operation')", [id]);
     await sql.query("insert into private.funding_account_operators values($1,$2)", [account, id]);
   }
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
-  await page.goto(`${origin}/login`);
-  await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByLabel("Kata sandi", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Masuk", exact: true }).click();
-  await page.waitForURL("**/account");
-  return { id, context, page };
+  async function signIn(destination = "/account") {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.goto(`${origin}${destination === "/account" ? "/login" : destination}`);
+    await page.getByLabel("Email", { exact: true }).fill(email);
+    await page.getByLabel("Kata sandi", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Masuk", exact: true }).click();
+    await page.waitForURL(`${origin}${destination}`);
+    return { context, page };
+  }
+  return { id, ...await signIn(), signIn };
 }
 
 async function mfa({ page }) {
@@ -94,6 +97,15 @@ try {
     order = await value(sql, "select public.accept_order($1,$2,1)", [uuid(), listing]);
     await sql.query("commit");
   } catch (error) { await sql.query("rollback"); throw error; }
+  const orderPath = `/orders/${order}`;
+  const linkedCustomer = await customer.signIn(orderPath);
+  await expect(linkedCustomer.page.getByRole("heading", { name: "Kasus nasi rusak", exact: true })).toBeVisible();
+  await linkedCustomer.context.close();
+  const linkedStranger = await stranger.signIn(orderPath);
+  await expect(linkedStranger.page.getByRole("alert")).toBeVisible();
+  await expect(linkedStranger.page.getByRole("heading", { name: "Kasus nasi rusak", exact: true })).toHaveCount(0);
+  await linkedStranger.context.close();
+  console.log("PASS signing in from an order link resumes the order and preserves participant-only access");
   await sql.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
     values($1,$2,$3,25000,'verified',now(),now(),$4)`, [order, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, reviewer.id]);
   await sql.query("update public.reservations set funding_verified_at=now() where order_id=$1", [order]);
