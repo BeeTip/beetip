@@ -46,8 +46,8 @@ export const boardQuerySchema = z.object({
 }).strict().refine(value => Boolean(value.before) === Boolean(value.beforeId));
 
 export type ConnectedListingInput = z.infer<typeof connectedListingSchema>;
-export type PublicListing = Omit<ConnectedListingInput, "destination"> & { id: string; version: number; created_at: string; budget: number };
-export type OwnListing = PublicListing & { destination: string };
+export type PublicListing = Omit<ConnectedListingInput, "destination" | "status"> & { id: string; version: number; created_at: string; budget: number; status: ConnectedListingInput["status"] | "removed" };
+export type OwnListing = PublicListing & { destination: string; moderated: boolean };
 
 export function wibInput(value: string) { return new Date(value).toLocaleString("sv-SE", { timeZone: "Asia/Jakarta" }).slice(0, 16).replace(" ", "T"); }
 export function wibTimestamp(value: string) { return new Date(`${value}:00+07:00`).toISOString(); }

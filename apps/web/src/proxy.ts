@@ -7,6 +7,7 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if (path === "/api/jobs/transactional-email" || path === "/api/webhooks/brevo") return NextResponse.next();
   const connected = path === "/account/funding"
+    || path === "/account/listing-moderation"
     || path === "/account/order-cases"
     || path === "/account/transfers"
     || path === "/account/reconciliation"

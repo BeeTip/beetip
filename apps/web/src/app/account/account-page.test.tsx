@@ -7,7 +7,7 @@ import OrderPage from "../orders/[id]/page";
 import ChatPage from "../chat/[orderId]/page";
 import { ConnectedAffiliation } from "../../components/connected-affiliation";
 
-const identity = vi.hoisted(() => ({ configured: vi.fn(), member: vi.fn(), rpc: vi.fn() }));
+const identity = vi.hoisted(() => ({ configured: vi.fn(), member: vi.fn(), roles: vi.fn(), rpc: vi.fn() }));
 vi.mock("../../server/identity/config", () => ({ mode: () => "connected", identityConfigured: identity.configured }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({}),
@@ -19,8 +19,8 @@ vi.mock("../../server/identity/client", () => ({
     const query = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      is: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+      in: vi.fn().mockReturnThis(),
+      is: identity.roles,
     };
     return { from: () => query, rpc: identity.rpc };
   },
@@ -29,6 +29,7 @@ vi.mock("../../server/identity/client", () => ({
 it("shows members the account actions they can use", async () => {
   identity.configured.mockReturnValue(true);
   identity.member.mockResolvedValue({ id: "member", name: "Nadia", status: "active" });
+  identity.roles.mockResolvedValue({ data: [] });
 
   const page = renderToStaticMarkup(await AccountPage());
 
@@ -36,6 +37,11 @@ it("shows members the account actions they can use", async () => {
   expect(page).toContain('href="/account/orders"');
   expect(page).toContain('href="/listings/new"');
   expect(page).not.toContain("persetujuan keanggotaan");
+  expect(page).not.toContain('href="/account/listing-moderation"');
+  identity.roles.mockResolvedValue({ data: [{ role: "finance_operation" }, { role: "platform_admin" }] });
+  const staff = renderToStaticMarkup(await AccountPage());
+  expect(staff).toContain('href="/account/listing-moderation"');
+  expect(staff).toContain('href="/account/funding"');
 });
 
 it("lets visitors browse when account services are unavailable", async () => {

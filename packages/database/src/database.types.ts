@@ -208,6 +208,7 @@ export type Database = {
           fee: number
           id: string
           items: Json
+          moderation_hold: string | null
           negotiable: boolean
           owner_id: string
           shop: string
@@ -231,6 +232,7 @@ export type Database = {
           fee: number
           id: string
           items: Json
+          moderation_hold?: string | null
           negotiable: boolean
           owner_id: string
           shop: string
@@ -254,6 +256,7 @@ export type Database = {
           fee?: number
           id?: string
           items?: Json
+          moderation_hold?: string | null
           negotiable?: boolean
           owner_id?: string
           shop?: string
@@ -902,6 +905,11 @@ export type Database = {
         Args: { p_body: string; p_operation_id: string }
         Returns: string
       }
+      listing_moderation_queue: { Args: { p_search: string }; Returns: Json }
+      moderate_listing: {
+        Args: { p_operation_id: string; p_listing_id: string; p_version: number; p_status: string; p_reason: string }
+        Returns: string
+      }
       order_case_command: {
         Args: {
           p_action: string
@@ -928,6 +936,7 @@ export type Database = {
       read_order: { Args: { p_id: string }; Returns: Json }
       read_manual_transfers: { Args: { p_before?: string; p_order: string }; Returns: Json }
       read_order_cases: { Args: { p_order: string }; Returns: Json }
+      read_order_rating: { Args: { p_order_id: string }; Returns: Json }
       read_purchase: { Args: { p_order: string }; Returns: Json }
       read_reconciliation: {
         Args: { p_id: string; p_scope: string }
@@ -979,6 +988,10 @@ export type Database = {
         Returns: string
       }
       start_delivery: { Args: { p_order: string }; Returns: undefined }
+      submit_order_rating: {
+        Args: { p_operation_id: string; p_order_id: string; p_score: number; p_feedback: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
