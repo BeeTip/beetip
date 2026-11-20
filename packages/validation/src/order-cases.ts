@@ -9,13 +9,15 @@ const outcome = z.enum(["resolve", "dismiss"]);
 const kind = z.enum(["cancellation", "dispute"]);
 const base = { operationId: id, orderId: id };
 const amounts = { purchase: amount, fee: amount, refund: amount };
-const dispute = { kind: z.literal("dispute"), reason, imageHash: photo, amount: amount.min(1) };
+const dispute = { kind: z.literal("dispute"), reason, imageHash: photo };
+const amountDispute = { ...dispute, amount: amount.min(1) };
 
 export const orderCaseCommandSchema = z.discriminatedUnion("action", [
   z.strictObject({ ...base, action: z.literal("open"), payload: z.union([
     z.strictObject({ kind: z.literal("cancellation"), reason, imageHash: photo.optional() }),
-    z.strictObject({ ...dispute, component: z.literal("purchase"), itemIndex: index }),
-    z.strictObject({ ...dispute, component: z.literal("fee") }),
+    z.strictObject(dispute),
+    z.strictObject({ ...amountDispute, component: z.literal("purchase"), itemIndex: index }),
+    z.strictObject({ ...amountDispute, component: z.literal("fee") }),
   ]) }),
   z.strictObject({ ...base, action: z.literal("evidence"), payload: z.strictObject({ caseId: id, reason, imageHash: photo }) }),
   z.strictObject({ ...base, action: z.literal("propose"), payload: z.strictObject({ caseId: id, outcome, ...amounts, reason }) }),
@@ -32,6 +34,7 @@ export const orderCaseEvidenceQuery = z.strictObject({ order: id, key: id });
 
 const allocation = z.object(amounts);
 export const orderCaseViewSchema = z.object({
+  boothDemo: z.boolean().optional(),
   access: z.enum(["member", "reviewer"]),
   verified: amount,
   held: allocation,

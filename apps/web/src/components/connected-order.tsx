@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { ConnectedOrder } from "@beetip/validation";
 import { Button } from "./ui";
 import { connectedOrderState } from "./connected-order-state";
-import { ConnectedFunding } from "./connected-funding";
 import { ConnectedAmendments } from "./connected-amendments";
 import { ConnectedPurchase } from "./connected-purchase";
 import { ConnectedOrderCases } from "./connected-order-cases";
@@ -65,11 +64,8 @@ function ConnectedOrderContent({ id, memberId }: { id: string; memberId: string 
     <Link className="button button-secondary" href={`/chat/${id}`}>Pesan pesanan</Link>
     <ConnectedPurchase orderId={id} memberId={memberId} refreshKey={attempt} orderState={order.state} closed={["expired", "cancelled"].includes(order.state)} onChange={refresh} />
     <ConnectedAmendments orderId={id} memberId={memberId} refreshKey={attempt} completed={completed} onChange={refresh} />
-    {!order.boothDemo && <>
-      <ConnectedFunding orderId={id} memberId={memberId} refreshKey={attempt} />
-      <ConnectedOrderCases orderId={id} memberId={memberId} refreshKey={attempt} onChange={refresh} />
-      {order.state === "delivery_confirmed" && <ConnectedOrderRating orderId={id} memberId={memberId} />}
-    </>}
+    <ConnectedOrderCases orderId={id} memberId={memberId} boothDemo={order.boothDemo} refreshKey={attempt} onChange={refresh} />
+    {order.state === "delivery_confirmed" && <ConnectedOrderRating orderId={id} memberId={memberId} />}
     <Link href="/account/orders">Kembali ke daftar pesanan</Link>
   </>;
   return <section className="panel stack">

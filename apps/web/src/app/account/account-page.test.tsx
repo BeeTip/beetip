@@ -38,10 +38,14 @@ it("shows members the account actions they can use", async () => {
   expect(page).toContain('href="/listings/new"');
   expect(page).not.toContain("persetujuan keanggotaan");
   expect(page).not.toContain('href="/account/listing-moderation"');
+  expect(page).not.toContain('href="/account/order-cases"');
   identity.roles.mockResolvedValue({ data: [{ role: "finance_operation" }, { role: "platform_admin" }] });
   const staff = renderToStaticMarkup(await AccountPage());
   expect(staff).toContain('href="/account/listing-moderation"');
-  expect(staff).toContain('href="/account/funding"');
+  expect(staff).toContain('href="/account/order-cases"');
+  for (const retired of ["funding", "transfers", "reconciliation"]) {
+    expect(staff).not.toContain(`href="/account/${retired}"`);
+  }
 });
 
 it("lets visitors browse when account services are unavailable", async () => {

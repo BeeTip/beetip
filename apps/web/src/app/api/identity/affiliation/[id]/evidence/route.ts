@@ -1,7 +1,7 @@
 import { acceptsMutation, affiliationIdSchema } from "@beetip/validation";
 import { identityConfig } from "../../../../../../server/identity/config";
 import { evidenceUploadFailure, normalizeEvidenceImage, validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
-import { fundingImageHash, privateEvidenceClient } from "../../../../../../server/identity/funding-evidence";
+import { evidenceImageHash, privateEvidenceClient } from "../../../../../../server/identity/private-evidence";
 import { boundaryFailure, reply } from "../../../../../../server/identity/http";
 import { protectedClient } from "../../../../../../server/identity/protected";
 
@@ -45,7 +45,7 @@ export async function PUT(request: Request, context: Context) {
     let claim: string | null = "first";
     if (writer) {
       const { data, error } = await writer.rpc("claim_affiliation_upload", {
-        p_request: id, p_member: user.id, p_digest: fundingImageHash(bytes),
+        p_request: id, p_member: user.id, p_digest: evidenceImageHash(bytes),
       });
       if (error) throw new Error("UNAVAILABLE");
       claim = data;
