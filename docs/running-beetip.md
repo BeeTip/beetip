@@ -113,6 +113,8 @@ Keep the familiar marketplace sequence: browse, understand terms, confirm once, 
 
 For a usability rehearsal, ask a tester on their own phone to find an order, explain its status and the amount due, and advance it without coaching. Repeat with a failed or interrupted action. Record where they hesitate, what they believe happened, and whether they can recover. For handover, try both camera scanning and manual code entry on Android and iOS. Browser emulation covers layout and keyboard behavior. Record physical-device and uncoached results separately.
 
+For order history, use an account with at least 21 orders. Open **Pesanan saya**, choose **Muat lebih banyak**, then use **Coba lagi** after a failed load to check that BeeTip returns to the same page. Check that **Jelajahi titipan** takes the user back to the marketplace.
+
 ## Repeat validation
 
 Stop the development server on port 3107 before the demo browser suite. Do not run builds or fixture cleanup concurrently against the same application output or shared database.
