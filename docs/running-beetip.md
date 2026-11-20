@@ -138,6 +138,8 @@ For the isolated database checks, point `BEETIP_LOCAL_DATABASE_URL` at a disposa
 
 The `fresh-supabase` job in [CI](../.github/workflows/ci.yml) also starts a disposable Supabase database. It checks that every migration applied, public tables have row-level security, the affiliation upload grant is scoped, notification rules match the TypeScript registry, and generated database types match the checked-in schema. Record both database jobs in the release evidence.
 
+Follow the [local recovery rehearsal](btp23-local-recovery.md) to verify that a backup restores both the database and a private receipt on a second disposable stack.
+
 ## Release boundary
 
 The current release target is a synthetic demo. Every new connected order uses one-click simulated checkout. Migration `20261121004000` removes executable funding, transfer, and reconciliation commands while preserving any historical records. It converts active unpaid orders only when no funding record exists, retaining their original reservation deadline.
