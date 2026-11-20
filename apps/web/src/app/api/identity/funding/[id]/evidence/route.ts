@@ -1,6 +1,6 @@
 import { acceptsMutation, fundingIdSchema } from "@beetip/validation";
 import { identityConfig } from "../../../../../../server/identity/config";
-import { validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
+import { evidenceUploadFailure, validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
 import { fundingBucket, fundingImageHash } from "../../../../../../server/identity/funding-evidence";
 import { boundaryFailure, reply } from "../../../../../../server/identity/http";
 import { protectedClient } from "../../../../../../server/identity/protected";
@@ -53,5 +53,5 @@ export async function PUT(request: Request, context: Context) {
       }
     }
     throw new Error("UNAVAILABLE");
-  } catch (error) { return boundaryFailure(error); }
+  } catch (error) { return evidenceUploadFailure(error); }
 }

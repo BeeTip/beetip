@@ -14,7 +14,7 @@ Each mutation binds its action and canonical payload to an actor-scoped operatio
 
 The bucket is private and user roles have no direct bucket access. The application authorizes each upload and download against the caller’s current session, order role and funding state. `BEETIP_FUNDING_STORAGE_SECRET` is a server-only local Supabase secret key for the bucket operations. Downloads use a private, non-cacheable attachment response.
 
-Evidence accepts JPEG or PNG up to 2 MiB and 12 megapixels, decoded and re-encoded with metadata removed. Object names come from database-generated submission UUIDs. Upload retries can replay identical normalized bytes. Replacing a file requires discarding its draft. Finalization checks the stored object and keeps purchasing blocked until bank verification.
+Evidence accepts JPEG or PNG, decoded and re-encoded with metadata removed by the [shared evidence upload checks](private-evidence.md). Object names come from database-generated submission UUIDs. Upload retries can replay identical normalized bytes. Replacing a file requires discarding its draft. Finalization checks the stored object and keeps purchasing blocked until bank verification.
 
 The operator queue at `/account/funding` lists pending submissions with an active reservation for the operator’s assigned accounts. A previously verified reservation stays active beyond its initial deadline. Submission notifies eligible assigned operators. Review outcomes notify both counterparties. Notifications have a fixed summary and no evidence, amounts or references. The inbox rechecks current role, assignment and MFA before showing an operator entry or resolving its queue link. Email intents use the existing pending delivery contract.
 
