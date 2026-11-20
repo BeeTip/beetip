@@ -34,7 +34,7 @@ Check `node --version` before running the checks below. On Windows, if another N
 
 To rehearse the same demo from a production build, keep `BEETIP_MODE=demo` set and use `rtk pnpm build` followed by `rtk pnpm --filter @beetip/web start`.
 
-Stop the server before switching modes. Clear the shell override with `Remove-Item Env:BEETIP_MODE`. To reset only the demo fixtures, use **Reset data lokal** in the demo interface.
+Stop the server before switching modes and rebuild before starting in the new mode. Clear the shell override with `Remove-Item Env:BEETIP_MODE`. To reset only the demo fixtures, use **Reset data lokal** in the demo interface.
 
 ## Start the connected application
 

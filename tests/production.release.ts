@@ -46,6 +46,10 @@ test("demo routes and staff authority stay closed on the production server", asy
     expect(new URL(response.headers().location, response.url()).pathname, path).toBe("/account");
   }
 
+  const chatIndex = await request.get("/chat", { maxRedirects: 0 });
+  expect(chatIndex.status()).toBe(307);
+  expect(new URL(chatIndex.headers().location, chatIndex.url()).pathname).toBe("/account/orders");
+
   for (const [path, heading] of [["/orders/BTP-001", "Pesanan belum dapat dimuat"], ["/chat/BTP-001", "Pesan pesanan belum dapat dimuat"]]) {
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);

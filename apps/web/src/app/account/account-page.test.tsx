@@ -3,8 +3,8 @@ import { expect, it, vi } from "vitest";
 import AccountPage from "./page";
 import OrdersPage from "./orders/page";
 import LoginPage from "../login/page";
-import OrderPage from "../orders/[id]/page";
-import ChatPage from "../chat/[orderId]/page";
+import OrderPage from "../orders/[id]/page.connected";
+import ChatPage from "../chat/[orderId]/page.connected";
 import { ConnectedAffiliation } from "../../components/connected-affiliation";
 
 const identity = vi.hoisted(() => ({ configured: vi.fn(), member: vi.fn(), roles: vi.fn(), rpc: vi.fn() }));

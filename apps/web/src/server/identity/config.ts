@@ -2,7 +2,10 @@ import "server-only";
 import { applicationMode, trustedOrigin } from "@beetip/validation";
 
 export function mode() {
-  return applicationMode(process.env.BEETIP_MODE, process.env.VERCEL_ENV);
+  const runtimeMode = applicationMode(process.env.BEETIP_MODE, process.env.VERCEL_ENV);
+  const buildMode = process.env.BEETIP_BUILD_MODE;
+  if (buildMode && runtimeMode !== buildMode) throw new Error("Rebuild BeeTip to change application mode");
+  return runtimeMode;
 }
 
 export function identityConfig() {
