@@ -39,17 +39,22 @@ export async function PUT(request: Request, context: Context) {
     await ownedDraft(context);
     const { bytes, contentType } = await validatedEvidenceImage(request);
     const { client, user, id, path } = await ownedDraft(context);
-    const writer = privateEvidenceClient(process.env.BEETIP_AFFILIATION_STORAGE_SECRET);
-    const { data: claim, error: claimError } = await writer.rpc("claim_affiliation_upload", {
-      p_request: id, p_member: user.id, p_digest: fundingImageHash(bytes),
-    });
-    if (claimError) throw new Error("UNAVAILABLE");
+    const key = process.env.BEETIP_AFFILIATION_STORAGE_SECRET;
+    const writer = key ? privateEvidenceClient(key) : null;
+    let claim: string | null = "first";
+    if (writer) {
+      const { data, error } = await writer.rpc("claim_affiliation_upload", {
+        p_request: id, p_member: user.id, p_digest: fundingImageHash(bytes),
+      });
+      if (error) throw new Error("UNAVAILABLE");
+      claim = data;
+    }
     if (claim === "denied") throw new Error("PERMISSION");
     const conflict = () => reply({ ok: false, message: "Gunakan gambar yang sama atau tarik pengajuan untuk mengganti bukti." }, 409);
     if (claim === "conflict") return conflict();
 
     if (claim === "first" || claim === "retry") {
-      const { error } = await writer.storage.from(bucket).upload(path, bytes, { contentType, upsert: false });
+      const { error } = await (writer ?? client).storage.from(bucket).upload(path, bytes, { contentType, upsert: false });
       if (!error) return reply({ ok: true, alreadyUploaded: claim === "retry" });
       if (error.statusCode !== "409" && error.statusCode !== "400") throw new Error("UNAVAILABLE");
     } else if (claim !== "existing") {

@@ -6,7 +6,7 @@ const origin = "http://127.0.0.1:3108";
 const id = "00000000-0000-4000-8000-000000000001";
 const member = "00000000-0000-4000-8000-000000000002";
 const storage = vi.hoisted(() => ({ upload: vi.fn() }));
-const sessionStorage = vi.hoisted(() => ({ download: vi.fn() }));
+const sessionStorage = vi.hoisted(() => ({ download: vi.fn(), upload: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 const claimUpload = vi.hoisted(() => vi.fn());
 const maybeSingle = vi.hoisted(() => vi.fn());
@@ -77,8 +77,20 @@ it("checks draft state again after normalizing the image", async () => {
   expect(createClient).not.toHaveBeenCalled();
 });
 
-it("fails closed when the server write credential is missing", async () => {
+it("keeps validated uploads working before switching the Storage policy and credential", async () => {
   vi.stubEnv("BEETIP_AFFILIATION_STORAGE_SECRET", "");
+  sessionStorage.upload.mockResolvedValue({ error: null });
+  const image = await sharp({ create: { width: 2, height: 2, channels: 3, background: "red" } }).png().toBuffer();
+
+  expect((await upload(image, "image/png")).status).toBe(200);
+  expect(sessionStorage.upload).toHaveBeenCalledWith(`${member}/${id}/evidence`, expect.any(Buffer), { contentType: "image/png", upsert: false });
+  expect(createClient).not.toHaveBeenCalled();
+});
+
+it("cannot use session credentials once the old Storage policy has been removed", async () => {
+  vi.stubEnv("BEETIP_AFFILIATION_STORAGE_SECRET", "");
+  sessionStorage.upload.mockResolvedValue({ error: { statusCode: "400" } });
+  sessionStorage.download.mockResolvedValue({ error: { statusCode: "404" } });
   const image = await sharp({ create: { width: 2, height: 2, channels: 3, background: "red" } }).png().toBuffer();
 
   expect((await upload(image, "image/png")).status).toBe(503);
