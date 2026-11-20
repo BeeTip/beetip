@@ -68,6 +68,18 @@ it("refuses to upload to a visible affiliation draft owned by another member", a
   expect(createClient).not.toHaveBeenCalled();
 });
 
+it("withholds affiliation evidence when the reviewer loses access during the download", async () => {
+  const url = `${origin}/api/identity/affiliation/${id}/evidence`;
+  maybeSingle.mockResolvedValueOnce({ data: { member_id: id, status: "pending" } })
+    .mockResolvedValueOnce({ data: null });
+  sessionStorage.download.mockResolvedValue({ data: new Blob(["private evidence"]) });
+
+  const response = await GET(new Request(url), { params: Promise.resolve({ id }) });
+  expect(response.status).toBe(403);
+  expect(response.headers.get("cache-control")).toBe("private, no-store");
+  expect(await response.text()).not.toContain("private evidence");
+});
+
 it("checks draft state again after normalizing the image", async () => {
   maybeSingle.mockResolvedValueOnce({ data: { member_id: member, status: "draft" } })
     .mockResolvedValueOnce({ data: { member_id: member, status: "withdrawn" } });
