@@ -30,6 +30,11 @@ jobs:
         with:
           name: browser-test-results
           path: test-results/
+      - name: Build connected production candidate
+        run: pnpm build
+        env:
+          BEETIP_MODE: connected
+          VERCEL_ENV: production
   database:
     runs-on: ubuntu-latest
     services:

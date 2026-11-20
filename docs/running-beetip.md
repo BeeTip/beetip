@@ -126,7 +126,7 @@ rtk pnpm audit --prod --audit-level high
 rtk pnpm test:e2e
 ```
 
-The demo browser suite builds and runs its own production server. Rebuild in connected mode before connected browser acceptance. Hosted session harnesses require `BEETIP_TEST_PROJECT_REF=rgiptdfjlmwldngapojq`, the local candidate URL and authorized development test access. For the local chat and funding harnesses, set `BEETIP_TEST_LOCAL_STACK` to the disposable work directory and `BEETIP_TEST_URL` to the app's loopback origin. See [order acceptance](connected-orders.md), [listing acceptance](connected-listings.md), [offer acceptance](connected-offers.md) and [notifications](notifications.md) for their exact commands and evidence.
+The demo browser suite builds and runs its own production server. CI also builds with `BEETIP_MODE=connected` and `VERCEL_ENV=production` without project credentials. For connected browser acceptance, rebuild with the local configuration and start the server as described above. Hosted session harnesses require `BEETIP_TEST_PROJECT_REF=rgiptdfjlmwldngapojq`, the local candidate URL and authorized development test access. For the local chat and funding harnesses, set `BEETIP_TEST_LOCAL_STACK` to the disposable work directory and `BEETIP_TEST_URL` to the app's loopback origin. See [order acceptance](connected-orders.md), [listing acceptance](connected-listings.md), [offer acceptance](connected-offers.md) and [notifications](notifications.md) for their exact commands and evidence.
 
 For BTP-17, use the [synthetic transfer rehearsal](connected-manual-transfers.md) to run the disposable PostgreSQL checks and two-staff local Auth/MFA workflow.
 
