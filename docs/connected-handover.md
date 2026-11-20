@@ -6,6 +6,8 @@ The customer checks quantity and condition, then generates a 12-character hexade
 
 Each code expires after 60 seconds according to PostgreSQL. A new code immediately replaces the old one and starts a fresh attempt budget. Five incorrect submissions for an active code require a replacement from the customer. Code issuance and confirmation serialize on the same order row. Confirmation updates the challenge, order state, and audit in one transaction. Shipment and receipt do not release funds or change simulated funding balances.
 
+The customer screen times the display from the start of the issuance request using elapsed browser time. This keeps an incorrect device clock from hiding a fresh code or extending its display. The display can end early by the time it takes for the request to reach PostgreSQL and for PostgreSQL to issue the code.
+
 The issuance response is private and uncached. The interface holds the code and QR in memory. The mutation API hashes the submitted code before calling PostgreSQL. PostgreSQL stores a separate salted hash bound to the order and both participants. Audit records contain actor, order, event, and a fixed reason for authorized confirmation rejections. Requests from unauthorized callers receive a generic permission response. Keep handover bodies, RPC payloads, screenshots and traces out of operational logging and test artifacts.
 
 ## Verification
