@@ -1,5 +1,7 @@
 # Connected order amendments
 
+The connected demo uses the approved item budget for shopping after simulated checkout. An approved increase still checks trip capacity and requires the customer's consent. The manual top-up procedure below describes the [historical funding workflow](connected-funding.md).
+
 [BeeTip issue #15](https://github.com/BeeTip/beetip/issues/15) adds provider proposals and explicit customer approval or rejection for connected orders. Both parties can open **Perubahan pesanan** in the private order detail. Providers propose a complete replacement shopping list and a reason. The unit budgets and quantities determine the revised maximum item budget in whole rupiah. Customers see the proposed items, reason, item budget and total with the original service fee before deciding. The order still shows its original accepted snapshot and displays the current approved terms and up to 20 recent proposals separately.
 
 ## Versions, authorization and capacity

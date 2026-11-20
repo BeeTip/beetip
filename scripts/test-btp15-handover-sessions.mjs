@@ -53,9 +53,7 @@ try {
   const customerClient = api(), providerClient = api();
   assert.ifError((await customerClient.auth.signInWithPassword(customer)).error);
   assert.ifError((await providerClient.auth.signInWithPassword(provider)).error);
-  const account = uuid();
-  await sql.query("insert into private.funding_accounts(id,label) values($1,'Akun simulasi serah terima')", [account]);
-  async function completedOrder({ booth = false } = {}) {
+  async function completedOrder({ verifyCheckout = false } = {}) {
     const listing = uuid(), offer = uuid();
     await sql.query(`insert into public.listings(id,owner_id,type,title,shop,category,area,destination,items,budget,fee,bound,negotiable,capacity,spending_capacity,start_at,end_at,cutoff_at,status)
       values($1,$2,'trip','Uji serah terima','Warung','Makanan','Alam Sutera','Kampus',$3,20000,5000,5000,false,2,40000,
@@ -68,7 +66,7 @@ try {
       p_listing_version: 1, p_offer_id: offer, p_offer_version: 1 });
     assert.ifError(accepted.error);
     const id = accepted.data;
-    if (booth) {
+    if (verifyCheckout) {
       const payment = `${origin}/api/identity/orders/demo-payment`;
       for (const member of [provider, outsider]) {
         await checked(await member.context.request.post(payment, { headers: headers(member), data: { orderId: id } }), 403);
@@ -96,9 +94,7 @@ try {
         (select count(*)::int from private.audit_events where target_id=$1 and event_type='booth_payment_confirmed') confirmations`, [id]);
       assert.deepEqual(stats.rows[0], { funding: 0, confirmations: 1 });
     } else {
-      await sql.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
-        select $1,$2,$3,private.funding_required($1),'verified',now(),now(),$4`, [id, account, `TEST${uuid().replaceAll("-", "").toUpperCase()}`, outsider.id]);
-      await sql.query("update public.reservations set funding_verified_at=now() where order_id=$1", [id]);
+      assert.ifError((await customerClient.rpc("confirm_booth_payment", { p_order: id })).error);
     }
     const operationId = uuid();
     const image = await sharp({ create: { width: 32, height: 32, channels: 3, background: `#${operationId.slice(0, 6)}` } }).png().toBuffer();
@@ -224,8 +220,7 @@ try {
   for (const code of [firstCode, replacement, qrCode]) {
     assert(!JSON.stringify([projections, audit.rows]).includes(code) && !logs.includes(code), "Code leaked to a projection, audit, or app log");
   }
-  await sql.query("insert into private.booth_members(member_id) values($1),($2)", [customer.id, provider.id]);
-  const boothOrder = await completedOrder({ booth: true });
+  const boothOrder = await completedOrder({ verifyCheckout: true });
   await post(provider, { action: "start", orderId: boothOrder });
   const boothCode = await post(customer, { action: "issue", orderId: boothOrder, checked: true });
   await post(provider, { action: "confirm", orderId: boothOrder, code: boothCode.code });

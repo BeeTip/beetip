@@ -1,5 +1,7 @@
 # BTP-12 incoming funding
 
+Migration `20261121004000` removed this workflow from the connected demo. The procedure records [revision f4cb229](https://github.com/BeeTip/beetip/blob/f4cb229/docs/connected-funding.md). See the [current checkout walkthrough](running-beetip.md#connected-walkthrough).
+
 [BeeTip issue #14](https://github.com/BeeTip/beetip/issues/14) adds a connected customer submission and a private finance review queue. The migration is `20261119001000`. It follows BTP-07 expiry, BTP-10 notifications and the BTP-08 notification resolver. The demo uses its existing funding adapter.
 
 ## Funding and expiry

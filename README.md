@@ -8,7 +8,7 @@ Follow [Run and demonstrate BeeTip](docs/running-beetip.md) for the hosted booth
 
 The current access policy is [public browsing and open onboarding](docs/public-onboarding.md). Visitors can explore without an account, and personalized email confirmation signs new users into their dashboard. Connected features include [listing publishing and browsing](docs/connected-listings.md), [private versioned offers and owner review](docs/connected-offers.md), [atomic acceptance and reserved orders](docs/connected-orders.md), [scheduled reservation expiry](docs/connected-expiry.md), [durable private order chat](docs/connected-chat.md), and [in-app notifications](docs/notifications.md). Check each feature record for the environments verified.
 
-The browser-local demo covers both listing types, negotiation, funding, purchases, chat, handover, disputes, transfers, ratings, and reconciliation with synthetic records. Connected mode adds [private support](docs/connected-support.md), [versioned order amendments](docs/connected-amendments.md), [synthetic funding and top-ups](docs/connected-funding.md) reviewed by scoped MFA roles, [purchase progress with shared receipts](docs/connected-purchases.md), and [delivery confirmation by QR or backup code](docs/connected-handover.md). Connected settlement and real-money operation remain release work. See [affiliation and scoped staff access](docs/affiliation-staff.md) for the role model.
+The browser-local demo includes fictional personas and an optional synthetic ledger. The [connected demo](docs/running-beetip.md#connected-walkthrough) uses separate signed-in accounts for listings, offers, private realtime chat, one-click simulated checkout, shopping receipts, handover, and ratings. It includes private support, order amendments, and case review. Connected checkout never collects bank details or moves money.
 
 The demo uses Next.js, React, TypeScript, Tailwind CSS, Radix/shadcn-style primitives, React Hook Form, Zod, and Lucide. The interface targets mobile browsers first, with responsive desktop layouts and a simulated administration area. Supabase PostgreSQL, Auth, private Storage and authorized Realtime hints back the connected slices. Native applications remain deferred under the PRD.
 
@@ -86,7 +86,7 @@ The synthetic dataset is visible to the browser and can be edited through develo
 
 ## Pilot boundary
 
-Payment verification, payouts, and refunds are supervised manual operations. Simulated payments must be labeled. Real funds require a suitable collection and payout arrangement, verified operators, and reconciliation procedures before launch. Delivery confirmation establishes payout eligibility; it does not prove an outgoing transfer.
+The connected demo has no funding, payout, refund, or reconciliation endpoints. Historical financial records are retained privately. Any future real-money system would require a new operating decision and implementation.
 
 ## Member UX upgrade
 

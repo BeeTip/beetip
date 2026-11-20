@@ -1,5 +1,7 @@
 # Connected synthetic transfer review
 
+Migration `20261121004000` removed connected transfer commands. The procedure records [revision f4cb229](https://github.com/BeeTip/beetip/blob/f4cb229/docs/connected-manual-transfers.md).
+
 Open **Pemeriksaan dana** from the account dashboard and choose **Transfer dan pengembalian dana**. The queue is scoped to connected finance staff with verified MFA and a synthetic account assignment. Order participants cannot operate or read the staff transfer ledger for their own order.
 
 1. Open an eligible delivered or case-cancelled order. Select an available item, fee or refund, then enter a whole IDR amount and a note.

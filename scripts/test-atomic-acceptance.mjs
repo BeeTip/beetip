@@ -22,6 +22,40 @@ async function connect(actor) {
 async function denied(promise, match = /CONFLICT:/) { await assert.rejects(promise, match); }
 const accept = (client, command) => client.query("select public.accept_order($1,$2,$3,$4,$5) id", [command.operation, command.listing, command.version ?? 1, command.offer ?? null, command.offerVersion ?? (command.offer ? 1 : null)]).then(result => result.rows[0].id);
 const command = (listing, offer) => ({ operation: randomUUID(), listing, offer });
+
+async function checkDemoUpgrade(owner, migration) {
+  const seller = randomUUID(), buyer = randomUUID(), session = randomUUID(), account = randomUUID();
+  await owner.query("insert into auth.users(id,email,email_confirmed_at) values($1::uuid,$1::uuid::text||'@example.invalid',now()),($2::uuid,$2::uuid::text||'@example.invalid',now())", [seller, buyer]);
+  await owner.query("insert into auth.sessions(id,user_id) values($1,$2)", [session, buyer]);
+  await owner.query("insert into private.funding_accounts(id,label) values($1,'Fixture upgrade demo')", [account]);
+  const orders = {};
+  for (const type of ["unpaid", "expired", "funded"]) {
+    const listing = randomUUID();
+    await owner.query(`insert into public.listings(id,owner_id,type,title,shop,category,area,destination,items,budget,fee,bound,negotiable,capacity,spending_capacity,start_at,end_at,cutoff_at,status)
+      values($1,$2,'request','Uji upgrade demo','Warung','Makanan','Alam Sutera','Kampus',
+        '[{"name":"Nasi","specification":"","quantity":1,"unitBudget":20000}]',20000,5000,5000,false,1,150000,
+        now()+interval '1 day',now()+interval '25 hours',now()+interval '23 hours','active')`, [listing, seller]);
+    await owner.query("select set_config('request.jwt.claims',$1,false)", [JSON.stringify({ sub: buyer, session_id: session, aal: "aal1" })]);
+    orders[type] = (await owner.query("select public.accept_order($1,$2,1) id", [randomUUID(), listing])).rows[0].id;
+  }
+  await owner.query("update public.reservations set expires_at=now()-interval '1 minute' where order_id=$1", [orders.expired]);
+  await owner.query(`insert into private.funding_submissions(order_id,account_id,reference,amount,state,submitted_at,reviewed_at,reviewed_by)
+    values($1,$2,'TESTDEMOUPGRADE',25000,'verified',now(),now(),$3)`, [orders.funded, account, seller]);
+  await owner.query("update public.reservations set funding_verified_at=now() where order_id=$1", [orders.funded]);
+  const reservation = id => owner.query("select expires_at from public.reservations where order_id=$1", [id]).then(result => result.rows[0].expires_at);
+  const unpaidDeadline = await reservation(orders.unpaid);
+
+  await owner.query(migration);
+  const state = id => owner.query("select public.read_order($1)->>'state' state", [id]).then(result => result.rows[0].state);
+  assert.equal(await state(orders.unpaid), "booth_awaiting_payment");
+  assert.deepEqual(await reservation(orders.unpaid), unpaidDeadline, "Upgrade preserves the unpaid deadline");
+  assert.equal(await state(orders.expired), "expired");
+  assert.equal(await state(orders.funded), "funding_verified");
+  assert.equal((await owner.query("select amount::int from private.funding_submissions where order_id=$1", [orders.funded])).rows[0].amount, 25000);
+  await owner.query("select set_config('request.jwt.claims','{}',false)");
+  checks.push("demo upgrade converts active unpaid orders, preserves their deadline, never revives expiry, and preserves legacy funding");
+}
+
 try {
   await admin.connect();
   for (const role of ["anon", "authenticated"]) await admin.query(`do $$ begin if not exists(select 1 from pg_roles where rolname='${role}') then create role ${role}; end if; end $$`);
@@ -30,7 +64,9 @@ try {
   const owner = await connect();
   await owner.query(readFileSync(new URL("../supabase/tests/local_platform.sql", import.meta.url), "utf8"));
   for (const file of readdirSync(new URL("../supabase/migrations/", import.meta.url)).filter(file => file.endsWith(".sql")).sort()) {
-    await owner.query(readFileSync(new URL(`../supabase/migrations/${file}`, import.meta.url), "utf8"));
+    const migration = readFileSync(new URL(`../supabase/migrations/${file}`, import.meta.url), "utf8");
+    if (file === "20261121004000_connected_demo_only.sql") await checkDemoUpgrade(owner, migration);
+    else await owner.query(migration);
   }
   checks.push("all repository migrations apply to fresh PostgreSQL with local platform stubs");
   assert.equal((await owner.query(`select count(*)::int n from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -39,11 +75,11 @@ try {
     assert.equal((await owner.query("select has_function_privilege('anon',$1,'execute') allowed", [signature])).rows[0].allowed, false);
   }
   checks.push("new public tables enforce RLS and acceptance/order RPCs deny anon execution");
-  for (const file of ["connected_listings.sql", "versioned_offers.sql", "atomic_acceptance.sql", "notification_inbox.sql"]) {
+  for (const file of ["connected_listings.sql", "versioned_offers.sql", "atomic_acceptance.sql", "notification_inbox.sql", "connected_demo_payment.sql"]) {
     const path = new URL(`../supabase/tests/${file}`, import.meta.url);
     await owner.query(readFileSync(path, "utf8"));
   }
-  checks.push("rollback-only listing, offer, acceptance and notification authorization suites");
+  checks.push("rollback-only listing, offer, acceptance, notification and demo checkout authorization suites");
   const actors = [];
   for (let i = 0; i < 5; i++) {
     const actor = { id: randomUUID(), session: randomUUID() };
