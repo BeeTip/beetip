@@ -25,8 +25,8 @@ export default async function Page() {
   if (!identityConfigured()) return <AccountUnavailable />;
   const member = await currentMember();
   if (!member) redirect("/login");
-  const finance = member.status === "suspended" ? null : await (await identityClient())
-    .from("staff_roles").select("role").eq("member_id", member.id).eq("role", "finance_operation").is("revoked_at", null).maybeSingle();
+  const roles = member.status === "suspended" ? null : await (await identityClient())
+    .from("staff_roles").select("role").eq("member_id", member.id).in("role", ["finance_operation", "platform_admin"]).is("revoked_at", null);
   return <section className="account-dashboard" aria-label="Dashboard BeeTip">
     <header className="dashboard-hero">
       <span className="dashboard-monogram" aria-hidden="true">{Array.from(member.name.trim())[0]?.toLocaleUpperCase("id-ID")}</span>
@@ -46,7 +46,8 @@ export default async function Page() {
       <div className="dashboard-settings">
         <DashboardLink href="/support" label="Hubungi bantuan" icon={LifeBuoy} />
         {member.status !== "suspended" && <DashboardLink href="/account/affiliation" label="Afiliasi dan keamanan akun" icon={ShieldCheck} />}
-        {finance?.data && <DashboardLink href="/account/funding" label="Pemeriksaan dana" icon={Wallet} />}
+        {roles?.data?.some(grant => grant.role === "finance_operation") && <DashboardLink href="/account/funding" label="Pemeriksaan dana" icon={Wallet} />}
+        {roles?.data?.some(grant => grant.role === "platform_admin") && <DashboardLink href="/account/listing-moderation" label="Moderasi listing" icon={ShieldCheck} />}
       </div>
       <SignOut />
     </section>

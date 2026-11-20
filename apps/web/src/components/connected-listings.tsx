@@ -41,7 +41,8 @@ async function read(url: string, signal?: AbortSignal) {
 }
 
 function ListingCard({ listing, own }: { listing: PublicListing; own: boolean }) {
-  return <article className="panel stack"><div className="badge-row"><Badge>{listing.type === "request" ? "Minta dibelikan" : "Jasa titip"}</Badge><Badge>{listing.category}</Badge>{own && <Badge>{listing.status}</Badge>}</div><h2>{listing.title}</h2><p>{listing.shop} · {listing.area}</p><p>{time(listing.start)}</p><p>Ongkos jasa <strong>{money(listing.fee)}</strong></p><Link className="button button-primary" href={own ? `/listings/new?edit=${listing.id}` : `/listings/${listing.id}`}>{own ? "Ubah listing" : "Lihat detail"}</Link>{own && <Link className="button button-secondary" href={`/account/offers?listing=${listing.id}`}>Tinjau penawaran</Link>}</article>;
+  const statuses = { active: "Aktif", paused: "Dijeda", closed: "Ditutup", removed: "Dihapus oleh operator" };
+  return <article className="panel stack"><div className="badge-row"><Badge>{listing.type === "request" ? "Minta dibelikan" : "Jasa titip"}</Badge><Badge>{listing.category}</Badge>{own && <Badge>{statuses[listing.status]}</Badge>}</div><h2>{listing.title}</h2><p>{listing.shop} · {listing.area}</p><p>{time(listing.start)}</p><p>Ongkos jasa <strong>{money(listing.fee)}</strong></p>{listing.status !== "removed" && <Link className="button button-primary" href={own ? `/listings/new?edit=${listing.id}` : `/listings/${listing.id}`}>{own ? "Ubah listing" : "Lihat detail"}</Link>}{own && <Link className="button button-secondary" href={`/account/offers?listing=${listing.id}`}>Tinjau penawaran</Link>}</article>;
 }
 
 export function ConnectedBoard({ own = false }: { own?: boolean }) {
@@ -101,6 +102,7 @@ function initialListing(): ConnectedListingInput {
 export function ConnectedListingForm({ editId, memberId }: { editId?: string; memberId: string }) {
   const [value, setValue] = useState<ConnectedListingInput>(initialListing);
   const [published, setPublished] = useState<ConnectedListingInput | null>(null);
+  const [moderated, setModerated] = useState(false);
   const [loadedAt, setLoadedAt] = useState(0);
   const [version, setVersion] = useState(0);
   const [loading, setLoading] = useState(Boolean(editId));
@@ -117,7 +119,9 @@ export function ConnectedListingForm({ editId, memberId }: { editId?: string; me
       if (controller.signal.aborted) return;
       const row: OwnListing | undefined = data.listings[0];
       if (!row) throw new Error("Listing tidak ditemukan atau bukan milikmu.");
-      const parsed = connectedListingSchema.parse(Object.fromEntries(Object.entries(row).filter(([key]) => !["id", "version", "created_at", "budget"].includes(key))));
+      if (row.status === "removed") throw new Error("Listing ini dihapus oleh operator.");
+      const parsed = connectedListingSchema.parse(Object.fromEntries(Object.entries(row).filter(([key]) => !["id", "version", "created_at", "budget", "moderated"].includes(key))));
+      setModerated(Boolean(row.moderated));
       setPublished(parsed);
       setLoadedAt(Date.now());
       setValue(parsed); setVersion(row.version); setReady(true);
@@ -147,13 +151,14 @@ export function ConnectedListingForm({ editId, memberId }: { editId?: string; me
     {!saved.closed && <Link className="button button-primary" href={`/listings/${saved.id}`}>Lihat listing</Link>}
     <Link className="button button-secondary" href="/account/listings">Listing saya</Link>
   </section>;
-  const canCancel = editId && published && published.status !== "closed" && Date.parse(published.cutoff) > loadedAt;
+  const canCancel = editId && published && !moderated && published.status !== "closed" && Date.parse(published.cutoff) > loadedAt;
   return <section className="stack listing-editor">
     <header>
       <Link className="back-link" href={editId ? "/account/listings" : "/"}><ArrowLeft size={16} aria-hidden="true" />{editId ? "Listing saya" : "Jelajahi listing"}</Link>
       <h1>{editId ? "Ubah listing" : "Buat listing"}</h1>
     </header>
     {error && <div role="alert" className="info-box"><p>{error}</p>{editId && <Button onClick={() => { pending.current = null; setLoading(true); setReady(false); setError(""); setAttempt(attempt + 1); }}>Muat ulang listing</Button>}</div>}
+    {ready && moderated && <p className="info-box">Listing sedang dimoderasi. Perubahan jadwal akan tersimpan, dan operator menentukan kapan listing dapat dibuka kembali.</p>}
     {ready && <form className="stack" onSubmit={event => { event.preventDefault(); void save({ ...value, negotiable: false, bound: value.fee }); }}>
       <fieldset disabled={busy} className="stack listing-fields">
         <section className="panel listing-section">
