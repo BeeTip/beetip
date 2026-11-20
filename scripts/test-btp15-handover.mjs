@@ -66,10 +66,10 @@ try {
     }
     return id;
   }
-  async function finish(id, quantity = 1) {
+  async function finish(id, quantity = 1, imageHash) {
     const run = (key, action, payload) => first(provider.client, "select public.record_purchase($1,$2,1,$3,$4)", [key, id, action, payload]);
     if (quantity) {
-      const key = uuid(), hash = createHash("sha256").update(key).digest("hex");
+      const key = uuid(), hash = imageHash ?? createHash("sha256").update(key).digest("hex");
       await owner.query("insert into storage.objects(id,bucket_id,name,metadata) values($1,'purchase-receipts',$2,$3)",
         [uuid(), `${provider.id}/${id}/${key}/${hash}`, { mimetype: "image/png", size: 100 }]);
       const date = await first(owner, "select (now() at time zone 'Asia/Jakarta')::date::text");
@@ -121,7 +121,9 @@ try {
   await assert.rejects(consume(outsider, id, issued.code), /PERMISSION/);
   await assert.rejects(consume(provider, uuid(), issued.code), /PERMISSION/);
   const other = await order();
-  await finish(other, 2);
+  const regularImage = createHash("sha256").update("regular receipt").digest("hex");
+  await finish(other, 2, regularImage);
+  await assert.rejects(finish(await order(), 2, regularImage), /Receipt image already recorded/);
   await start(provider, other);
   const otherCode = await issue(customer, other);
   assert.equal(await consume(provider, other, issued.code), "invalid", "Code is bound to its order");
@@ -147,11 +149,16 @@ try {
   const history = await first(provider.client, "select public.btp08_history($1)", [booth]);
   assert.match(JSON.stringify(history), /Siap untuk demo/);
   await assert.rejects(outsider.client.query("select public.btp08_history($1)", [booth]), /PERMISSION/);
-  await finish(booth, 2);
+  const sampleImage = createHash("sha256").update("booth sample").digest("hex");
+  await finish(booth, 2, sampleImage);
   await start(provider, booth);
   assert.equal(await consume(provider, booth, (await issue(customer, booth)).code), "confirmed");
   assert.equal(await state(customer, booth), "delivery_confirmed");
   assert.equal(await first(owner, "select count(*)::int from private.funding_submissions where order_id=$1", [booth]), 0);
+  const repeatedBooth = await order({ fund: false });
+  await finish(repeatedBooth, 2, sampleImage);
+  assert.equal(await state(customer, repeatedBooth), "purchased", "A sample photo can be reused on a new booth listing");
+  console.log("PASS booth account isolation, unpaid handover, reusable sample receipt, and regular receipt deduplication");
 
   const attempts = () => first(owner, "select failed_attempts from private.handover_challenges where order_id=$1", [id]);
   assert.equal(await attempts(), 0);

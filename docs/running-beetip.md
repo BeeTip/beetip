@@ -8,7 +8,7 @@ For the booth, use connected BeeTip with two confirmed booth accounts. The local
 2. As Nadia, open **Buat listing**, choose **Minta dibelikan**, and publish a fixed-fee request. Prefix the title with `[DEMO]`. Enter a future WIB cutoff and delivery window, a shopping budget, a fee, and a sample campus destination.
 3. As Rizky, open the published request, select **Lanjut ke penawaran**, check the agreement, and choose **Ambil permintaan harga tetap**. For a shopping trip or a negotiable request, submit an offer from the other session and accept it as the listing owner from **Tinjau penawaran**.
 4. Open **Pesanan saya** from both accounts. The order starts at **Siap belanja demo** with a 24-hour reservation. From the order, open **Pesan pesanan**, send a message in each direction, and reload to see saved chat.
-5. As Rizky, open **Progres belanja**, add a sample JPEG or PNG receipt, allocate the items, and select **Selesaikan belanja**. Start delivery. As Nadia, confirm the goods and generate a handover code. Enter the code in Rizky's session and verify **Diterima** on both sides.
+5. As Rizky, open **Progres belanja**, add a sample JPEG or PNG receipt with a fresh receipt reference, allocate the items, and select **Selesaikan belanja**. You can reuse the sample image on another booth listing. Start delivery. As Nadia, confirm the goods and generate a handover code. Enter the code in Rizky's session and verify **Diterima** on both sides.
 
 The database marks new orders between the two booth members. Ordinary confirmed users can use listings, offers, chat, and the standard order flow. The payment exception requires both booth accounts. Booth orders record zero incoming funds and continue through the ordinary purchase and handover commands using sample data. Funding, financial dispute review and settlement are outside the booth walkthrough. Support and notifications retain their normal account permissions.
 
@@ -16,7 +16,7 @@ To prepare another pair, create two confirmed synthetic Auth users in the dedica
 
 The targeted database regression runs with `node scripts/test-btp15-handover.mjs` on disposable loopback PostgreSQL. It verifies purchase, chat, handover, zero financial rows, and separation from regular accounts. Hosted setup and promotion steps are in the [Vercel runbook](vercel-deployment.md).
 
-The 19 November rehearsal passed on a local production build backed by the hosted development database. Two real browser sessions published and took a request, exchanged messages that survived reload, allocated a private sample receipt, and confirmed delivery with a backup code. A separate temporary account confirmed and replaced its password using generated Auth links. The 18 November [onboarding record](public-onboarding.md) covers actual email delivery.
+The 20 November hosted rehearsal verified that two separate browser sessions could publish and take a request, exchange messages that survived reload, reuse a private sample receipt from an earlier listing, and confirm delivery with a backup code. A separate temporary account confirmed and replaced its password using generated Auth links. The 18 November [onboarding record](public-onboarding.md) covers actual email delivery. See [BTP-21](https://github.com/BeeTip/beetip/issues/23) for deployment and rehearsal evidence.
 
 ## Start the full synthetic demo
 
