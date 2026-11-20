@@ -33,7 +33,9 @@ test("multi-item creation, fixed acceptance, role dashboard and persisted suppor
   await page.getByRole("button", { name: "Saya bisa belikan", exact: true }).click(); await page.getByRole("button", { name: "Setujui dan ambil titipan", exact: true }).click();
   await expect(page).toHaveURL(/\/orders\/demo-/); const order = page.url(); await expect(page.getByText("Meja resepsionis gedung A", { exact: true })).toBeVisible();
   await page.goto("/trips"); await expect(page.locator(".order-card").filter({ hasText: "Kopi dan roti untuk kelas" })).toBeVisible();
-  await page.goto(order); await page.getByRole("link", { name: "Hubungi bantuan" }).click(); await page.getByLabel("Pesan bantuan").fill("Tolong periksa lokasi serah terima"); await page.getByRole("button", { name: "Kirim ke bantuan" }).click();
+  await page.goto(order); await page.getByRole("link", { name: "Hubungi bantuan" }).click();
+  await expect(page.getByText("Percakapan demo tersimpan di perangkat ini.", { exact: true })).toBeVisible();
+  await page.getByLabel("Pesan bantuan").fill("Tolong periksa lokasi serah terima"); await page.getByRole("button", { name: "Kirim ke bantuan" }).click();
   await page.reload(); await expect(page.getByText("Tolong periksa lokasi serah terima", { exact: true })).toBeVisible();
   await persona(page, "customer2"); await page.goto("/support"); await expect(page.getByText("Tolong periksa lokasi serah terima", { exact: true })).toHaveCount(0);
   await persona(page, "admin1"); await page.goto("/admin"); await page.getByLabel("Balasan bantuan").fill("Lokasi telah diperiksa"); await page.getByRole("button", { name: "Kirim balasan" }).click();

@@ -20,7 +20,8 @@ const { createClient } = require("@supabase/supabase-js");
 const { createServerClient } = require("@supabase/ssr");
 const admin = createClient(settings.NEXT_PUBLIC_SUPABASE_URL, key.api_key, { auth: { persistSession: false, autoRefreshToken: false } });
 const password = randomBytes(24).toString("base64url");
-const image = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1fQAAAAASUVORK5CYII=", "base64");
+const sharp = require("sharp");
+const image = await sharp({ create: { width: 16, height: 16, channels: 3, background: "#FDB900" } }).png().toBuffer();
 const fixtures = [];
 const checks = [];
 let browser;
@@ -137,7 +138,7 @@ try {
   assert.equal((await owner.context.request.put(`${origin}/api/identity/${secondPath}`, { headers: { Origin: origin, "Content-Type": "image/png" }, data: Buffer.from("this is not a PNG") })).status(), 400);
   assert.equal((await owner.context.request.put(`${origin}/api/identity/${secondPath}`, { headers: { Origin: origin, "Content-Type": "image/png" }, data: image })).status(), 200);
   assert.equal((await owner.context.request.put(`${origin}/api/identity/${secondPath}`, { headers: { Origin: origin, "Content-Type": "image/png" }, data: image })).status(), 200);
-  const changedImage = Buffer.concat([image, Buffer.from("changed")]);
+  const changedImage = await sharp({ create: { width: 16, height: 16, channels: 3, background: "#2D4400" } }).png().toBuffer();
   assert.equal((await owner.context.request.put(`${origin}/api/identity/${secondPath}`, { headers: { Origin: origin, "Content-Type": "image/png" }, data: changedImage })).status(), 409);
   const submitOperation = randomUUID();
   const duplicates = await Promise.all([command(owner.context, "submit", secondId, "", 200, submitOperation), command(owner.context, "submit", secondId, "", 200, submitOperation)]);

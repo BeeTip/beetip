@@ -17,7 +17,7 @@ export function Support({ orderId }: { orderId?: string }) {
   const { service } = useDemo();
   if (orderId && !service.queryOrder(orderId).ok) return <Empty title="Pesanan tidak tersedia">Bantuan pesanan hanya dapat dibuka peserta terkait.</Empty>;
   const threads = service.querySupport().filter(t => !orderId || t.orderId === orderId);
-  return <><Heading title="Hubungi bantuan" subtitle="Tanyakan cara memakai BeeTip atau laporkan masalah titipan." /><p className="small">Percakapan tersimpan pada perangkat ini. Pengiriman antarperangkat akan tersedia setelah layanan pesan terhubung.</p><SupportComposer orderId={orderId} /><div className="stack">{threads.map(thread => <Conversation key={thread.id} thread={thread} />)}{!threads.length && <Empty title="Belum ada percakapan bantuan">Ceritakan pertanyaan atau masalahmu melalui formulir di atas.</Empty>}</div></>;
+  return <><Heading title="Hubungi bantuan" subtitle="Tanyakan cara memakai BeeTip atau laporkan masalah titipan." /><p className="small">Percakapan demo tersimpan di perangkat ini.</p><SupportComposer orderId={orderId} /><div className="stack">{threads.map(thread => <Conversation key={thread.id} thread={thread} />)}{!threads.length && <Empty title="Belum ada percakapan bantuan">Ceritakan pertanyaan atau masalahmu melalui formulir di atas.</Empty>}</div></>;
 }
 function SupportComposer({ orderId }: { orderId?: string }) {
   const { run } = useDemo();

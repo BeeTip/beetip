@@ -1,7 +1,7 @@
-import { createHash } from "node:crypto";
-import { acceptsMutation, affiliationIdSchema, evidenceType } from "@beetip/validation";
+import { acceptsMutation, affiliationIdSchema } from "@beetip/validation";
 import { identityConfig } from "../../../../../../server/identity/config";
-import { boundaryFailure } from "../../../../../../server/identity/http";
+import { normalizeEvidenceImage, validatedEvidenceImage } from "../../../../../../server/identity/evidence-image";
+import { boundaryFailure, reply } from "../../../../../../server/identity/http";
 import { protectedClient } from "../../../../../../server/identity/protected";
 
 type Context = { params: Promise<{ id: string }> };
@@ -27,29 +27,21 @@ export async function GET(_request: Request, context: Context) {
 export async function PUT(request: Request, context: Context) {
   try {
     if (!acceptsMutation(request.headers.get("origin"), identityConfig().origin, "application/json")) throw new Error("PERMISSION");
-    if (!["image/png", "image/jpeg"].includes(request.headers.get("content-type") ?? "")) throw new Error("VALIDATION");
     const { client, user, row, path } = await evidence(context);
     if (row.member_id !== user.id || row.status !== "draft") throw new Error("PERMISSION");
-    if (Number(request.headers.get("content-length") ?? 0) > 2097152) throw new Error("VALIDATION");
-    const reader = request.body?.getReader();
-    if (!reader) throw new Error("VALIDATION");
-    const chunks: Uint8Array[] = [];
-    let length = 0;
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      length += value.byteLength;
-      if (length > 2097152) { await reader.cancel(); throw new Error("VALIDATION"); }
-      chunks.push(value);
-    }
-    const bytes = Buffer.concat(chunks);
-    const contentType = evidenceType(bytes);
-    if (!contentType || contentType !== request.headers.get("content-type")) throw new Error("VALIDATION");
+    const image = await validatedEvidenceImage(request).catch((error: unknown) => {
+      if (error instanceof Error && error.message === "VALIDATION") return null;
+      throw error;
+    });
+    if (!image) return reply({ ok: false, code: "VALIDATION", message: "Pilih gambar JPG atau PNG yang bisa dibuka, maksimal 2 MB." }, 400);
+    const { bytes, contentType } = image;
     const { error } = await client.storage.from("affiliation-evidence").upload(path, bytes, { contentType, upsert: false });
     if (error?.statusCode === "409") {
       const { data: previous, error: readError } = await client.storage.from("affiliation-evidence").download(path);
       if (readError) throw new Error("UNAVAILABLE");
-      if (createHash("sha256").update(Buffer.from(await previous.arrayBuffer())).digest("hex") !== createHash("sha256").update(bytes).digest("hex")) {
+      const existing = Buffer.from(await previous.arrayBuffer());
+      const normalized = existing.equals(bytes) ? existing : await normalizeEvidenceImage(existing, contentType).catch(() => null);
+      if (!normalized?.equals(bytes)) {
         return Response.json({ ok: false, message: "Bukti sudah tersimpan. Tarik pengajuan sebelum mengganti bukti." }, { status: 409, headers: { "Cache-Control": "private, no-store" } });
       }
     }
