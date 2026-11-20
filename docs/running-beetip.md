@@ -149,6 +149,7 @@ Record the source commit, last migration, target environment and validation resu
 | --- | --- |
 | Synthetic demo | Production build starts with `BEETIP_MODE=demo`, and the browser suite and selected walkthrough pass with synthetic personas. |
 | Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
+| Connected production startup | CI starts the compiled app with identity configuration empty and verifies the [unavailable screens and blocked demo routes](btp21-production-startup.md). |
 | Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
 | Real-data pilot | Record the approved retention and account data procedures, the exact candidate's staging and device results, and the recovery and settlement rehearsals before collecting real evidence or taking payments. |
 
