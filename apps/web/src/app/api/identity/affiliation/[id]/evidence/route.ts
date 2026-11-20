@@ -29,6 +29,7 @@ export async function GET(_request: Request, context: Context) {
     const { client, path } = await evidence(context);
     const { data, error } = await client.storage.from(bucket).download(path);
     if (error) throw new Error("PERMISSION");
+    await evidence(context);
     return new Response(data, { headers: { "Content-Type": "application/octet-stream", "Content-Disposition": "attachment; filename=affiliation-evidence", "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
   } catch (error) { return boundaryFailure(error); }
 }

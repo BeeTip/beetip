@@ -4,7 +4,7 @@ Affiliation, incoming funding, purchase receipt and order-case upload endpoints 
 
 | Evidence | Object identity | Download authorization |
 | --- | --- | --- |
-| Affiliation | Draft owner's ID, request ID and fixed `evidence` suffix | Request visibility plus Storage RLS for its owner or a currently authorized MFA membership reviewer on a non-draft request |
+| Affiliation | Draft owner's ID, request ID and fixed `evidence` suffix | Request visibility before and after retrieval, plus Storage RLS for the owner or a current MFA membership reviewer on a non-draft request |
 | Incoming funding | Database-generated submission ID | Customer or current scoped finance reviewer, checked before and after retrieving bytes |
 | Purchase receipt | Provider ID, order ID, operation ID and SHA-256 of normalized bytes | Receipt provider through an order on the same listing, checked before and after retrieving bytes |
 | Order case | Participant ID, order ID, operation ID and SHA-256 of normalized bytes | Order participant or current scoped finance reviewer, checked before and after retrieving bytes |
@@ -13,7 +13,7 @@ The app writes insert-only and serves private, non-cacheable attachments after a
 
 ## Verification and operating gates
 
-Run `pnpm test evidence` with Node 24.22.1. The tests use synthetic images and in-process route handlers with Auth and Storage test doubles. They cover a progressive phone-size JPEG with EXIF orientation, transparent PNG, damaged image data, mismatched MIME and signature, streamed byte limits, the decoded pixel limit, metadata removal, generated object names, immutable affiliation retry behavior, and authorization decisions around private reads and writes.
+Run `pnpm test evidence` with Node 24.22.1. The tests use synthetic images and in-process route handlers with Auth and Storage test doubles. They cover a progressive phone-size JPEG with EXIF orientation, transparent PNG, damaged image data, mismatched MIME and signature, streamed byte limits, the decoded pixel limit, metadata removal, generated object names, immutable affiliation retry behavior, and authorization decisions around private reads and writes. This includes withholding an affiliation attachment when a reviewer's access is revoked during retrieval.
 
 Affiliation uploads use the server-only `BEETIP_AFFILIATION_STORAGE_SECRET` Supabase secret key. The route checks ownership and draft status before decoding and again before using the credential. Migration `20261121001900` lets the server claim the normalized image digest under a draft lock. Concurrent retries can send the same normalized bytes. A different image requires a new draft. The app uses the caller's session for downloads and retry comparisons. Migration `20261121002000` removes direct Storage inserts for drafts and keeps authenticated download and metadata access under the existing read rules. Follow the [deployment sequence](vercel-deployment.md#booth-deployment) to preserve upload availability. Earlier usable objects remain readable and can be submitted, including when earlier bytes normalize to the same image. Legacy objects can retain embedded metadata and need an approved handling plan before real evidence collection.
 
