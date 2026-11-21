@@ -122,13 +122,13 @@ Stop the development server on port 3107 before the demo browser suite. Do not r
 rtk pnpm lint
 rtk pnpm typecheck
 rtk pnpm test
-rtk proxy node --test scripts/check-staging.test.mjs
+rtk proxy node --test scripts/check-staging.test.mjs scripts/check-connected-build.test.mjs
 rtk proxy node scripts/notification-registry.mjs
 rtk pnpm audit --prod --audit-level high
 rtk pnpm test:e2e
 ```
 
-The demo browser suite builds and runs its own production server. CI also builds connected production without project credentials to check that it fails closed. For the complete connected demo, build and start the app with the disposable stack, set `BEETIP_TEST_LOCAL_STACK` to the stack directory and `BEETIP_TEST_URL` to the matching app origin, then run `rtk proxy node scripts/test-connected-demo.mjs`. The harness uses separate signed-in sessions for publishing, offering, checkout, realtime chat, purchase, and handover. For affiliation uploads, run the [private evidence rehearsal](private-evidence.md#verification-and-operating-gates).
+The demo browser suite builds and runs its own production server. CI checks that connected production fails closed without project credentials. On both connected builds, `rtk proxy node scripts/check-connected-build.mjs` verifies that the compiled simulated checkout handler is present and that retired payment paths and their subpaths are absent. For the complete connected demo, build and start the app with the disposable stack, set `BEETIP_TEST_LOCAL_STACK` to the stack directory and `BEETIP_TEST_URL` to the matching app origin, then run `rtk proxy node scripts/test-connected-demo.mjs`. The harness uses separate signed-in sessions for publishing, offering, checkout, realtime chat, purchase, and handover. For affiliation uploads, run the [private evidence rehearsal](private-evidence.md#verification-and-operating-gates).
 
 The same rehearsal provisions 50 confirmed synthetic members and runs three bursts of 20 simultaneous chat sends across 10 active orders. It requires a chat acknowledgment p95 of at most 2 seconds, checks all 60 messages in order through the authenticated history API, and verifies their durable email intents. Loopback timing measures the connected application and database on the runner. Hosted load, provider delivery latency, and physical camera checks have separate acceptance criteria.
 
