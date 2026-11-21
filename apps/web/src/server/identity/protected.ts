@@ -14,7 +14,10 @@ export async function protectedClient() {
   return { client, user };
 }
 
-export function commandFailure(error: { message: string }) {
+export function commandFailure(error: { message: string; code?: string }) {
+  if (error.code === "PT503" && error.message === "Connected demo writes paused") {
+    return reply({ ok: false, code: "UNAVAILABLE", message: "Penerimaan pesanan dan pembayaran simulasi sedang dijeda. Coba lagi nanti." }, 503);
+  }
   const code = ["PERMISSION", "VALIDATION", "CONFLICT"].find(value => error.message.startsWith(value));
   if (!code) throw new Error("UNAVAILABLE");
   return reply({ ok: false, code, message: code === "PERMISSION" ? "Akses tidak diizinkan. Periksa akun, peran, dan MFA." : code === "CONFLICT" ? "Data sudah berubah atau permintaan sudah digunakan. Muat ulang." : "Periksa data dan bukti yang dikirim." }, code === "PERMISSION" ? 403 : code === "CONFLICT" ? 409 : 400);
