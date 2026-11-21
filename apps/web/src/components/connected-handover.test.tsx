@@ -43,7 +43,7 @@ it("keeps an incomplete backup code available for correction without submitting 
   input.value = "0123 45ab-cdef";
   await act(async () => submit.click());
   expect(fetchHandover).toHaveBeenCalledOnce();
-  expect(JSON.parse(String(fetchHandover.mock.calls[0]![1].body)).code).toBe("012345ABCDEF");
+  expect(JSON.parse(String(fetchHandover.mock.calls[0]![1]?.body)).code).toBe("012345ABCDEF");
   expect(host.textContent).toContain("Serah terima dikonfirmasi.");
 });
 

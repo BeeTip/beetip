@@ -223,6 +223,23 @@ async function finishPurchase(provider, customer, outsider, orderPath) {
   console.log("PASS provider uploaded and allocated private receipt, both participants saw confirmed handover");
 }
 
+async function withIncidentPause(check) {
+  await sql.query("insert into private.demo_incident_pause default values");
+  try {
+    await check();
+  } finally {
+    await sql.query("delete from private.demo_incident_pause");
+  }
+}
+
+async function expectPausedWrite(page, path, button) {
+  const response = page.waitForResponse(response =>
+    new URL(response.url()).pathname === path && response.request().method() === "POST");
+  await button.click();
+  assert.equal((await response).status(), 503);
+  await expect(page.getByRole("alert").filter({ hasText: "sedang dijeda" })).toBeVisible();
+}
+
 try {
   await sql.connect();
   const migrations = readdirSync(new URL("../supabase/migrations/", import.meta.url))
@@ -255,9 +272,11 @@ try {
   await provider.page.getByRole("link", { name: "Listing saya", exact: true }).click();
   await provider.page.getByRole("article").filter({ hasText: title }).getByRole("link", { name: "Tinjau penawaran" }).click();
   await provider.page.getByRole("checkbox", { name: /Saya menyetujui rincian, ongkos, dan jadwal/ }).check();
+  const accept = provider.page.getByRole("button", { name: "Terima penawaran", exact: true });
+  await withIncidentPause(() => expectPausedWrite(provider.page, "/api/identity/orders", accept));
   const acceptance = provider.page.waitForResponse(response =>
     new URL(response.url()).pathname === "/api/identity/orders" && response.request().method() === "POST");
-  await provider.page.getByRole("button", { name: "Terima penawaran", exact: true }).click();
+  await provider.page.getByRole("button", { name: "Coba lagi penerimaan", exact: true }).click();
   const accepted = await acceptance;
   assert.equal(accepted.status(), 200, `Order acceptance failed: ${await accepted.text()}`);
   await provider.page.getByRole("link", { name: "Lihat pesanan", exact: true }).click();
@@ -298,6 +317,15 @@ try {
   await expect(payment(provider.page)).toHaveCount(0);
   await expect(payment(customer.page), `Ordinary customer has no demo payment button (state=${order.state}, canSimulatePayment=${order.canSimulatePayment})`).toBeVisible();
   await expect(customer.page.getByText("Menunggu pembayaran demo", { exact: true })).toBeVisible();
+  await withIncidentPause(async () => {
+    await expectPausedWrite(customer.page, "/api/identity/orders/demo-payment", payment(customer.page));
+    for (const participant of [provider, customer]) {
+      const read = await participant.context.request.get(`${origin}/api/identity/orders?id=${orderId}`, { maxRedirects: 0 });
+      assert.equal(read.status(), 200);
+      assert.equal((await read.json()).order.state, order.state);
+    }
+  });
+  console.log("PASS incident pause blocked new acceptance and checkout while preserving participant reads");
   await payment(customer.page).click();
   await expect(customer.page.getByText("Siap belanja demo", { exact: true })).toBeVisible();
   await expect(payment(customer.page)).toHaveCount(0);
