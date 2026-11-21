@@ -334,6 +334,20 @@ try {
   console.log("PASS ordinary customer simulated payment in the UI and both participants saw purchase readiness");
 
   await finishPurchase(provider.page, customer.page, outsider.page, orderPath);
+  await customer.page.goto(`${origin}/account`);
+  await customer.page.getByRole("link", { name: "Permintaan data pribadi" }).click();
+  await customer.page.getByLabel("Jenis permintaan").selectOption("deletion");
+  const privacyRequest = customer.page.waitForResponse(response =>
+    new URL(response.url()).pathname === "/api/identity/support" && response.request().method() === "POST");
+  await customer.page.getByRole("button", { name: "Kirim permintaan" }).click();
+  const filed = await privacyRequest;
+  assert.equal(filed.status(), 200);
+  const { conversationId } = await filed.json();
+  assert.match(conversationId, /^[0-9a-f-]{36}$/);
+  await expect(customer.page.getByText("Permintaan penghapusan data pribadi.")).toBeVisible();
+  const unrelated = await outsider.context.request.get(`${origin}/api/identity/support?case=${conversationId}`);
+  assert.equal(unrelated.status(), 403);
+  console.log("PASS data request creates a private account support case and denies unrelated sessions");
   await assertOrdinary([provider, customer, outsider]);
   const load = await rehearseConnectedChatLoad({ admin, origin, sql });
   assert.equal(load.members, 50);

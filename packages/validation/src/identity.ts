@@ -32,6 +32,7 @@ export function authRedirect(value: string | null) {
 export function accountRedirect(value: string | null | undefined) {
   if (typeof value === "string" && /^\/(?:chat|orders)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return value;
   if (typeof value === "string" && /^\/support\?(?:case|orderId)=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return value;
+  if (value === "/support?request=privacy") return value;
   return value === "/listings/new" || value === "/support" || value === "/account/offers" || value === "/account/orders" || value === "/account/notifications" || (typeof value === "string" && /^\/account\/offers\?listing=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) ? value : "/account";
 }
 
