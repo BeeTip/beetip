@@ -94,7 +94,7 @@ Provider acceptance, recipient-server delivery, bounce, and opened tracking are 
 
 ## Retention and operations
 
-Proposed default retention is 90 days after final settlement or support closure for chat and ordinary evidence. Financial records and open disputes have a separate reviewed retention policy and hold mechanism. Delete expired objects and redact message bodies under an audited process while preserving minimal tombstones and sequence positions. These values require owner approval before real data collection. Verification evidence should be removed after review unless an approved policy requires retention.
+The pilot retention target is 90 days after final order resolution for order chat and ordinary receipt photos, and 90 days after closure for support conversations and ordinary case attachments. The clock starts after the last linked case closes. Verification evidence and abandoned uploads follow the shorter windows in the [pilot operating policy](pilot-operating-policy.md). [BTP-20](https://github.com/BeeTip/beetip/issues/22) owns retention enforcement, including audited deletion and message tombstones that preserve sequence positions.
 
 Admin roles need MFA, least-privilege case assignment, and audited access. Publish abuse-reporting and escalation routes with real operating hours. No direct member-to-member inbox, WhatsApp, SMS, push delivery, live location, typing indicator, or chat attachments are required for first release. Revisit those as separate issues after the pilot demonstrates demand.
 

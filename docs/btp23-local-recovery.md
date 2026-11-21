@@ -18,7 +18,7 @@ The script prints the candidate Git commit and marks a dirty worktree. The recov
 
 The final line prints the temporary artifact directory. Keep `database.sql`, `receipt.png`, and `manifest.json` together if retaining evidence. The database export contains synthetic Auth rows, including password hashes and session records. Keep the artifacts local and delete them when they are no longer needed. The script removes only its own generated Docker projects and volumes.
 
-This exercises one receipt and a data-only restore into the same migration revision. It leaves provider-managed backups, point-in-time recovery, concurrent writes across database and Storage, complete object inventories and metadata, server route and Vercel release verification, scheduler and secret rotation, and external reconciliation for separate drills. Owner-approved recovery targets are still pending.
+This exercises one receipt and a data-only restore into the same migration revision. The combined rehearsal at `66254ffa9a1245b36b6599b9facc1cf6effcc373` restored 81 matching tables and an identical private receipt in 73.845 seconds. The backup point was 420 ms before the simulated outage with no intervening fixture writes. The [pilot targets](pilot-operating-policy.md) also require a repeatable backup cadence and a service recovery drill. These local results measure fixture recovery only.
 
 ## Pause connected demo acceptance and checkout
 
