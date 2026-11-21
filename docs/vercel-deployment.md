@@ -39,7 +39,6 @@ Create an environment example with names and descriptions during implementation.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser | Public client identifier, always paired with authorization |
 | `APP_ORIGIN` | Server | Exact trusted origin for links, redirects, and mutation checks |
 | `SUPABASE_SECRET_KEY` | Restricted server job runtime | Privileged outbox and operational tasks, never ordinary user commands |
-| `RESEND_API_KEY`, `EMAIL_FROM` | Server worker | Transactional application email, proposed provider |
 | `EMAIL_WEBHOOK_SECRET` | Server webhook | Verify provider delivery and bounce events |
 | `JOBS_SECRET` | Worker and scheduler secret stores | Authenticate scheduled dispatch requests |
 | SMTP host, port, user, password, sender | Supabase Auth settings | Signup, verification, and password recovery delivery |
@@ -55,7 +54,7 @@ Use the appropriate supported Supabase key form when provisioning. Never expose 
 5. Configure custom SMTP and verified sender DNS. Test delivery to real pilot mailbox providers without link tracking rewriting Auth links. Supabase's default SMTP is intended for restricted nonproduction use. [SMTP documentation](https://supabase.com/docs/guides/auth/auth-smtp).
 6. Create private evidence buckets with size, content-type, ownership, and retention limits. Test upload finalization and short-lived authorized downloads.
 7. Disable public Realtime channels. Authorize private per-member invalidation topics. Deploy the transactional notification triggers and test reconnect fetching.
-8. Enable Supabase Cron for expiry and outbox wakeups. Store the authenticated worker URL and credentials in secret storage. Deploy bounded worker execution and inspect scheduler run records. [Supabase Cron](https://supabase.com/docs/guides/cron) supports SQL jobs and HTTP invocation.
+8. Enable Supabase Cron for reservation expiry and inspect scheduler run records. [Supabase Cron](https://supabase.com/docs/guides/cron) supports SQL jobs and HTTP invocation.
 9. Restore a database export and its companion private-object backup into an isolated environment. Measure against the [pilot targets](pilot-operating-policy.md) of at most 24 hours of data loss and 4 hours to restore service. Use encrypted exports on the Free plan and retain a manifest that binds the database and object copies.
 
 ## Configure the Vercel build
@@ -87,7 +86,7 @@ Run the migration, authorization, concurrency and real-session checks documented
 
 On demo staging, use separate authenticated browser sessions for customer, provider, unrelated member, support operator, and two assigned case reviewers. Exercise both listing types, final-slot races, simulated checkout, amendments, shared receipts, delivery confirmation, cancellation, disputes, and ratings. Test chat during network loss, tab duplication, session expiry, retries, and membership suspension. Inspect private downloads with an unrelated account.
 
-Test signup and recovery email, in-app notification links, application email delivery, signed duplicate webhook events, bounce suppression, outbox retry, and a worker crash after provider acceptance. Test narrow mobile layouts, keyboard use, Android Chrome and iOS Safari camera access, permission refusal, manual code fallback, and image upload. Record real-device results separately from browser emulation.
+Test signup and recovery email, in-app notification links, and the absence of application email routes. Test narrow mobile layouts, keyboard use, Android Chrome and iOS Safari camera access, permission refusal, manual code fallback, and image upload. Record real-device results separately from browser emulation.
 
 Proposed pilot load is 50 approved members, 20 concurrent sessions, and 10 simultaneous active orders. These are test assumptions, not measured demand or provider capacity guarantees. Target a durable chat send acknowledgment within 2 seconds at the 95th percentile and notification dispatch within 2 minutes under that load. Record the test environment and failures before changing a target.
 
@@ -103,7 +102,7 @@ Proposed pilot load is 50 approved members, 20 concurrent sessions, and 10 simul
 
 ## Recover or roll back
 
-Disable new acceptances and sensitive financial mutations if money or authorization correctness is uncertain. Preserve existing orders, evidence, and audit records. Pause email dispatch if recipient privacy or duplicate delivery is uncertain. Inspect pending and ambiguous deliveries before resuming.
+Disable new acceptances and sensitive financial mutations if money or authorization correctness is uncertain. Preserve existing orders, evidence, and audit records.
 
 Revert to the recorded compatible Vercel deployment. Application rollback does not reverse database migrations or external email sends. Prefer an additive forward repair for schema faults. Restore a database or objects only under the incident operator's reviewed plan, after preserving newer records and reconciling external bank transfers. Never repeat an ambiguous transfer to repair a software failure.
 
@@ -111,4 +110,4 @@ Alert on failed or stale job heartbeats, oldest pending notification age over 5 
 
 ## Platform checks
 
-Vercel hosts the web application and finite request handlers. Supabase owns realtime connections and durable data. Use database scheduling for expiry and email dispatch rather than depending on a browser tab. Vercel's documented legacy Hobby cron interval is daily, which is unsuitable for minute-scale notification polling. [Cron usage and pricing](https://vercel.com/docs/cron-jobs/usage-and-pricing). Recheck current platform limits when provisioning because provider offerings can change.
+Vercel hosts the web application and finite request handlers. Supabase owns realtime connections and durable data. Use database scheduling for reservation expiry rather than depending on a browser tab. Vercel's documented legacy Hobby cron interval is daily, which is unsuitable for minute-scale notification polling. [Cron usage and pricing](https://vercel.com/docs/cron-jobs/usage-and-pricing). Recheck current platform limits when provisioning because provider offerings can change.

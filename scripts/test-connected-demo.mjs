@@ -341,6 +341,7 @@ try {
   assert.equal(load.orders, 10);
   assert.equal(load.acknowledgments, 60);
   assert.equal(load.durableMessages, 60);
+  assert.equal(load.inAppIntents, 60);
   assert(load.p95Ms <= 2000, `Chat send p95 ${load.p95Ms} ms exceeded 2000 ms`);
   console.log(`PASS connected load ${JSON.stringify(load)}`);
   console.log("PASS connected synthetic demo");

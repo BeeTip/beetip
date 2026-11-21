@@ -30,7 +30,7 @@ Current order states do not include final financial settlement. Future settlemen
 
 Each new message creates one counterpart-only in-app notification and durable channel intents. Notification access rechecks current conversation membership; a revoked member loses the notification target as well as message access. The authorized order target contains the chat link.
 
-`private.btp08_email_sources` associates a notification with its conversation sequence and unread window. The [transactional email worker](transactional-email.md) uses these sources for grouping and rechecks access and the read cursor before dispatch. Live dispatch requires the configured provider and scheduler. Chat attachments, typing indicators and a direct member inbox remain outside this slice.
+Order chat creates an in-app notification for the other participant. Chat attachments, typing indicators and a direct member inbox remain outside this slice.
 
 `20261119000801_btp08_private_hint_initplan.sql` wraps policy lookups in scalar subqueries to avoid per-row authorization-function evaluation. It preserves the same private topic and live identity predicates.
 
@@ -74,4 +74,4 @@ This exercises Auth, Realtime and Cron on the actual local services, and saves a
 
 `supabase/rollback/btp08_connected_chat.sql` is a destructive feature rollback for isolated verification. It removes this feature's notification/read/retry metadata and functions while preserving message history and restoring the prior target helper. Back up feature records before considering it on a shared environment; an application rollback alone does not reverse schema or external effects. Prefer a compatible forward repair after real conversations exist.
 
-Development schema and local browser acceptance must be recorded separately from public web deployment. Physical devices, measured pilot latency/load, support operations, transactional application email, retention approval, recovery rehearsal and real-money release remain owning-slice gates. See [running BeeTip](running-beetip.md) and [the deployment runbook](vercel-deployment.md).
+Development schema and local browser acceptance must be recorded separately from public web deployment. Physical devices, measured pilot latency/load, support operations, retention approval, recovery rehearsal and real-money release remain owning-slice gates. See [running BeeTip](running-beetip.md) and [the deployment runbook](vercel-deployment.md).

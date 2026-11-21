@@ -132,7 +132,7 @@ try {
   checks.push("atomic per-account minute/hour quotas; exact committed retry bypasses quota");
   const notification = (await owner.query("select * from public.notifications where event_id=$1", [first.id])).rows;
   assert.equal(notification.length, 1); assert.equal(notification[0].recipient_id, actors[1].id);
-  assert.equal((await owner.query("select count(*)::int n from private.btp08_email_sources where notification_id=$1 and due_at=window_end+interval '1 minute'", [notification[0].id])).rows[0].n, 1);
+  assert.equal((await owner.query("select count(*)::int n from private.btp08_email_sources where notification_id=$1", [notification[0].id])).rows[0].n, 0);
   await owner.query("update public.conversation_members set revoked_at=clock_timestamp() where conversation_id=$1 and member_id=$2", [conversation, actors[1].id]);
   await denied(history(b, order)); await denied(send(b, order, randomUUID(), "Revoked"));
   await denied(b.query("select public.notification_target($1)", [notification[0].id]));
@@ -142,7 +142,7 @@ try {
   await denied(history(b, order)); await owner.query("update public.members set status='pending' where id=$1", [actors[1].id]);
   await owner.query("delete from auth.sessions where id=$1", [actors[1].session]);
   await denied(history(b, order));
-  checks.push("counterparty-only notification and durable delayed email source; revocation hides notification/history and denies sends; suspension/deleted session denied");
+  checks.push("counterparty-only in-app notification without an email source; revocation hides notification/history and denies sends; suspension/deleted session denied");
   await owner.query("update public.reservations set expires_at=clock_timestamp()-interval '1 second' where order_id=$1", [order]);
   assert.equal((await history(a, order)).closed, true);
   await denied(send(a, order), /CONFLICT: Conversation closed/);

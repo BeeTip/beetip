@@ -816,42 +816,6 @@ export type Database = {
         Args: { p_body: string; p_case: string; p_client: string }
         Returns: Json
       }
-      btp11_claim: {
-        Args: never
-        Returns: {
-          id: string
-          lease_token: string
-        }[]
-      }
-      btp11_finish: {
-        Args: {
-          p_id: string
-          p_lease: string
-          p_outcome: string
-          p_provider_id: string
-          p_retry_seconds: number
-        }
-        Returns: boolean
-      }
-      btp11_heartbeat: { Args: never; Returns: undefined }
-      btp11_operator_action: {
-        Args: { p_action: string; p_dispatch: string; p_id: string }
-        Returns: undefined
-      }
-      btp11_operator_queue: { Args: never; Returns: Json }
-      btp11_prepare: {
-        Args: { p_allowlist: string[]; p_id: string; p_lease: string }
-        Returns: Json
-      }
-      btp11_webhook: {
-        Args: {
-          p_address_hash: string
-          p_dispatch: string
-          p_event: string
-          p_provider_id: string
-        }
-        Returns: undefined
-      }
       confirm_booth_payment: { Args: { p_order: string }; Returns: undefined }
       confirm_handover: {
         Args: { p_digest: string; p_order: string }
@@ -937,10 +901,6 @@ export type Database = {
           p_version: number
         }
         Returns: string
-      }
-      set_notification_preference: {
-        Args: { p_email: boolean; p_type: string }
-        Returns: undefined
       }
       set_staff_role: {
         Args: {

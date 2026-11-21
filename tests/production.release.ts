@@ -94,3 +94,12 @@ test("old payment URLs cannot reach a payment surface", async ({ request }) => {
     expect(write.status(), path).toBe(404);
   }
 });
+
+test("application email endpoints stay closed", async ({ request }) => {
+  const page = await request.get("/account/email-operations", { maxRedirects: 0 });
+  expect(page.status()).toBe(404);
+  for (const path of ["/api/identity/email-operations", "/api/jobs/transactional-email", "/api/webhooks/brevo"]) {
+    const response = await request.post(path, { maxRedirects: 0 });
+    expect(response.status(), path).toBe(404);
+  }
+});
