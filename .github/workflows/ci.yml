@@ -21,7 +21,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: node --test scripts/check-staging.test.mjs
+      - run: node --test scripts/check-staging.test.mjs scripts/check-connected-build.test.mjs
       - run: node scripts/notification-registry.mjs
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
@@ -33,7 +33,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ''
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ''
           APP_ORIGIN: ''
-      - name: Verify connected build excludes demo authority
+      - name: Verify connected release artifacts
         run: node scripts/check-connected-build.mjs
       - name: Verify connected production startup without identity configuration
         run: pnpm exec playwright test --config playwright.release.config.ts
@@ -124,6 +124,7 @@ jobs:
           export BEETIP_RECEIPT_STORAGE_SECRET="$(jq -er .SECRET_KEY <<< "$config")"
           export BEETIP_CASE_STORAGE_SECRET="$BEETIP_RECEIPT_STORAGE_SECRET"
           pnpm build
+          node scripts/check-connected-build.mjs
           pnpm --filter @beetip/web exec next start --hostname 127.0.0.1 --port 3196 > "$RUNNER_TEMP/beetip-connected-app.log" 2>&1 &
           app_pid=$!
           trap 'kill "$app_pid" 2>/dev/null || true' EXIT

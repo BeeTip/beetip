@@ -79,7 +79,7 @@ try {
     const path = new URL(`../supabase/tests/${file}`, import.meta.url);
     await owner.query(readFileSync(path, "utf8"));
   }
-  checks.push("rollback-only listing, offer, acceptance, notification and demo checkout authorization suites");
+  checks.push("rollback-only listing, offer, acceptance, notification, demo checkout and incident pause suites");
   const actors = [];
   for (let i = 0; i < 5; i++) {
     const actor = { id: randomUUID(), session: randomUUID() };
@@ -162,6 +162,25 @@ try {
   assert.equal((await b.query("select * from public.conversations where id=(select conversation_id from public.orders where id=$1)", [first])).rowCount, 1);
   assert.equal((await c.query("select * from public.conversations where kind='order'")).rowCount, 0);
   checks.push("atomic durable facts, no self-intent, immutable snapshot and participant-only order/conversation reads and direct-write denial");
+
+  const operator = await connect();
+  const inFlightCommand = command(await listing());
+  const queuedCommand = command(await listing());
+  await b.query("begin");
+  const inFlightOrder = await accept(b, inFlightCommand);
+  await operator.query("begin");
+  const pausing = operator.query("insert into private.demo_incident_pause default values");
+  await waiting(operator);
+  await b.query("commit");
+  await pausing;
+  const queued = assert.rejects(accept(c, queuedCommand), { code: "PT503" });
+  await waiting(c);
+  await operator.query("commit");
+  await queued;
+  assert.equal(await accept(b, inFlightCommand), inFlightOrder);
+  await operator.query("delete from private.demo_incident_pause");
+  assert(await accept(c, queuedCommand));
+  checks.push("pause waits for an in-flight write, blocks a queued acceptance at commit, and allows the original retry after resume");
 
   async function raceCapacity(options, expected) {
     const id = await listing({ type: "trip", negotiable: true, ...options });

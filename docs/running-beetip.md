@@ -122,13 +122,13 @@ Stop the development server on port 3107 before the demo browser suite. Do not r
 rtk pnpm lint
 rtk pnpm typecheck
 rtk pnpm test
-rtk proxy node --test scripts/check-staging.test.mjs
+rtk proxy node --test scripts/check-staging.test.mjs scripts/check-connected-build.test.mjs
 rtk proxy node scripts/notification-registry.mjs
 rtk pnpm audit --prod --audit-level high
 rtk pnpm test:e2e
 ```
 
-The demo browser suite builds and runs its own production server. CI also builds connected production without project credentials to check that it fails closed. For the complete connected demo, build and start the app with the disposable stack, set `BEETIP_TEST_LOCAL_STACK` to the stack directory and `BEETIP_TEST_URL` to the matching app origin, then run `rtk proxy node scripts/test-connected-demo.mjs`. The harness uses separate signed-in sessions for publishing, offering, checkout, realtime chat, purchase, and handover. For affiliation uploads, run the [private evidence rehearsal](private-evidence.md#verification-and-operating-gates).
+The demo browser suite builds and runs its own production server. CI checks that connected production fails closed without project credentials. On both connected builds, `rtk proxy node scripts/check-connected-build.mjs` verifies that the compiled simulated checkout handler is present and that retired payment paths and their subpaths are absent. For the complete connected demo, build and start the app with the disposable stack, set `BEETIP_TEST_LOCAL_STACK` to the stack directory and `BEETIP_TEST_URL` to the matching app origin, then run `rtk proxy node scripts/test-connected-demo.mjs`. The harness uses separate signed-in sessions for publishing, offering, checkout, realtime chat, purchase, and handover. For affiliation uploads, run the [private evidence rehearsal](private-evidence.md#verification-and-operating-gates).
 
 The same rehearsal provisions 50 confirmed synthetic members and runs three bursts of 20 simultaneous chat sends across 10 active orders. It requires a chat acknowledgment p95 of at most 2 seconds, checks all 60 messages in order through the authenticated history API, and verifies their durable email intents. Loopback timing measures the connected application and database on the runner. Hosted load, provider delivery latency, and physical camera checks have separate acceptance criteria.
 
@@ -142,7 +142,7 @@ Follow the [local recovery rehearsal](btp23-local-recovery.md) to verify that a 
 
 ## Release boundary
 
-The current release target is a synthetic demo. Every new connected order uses one-click simulated checkout. Migration `20261121004000` removes executable funding, transfer, and reconciliation commands while preserving any historical records. It converts active unpaid orders only when no funding record exists, retaining their original reservation deadline.
+The current release target is a synthetic demo. Use synthetic listings, order details, receipts, and affiliation documents on both the local and hosted demo. Every new connected order uses one-click simulated checkout. Migration `20261121004000` removes executable funding, transfer, and reconciliation commands while preserving any historical records. It converts active unpaid orders only when no funding record exists, retaining their original reservation deadline.
 
 Record the source commit, last migration, target environment and validation results together before promoting a candidate. Use the following evidence for each target.
 
@@ -152,6 +152,8 @@ Record the source commit, last migration, target environment and validation resu
 | Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
 | Connected production startup | CI starts the compiled app with identity configuration empty and verifies the [unavailable screens and blocked demo routes](btp21-production-startup.md). |
 | Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
-| Real-data pilot | Record the approved retention and account data procedures, the exact candidate's staging and device results, and the recovery and settlement rehearsals before collecting real evidence or taking payments. |
+| Real-data pilot | Before collecting real evidence, record the approved retention and account data procedures, named operators, the exact candidate's staging and device results, and a hosted recovery rehearsal against approved recovery targets. |
+
+The [manual-payment pilot](https://github.com/BeeTip/beetip/issues/26) was closed as not planned. Any future paid pilot would need a separate release and acceptance for settlement.
 
 Before hosting the demo, verify the exact candidate with separate sessions and the [deployment runbook](vercel-deployment.md). Record [release checks](https://github.com/BeeTip/beetip/issues/23), [recovery checks](https://github.com/BeeTip/beetip/issues/25), and any [transactional email](transactional-email.md) results for the target environment.

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { handoverCodePattern, issuedHandoverSchema, type HandoverCommand } from "@beetip/validation";
+import { handoverCodePattern, handoverCommandSchema, issuedHandoverSchema, type HandoverCommand } from "@beetip/validation";
 import { Button } from "./ui";
 
 const handoverLifetimeMs = 60_000;
@@ -18,6 +18,7 @@ export function ConnectedHandover({ orderId, memberId, orderState, provider, onC
 }) {
   const [challenge, setChallenge] = useState<Challenge>();
   const [error, setError] = useState("");
+  const [invalidCode, setInvalidCode] = useState(false);
   const [notice, setNotice] = useState("");
   const [scanning, setScanning] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -145,13 +146,24 @@ export function ConnectedHandover({ orderId, memberId, orderState, provider, onC
           <form className="stack" autoComplete="off" onSubmit={event => {
             event.preventDefault();
             const form = event.currentTarget;
-            const code = String(new FormData(form).get("code") ?? "");
+            const input = form.elements.namedItem("code") as HTMLInputElement;
+            const command = handoverCommandSchema.safeParse({ action: "confirm", orderId, code: input.value });
+            if (!command.success) {
+              setInvalidCode(true);
+              setError("");
+              input.focus();
+              return;
+            }
+            setInvalidCode(false);
             form.reset();
-            void send({ action: "confirm", orderId, code });
+            void send(command.data);
           }}>
             <label>Kode serah terima<input name="code" type="text" required maxLength={32} autoCapitalize="characters"
-              spellCheck={false} autoComplete="off" aria-describedby="handover-code-help" /></label>
+              spellCheck={false} autoComplete="off" aria-invalid={invalidCode}
+              aria-describedby={invalidCode ? "handover-code-help handover-code-error" : "handover-code-help"}
+              onChange={() => setInvalidCode(false)} /></label>
             <p id="handover-code-help">Masukkan 12 karakter yang ditunjukkan pelanggan. Lima percobaan gagal memerlukan kode baru.</p>
+            {invalidCode && <p id="handover-code-error" role="alert">Periksa kode cadangan. Masukkan 12 karakter dari angka 0–9 dan huruf A–F.</p>}
             <Button type="submit" disabled={busy}>Konfirmasi serah terima</Button>
           </form>
           <video ref={video} muted playsInline hidden={!scanning} aria-label="Pratinjau pemindai QR" />

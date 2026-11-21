@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { readFile } from "node:fs/promises";
 import { createSeed } from "../packages/domain/src";
 
 test("guest surfaces report missing identity configuration without falling back to demo data", async ({ page }) => {
@@ -78,13 +77,6 @@ test("demo routes and staff authority stay closed on the production server", asy
 
 const retiredPages = ["/account/funding", "/account/transfers", "/account/reconciliation"];
 const retiredHandlers = ["/api/identity/funding", "/api/identity/funding/[id]/evidence", "/api/identity/manual-transfers", "/api/identity/reconciliation"];
-
-test("the connected bundle omits retired payment pages and handlers", async () => {
-  const manifest = JSON.parse(await readFile(new URL("../apps/web/.next/server/app-paths-manifest.json", import.meta.url), "utf8"));
-  const retired = [...retiredPages.map(path => `${path}/page`), ...retiredHandlers.map(path => `${path}/route`)];
-  expect(retired.filter(route => Object.hasOwn(manifest, route))).toEqual([]);
-  expect(manifest).toHaveProperty(["/api/identity/orders/demo-payment/route"]);
-});
 
 test("old payment URLs cannot reach a payment surface", async ({ request }) => {
   for (const path of retiredPages) {

@@ -18,4 +18,26 @@ The script prints the candidate Git commit and marks a dirty worktree. The recov
 
 The final line prints the temporary artifact directory. Keep `database.sql`, `receipt.png`, and `manifest.json` together if retaining evidence. The database export contains synthetic Auth rows, including password hashes and session records. Keep the artifacts local and delete them when they are no longer needed. The script removes only its own generated Docker projects and volumes.
 
-This exercises one receipt and a data-only restore into the same migration revision. It leaves provider-managed backups, point-in-time recovery, concurrent writes across database and Storage, complete object inventories and metadata, server route and Vercel release verification, scheduler and secret rotation, incident pause, and external reconciliation for separate drills. Owner-approved recovery targets are still pending.
+This exercises one receipt and a data-only restore into the same migration revision. It leaves provider-managed backups, point-in-time recovery, concurrent writes across database and Storage, complete object inventories and metadata, server route and Vercel release verification, scheduler and secret rotation, and external reconciliation for separate drills. Owner-approved recovery targets are still pending.
+
+## Pause connected demo acceptance and checkout
+
+Use a privileged database session on the approved project after migration `20261121015951_btp23_demo_incident_pause.sql` is installed. Record the project, application revision, operator, incident ID, reason, and UTC timestamps in the incident record. Run the pause as a standalone transaction and confirm it committed.
+
+```sql
+insert into private.demo_incident_pause default values on conflict do nothing;
+select exists (select 1 from private.demo_incident_pause) as paused;
+```
+
+The pause takes effect at commit. It waits for transactions that have already reached the guarded write to finish. From an authorized synthetic test session, verify that a valid new acceptance and the first simulated checkout of an unexpired pending order return HTTP 503 with the pause message. Keep the original operation ID and acceptance payload for any retry. Read the pending order and order history, retry a known committed acceptance with its original ID and payload, and retry a known confirmed checkout. Check that the retries return the existing results and add no audit events. Pending orders keep their original reservation deadlines and may expire while paused.
+
+Record affected order and operation IDs and reconcile BeeTip audit, email provider outcomes, and any external bank records before authorizing recovery. Confirm ambiguous outcomes with provider or bank evidence before repeating an external operation. Keep the pause active during a compatible app rollback and recheck it on any restored environment before admitting traffic. A restored database reflects the pause state at the backup point.
+
+After the incident lead approves resumption, run and verify the resume as a standalone transaction on the same project.
+
+```sql
+delete from private.demo_incident_pause where active;
+select exists (select 1 from private.demo_incident_pause) as paused;
+```
+
+Expect `paused = false`. Verify a valid synthetic acceptance, an unexpired pending checkout, and the resulting order and audit entries. Record the resumption time and verification outcomes. The local PostgreSQL rehearsal runs these database checks through `node scripts/test-atomic-acceptance.mjs` with `BEETIP_LOCAL_DATABASE_URL` pointed at a disposable loopback cluster.
