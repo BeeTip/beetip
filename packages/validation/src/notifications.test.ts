@@ -27,9 +27,10 @@ describe("notification boundary and registry", () => {
     });
     expect(cases).toContain("('order_case_activity','parties_and_assignees','order','order_case_activity.v1','Kasus pesanan diperbarui','in_app_only',true)");
   });
-  it("offers email preferences for support replies, with queue alerts delivered in app", () => {
-    expect(notificationRegistry.support_opened.email).toBe("in_app_only");
-    expect(notificationRegistry.support_message).toMatchObject({ implemented: true, email: "unread_window" });
+  it("keeps all notifications in app and rejects former email preference commands", () => {
+    expect(Object.values(notificationRegistry).every(rule => rule.email === "in_app_only")).toBe(true);
+    expect(notificationRegistry.support_message.implemented).toBe(true);
+    expect(notificationCommandSchema.safeParse({ action: "preference", eventType: "order_accepted", email: true }).success).toBe(false);
   });
   it("rejects actor spoofing and read reversal", () => {
     const read = { action: "read", id: "00000000-0000-4000-8000-000000000001" };

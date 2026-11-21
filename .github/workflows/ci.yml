@@ -78,7 +78,7 @@ jobs:
       - run: node scripts/test-btp18-reconciliation.mjs
       - run: node scripts/test-btp19-moderation.mjs
       - run: node scripts/test-booth-rating-cases.mjs
-      - run: node scripts/test-transactional-email-db.mjs
+      - run: node scripts/test-application-email-retirement.mjs
   fresh-supabase:
     runs-on: ubuntu-latest
     timeout-minutes: 15

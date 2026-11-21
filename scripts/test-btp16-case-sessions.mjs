@@ -166,7 +166,7 @@ try {
   assert.deepEqual((await view(customer)).data.allocation, noFunds);
   assert.equal(await value(sql, "select count(*)::int from private.funding_submissions where order_id=$1", [order]), 0);
   await provider.page.goto(`${origin}/account/notifications`);
-  await expect(provider.page.getByText("Sengketa diselesaikan", { exact: true })).toBeVisible();
+  await expect(provider.page.getByText("Sengketa diselesaikan (Baru)", { exact: true })).toBeVisible();
 
   await sql.query("update public.staff_roles set revoked_at=now() where member_id=$1", [reviewer.id]);
   await view(reviewer, 403);

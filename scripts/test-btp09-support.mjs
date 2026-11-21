@@ -174,16 +174,16 @@ try {
   await denied(read(winner.client, caseId, 1));
   assert.equal(await value(winner.client, "select count(*)::int result from public.messages where conversation_id=$1", [caseId]), 0);
   assert.equal(await value(winner.client, "select count(*)::int result from public.notifications where event_id=$1", [before.id]), 0);
-  assert.equal(await value(owner, `select d.status result from private.notification_delivery_intents d
-    join public.notifications n on n.id=d.notification_id where n.event_id=$1 and d.channel='email'`, [before.id]), "suppressed");
+  assert.equal(await value(owner, `select count(*)::int result from private.notification_delivery_intents d
+    join public.notifications n on n.id=d.notification_id where n.event_id=$1 and d.channel='email'`, [before.id]), 0);
   const after = await send(requester.client, caseId, "After reassignment");
   assert.deepEqual(await value(owner, "select array_agg(recipient_id) result from public.notifications where event_id=$1", [after.id]), [replacement.id]);
-  assert.equal(await value(owner, "select sequence::int result from private.btp08_email_sources s join public.notifications n on n.id=s.notification_id where n.event_id=$1", [after.id]), 4);
+  assert.equal(await value(owner, "select count(*)::int result from private.btp08_email_sources s join public.notifications n on n.id=s.notification_id where n.event_id=$1", [after.id]), 0);
   assert.equal(await value(owner, `select detail->>'previous_assignee' result from private.audit_events
     where target_id=$1 and event_type='support_reassign'`, [caseId]), winner.id);
   assert.equal(await value(owner, `select count(*)::int result from realtime.messages
     where event='refresh' and not private or event='refresh' and payload-'id'<>'{}'::jsonb`), 0);
-  pass("reassignment during the old operator's session revokes access and queued email, audits the change, and redirects subsequent notifications");
+  pass("reassignment during the old operator's session revokes access and preserves in-app notifications, audits the change, and redirects subsequent notifications");
 
   await act(lead.client, caseId, "grant_order", 4, null, "Continue review");
   await act(lead.client, caseId, "revoke_order", 5, null, "Review completed");

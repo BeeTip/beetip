@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { notificationRegistry, type InboxNotification, type NotificationPreference } from "@beetip/validation";
+import { notificationRegistry, type InboxNotification } from "@beetip/validation";
 import { Button } from "./ui";
 
 type Cursor = { before: string; beforeId: string };
 export function ConnectedNotifications({ memberId }: { memberId: string }) {
   const [items, setItems] = useState<InboxNotification[]>([]);
-  const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
   const [unread, setUnread] = useState(0);
   const [next, setNext] = useState<Cursor | null>(null);
   const [error, setError] = useState("");
@@ -15,7 +14,7 @@ export function ConnectedNotifications({ memberId }: { memberId: string }) {
   const controller = useRef<AbortController | null>(null);
   const generation = useRef(0);
   const invalidate = useCallback(() => { generation.current++; controller.current?.abort(); }, []);
-  const clear = useCallback(() => { invalidate(); setItems([]); setPreferences([]); setUnread(0); setNext(null); }, [invalidate]);
+  const clear = useCallback(() => { invalidate(); setItems([]); setUnread(0); setNext(null); }, [invalidate]);
   const load = useCallback(async (cursor?: Cursor) => {
     controller.current?.abort();
     const request = new AbortController();
@@ -27,7 +26,7 @@ export function ConnectedNotifications({ memberId }: { memberId: string }) {
       if (request.signal.aborted || current !== generation.current) return;
       if (!response.ok || result.memberId !== memberId) { clear(); setError(result.message ?? "Sesi berubah. Muat ulang halaman."); return; }
       setItems(previous => cursor ? [...previous, ...result.items.filter((row: InboxNotification) => !previous.some(item => item.id === row.id))] : result.items);
-      setPreferences(result.preferences); setUnread(result.unread); setNext(result.next); setError("");
+      setUnread(result.unread); setNext(result.next); setError("");
     } catch (cause) { if (!request.signal.aborted) setError(cause instanceof Error ? cause.message : "Gagal memuat notifikasi."); }
   }, [memberId, clear]);
   useEffect(() => {
@@ -77,14 +76,5 @@ export function ConnectedNotifications({ memberId }: { memberId: string }) {
       {!item.read_at && <Button disabled={busy} onClick={() => void command({ action: "read", id: item.id })}>Tandai dibaca</Button>}
     </li>)}</ul>
     {next && <Button disabled={busy} onClick={() => void load(next)}>Muat lebih banyak</Button>}
-    <h2>Preferensi email</h2>
-    <p>Notifikasi di aplikasi tetap tersedia. Pengiriman email mengikuti kesiapan layanan.</p>
-    {preferences.filter(preference => {
-      const rule = notificationRegistry[preference.event_type];
-      return rule.implemented && rule.email !== "in_app_only";
-    }).map(preference => <label className="check-field" key={preference.event_type}>
-      <input type="checkbox" checked={preference.email_enabled} disabled={busy} onChange={event => void command({ action: "preference", eventType: preference.event_type, email: event.target.checked })} />
-      {notificationRegistry[preference.event_type].title}
-    </label>)}
   </section>;
 }

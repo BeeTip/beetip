@@ -1,6 +1,6 @@
 # Messaging and notification contracts
 
-This reference specifies the connected pilot. The implementation records describe [private order chat](connected-chat.md), [private support operations](connected-support.md), [in-app notifications](notifications.md), and [transactional email](transactional-email.md). Retention jobs remain proposed under their owning issues. The synthetic demo uses browser-local records.
+This reference specifies the connected pilot. The implementation records describe [private order chat](connected-chat.md), [private support operations](connected-support.md), [in-app notifications](notifications.md). Retention jobs remain proposed under their owning issues. The synthetic demo uses browser-local records.
 
 ## Conversation ownership
 
@@ -21,8 +21,6 @@ New support threads enter an MFA-protected queue with a fixed category label, ca
 | `messages` | UUID, conversation ID, sequence, authenticated sender, client message ID, normalized body, created time. Unique conversation sequence and unique conversation/sender/client-ID tuple. Immutable after commit except audited moderation tombstone. |
 | `conversation_reads` | Conversation ID, member ID, last read sequence, updated time. Unique pair, monotonic cursor bounded by committed history. |
 | `notifications` | UUID, recipient, event ID, event type, internal target reference, created time, read time. Unique event/recipient. |
-| `email_deliveries` | UUID, optional unique grouping key, template version, recipient ID, due time, attempt count, lease token and expiry, provider ID, status, last sanitized error. A non-chat event has one delivery. Chat events can share a grouped delivery. |
-| `email_delivery_sources` | Delivery ID and notification ID. Unique notification/channel association prevents duplicate logical dispatch while allowing several chat notifications to share a delivery. |
 
 Index messages by `(conversation_id, sequence)`, active memberships by `(member_id, conversation_id)`, notifications by `(recipient_id, created_at, id)`, and due email by `(status, due_at)`. Index support by `(state, assigned_operator_id, updated_at)` and enforce one read row per authorized member.
 
@@ -58,39 +56,21 @@ Use private buckets and server-authorized upload intents. Limit evidence to vali
 
 ## Notification rules
 
-| Event | Recipients | In-app | Email |
-| --- | --- | --- | --- |
-| Verification decision | Applicant | Immediately | Transactional summary |
-| Offer received or changed | Listing owner | Immediately | One summary per event |
-| Acceptance, expiry, cancellation | Affected customer and provider | Immediately | Transactional summary |
-| Funding review, amendment action, delivery confirmation | Affected parties and assigned operators | Immediately | Action-required summary |
-| New order message | Other active participant | Immediately | After 60 seconds if still unread, grouped per recipient/conversation window |
-| New unassigned support case | Support queue | Immediately | None |
-| New support message | Requester or assigned support operator | Immediately | After 60 seconds if still unread |
-| Dispute opened or resolved | Affected parties and assigned reviewer | Immediately | Transactional summary |
-| Transfer review or outcome | Affected member and assigned financial operators | Immediately | Transactional summary |
+| Event | Recipients | In-app |
+| --- | --- | --- |
+| Verification decision | Applicant | Immediately |
+| Offer received or changed | Listing owner | Immediately |
+| Acceptance, expiry, cancellation | Affected customer and provider | Immediately |
+| Funding review, amendment action, delivery confirmation | Affected parties and assigned operators | Immediately |
+| New order message | Other active participant | Immediately |
+| New unassigned support case | Support queue | Immediately |
+| New support message | Requester or assigned support operator | Immediately |
+| Dispute opened or resolved | Affected parties and assigned reviewer | Immediately |
+| Transfer review or outcome | Affected member and assigned financial operators | Immediately |
 
-Prevent self-notifications. Recheck current recipient access, notification preferences, unread status, and suppression immediately before email. Never include message text, exact address, receipts, bank details, or delivery codes in email. Use a generic subject and a trusted-origin deep link that requires login and renewed authorization. Escape template content and derive links from `APP_ORIGIN`, never from an arbitrary request host.
+Business transactions commit their in-app notification records together with the event. Recipients must have current access to the linked order or conversation. Auth handles confirmation and password recovery email separately.
 
-For chat email, group by recipient, conversation, and a fixed UTC minute window. Enforce a unique grouping key and retain the maximum message sequence for that window. Dispatch no earlier than 60 seconds after the window closes. Claim the window once, recheck the recipient read cursor transactionally, and suppress it if already read or access was revoked. A message committed in a later window creates another group. Reading immediately after the final check can still race with provider submission, so email never promises that a message remains unread.
-
-Message transactions and worker claims lock the same delivery group row. Only pending groups accept another source notification. If a group's claim or suppression already closed it, associate the new message with a fresh pending generation under the same window, keyed by an incremented generation. This prevents a delayed transaction from attaching a notification to already-sent work. Claiming a group checks all committed sources under that lock.
-
-In-app notification read state is independent of message read state. Read markers only advance for committed visible messages belonging to the current member. Marking a notification read does not mark all conversation history read. Unread counts count received, visible messages after the member's cursor.
-
-## Outbox and worker contract
-
-The owning business transaction writes both the durable change and its notification rows. Email intents exist before commit returns. Do not perform an email send or network call inside the database transaction. Notification failure after commit never rolls back an order or hides its in-app notification.
-
-Supabase Cron wakes a protected bounded Vercel job endpoint once per minute. The worker claims at most 10 due deliveries using row locks with skip-locked semantics, a lease token, and a 2-minute lease. An expired claim can be reclaimed before submission begins. An expired in-flight submission goes to reconciliation. Updates require the current lease token. The endpoint uses fixed job RPCs, recipients and copy derived by the service, and grants that exclude ordinary users.
-
-The Supabase secret is broadly privileged at the database level. Its server-only client exposes only the fixed RPCs for email jobs. Lint restricts imports to the worker and webhook routes. The replay interface uses the operator's member session and requires a current platform-admin role and verified MFA.
-
-Retry explicit Brevo rate-limit responses with jittered delays of 1, 5, 15, and 60 minutes, up to 5 attempts including the initial attempt. Apply bounded provider retry hints. Verified permanent bounce and policy events suppress the destination. Operators can inspect sanitized outcomes and authorize replay. Missed scheduler runs leave durable work pending and trigger a heartbeat alert after 5 minutes.
-
-Each Brevo dispatch generation has a stable UUID idempotency key. Ambiguous transport or worker outcomes wait for a provider callback or operator reconciliation. Operator replay of an uncertain dispatch requires a 30-minute wait and confirmation that the earlier request was not accepted. Webhooks use Brevo bearer authentication and a BeeTip-signed dispatch tag bound to the destination. Receipts are unique by dispatch, provider message ID, and normalized outcome. See [transactional email](transactional-email.md) for provider limits and the staged confirmation checklist.
-
-Provider acceptance, recipient-server delivery, bounce, and opened tracking are distinct outcomes. Avoid open tracking for pilot mail. Display an in-app record even when email fails. Do not claim exactly-once email delivery.
+Notification read state is independent of the conversation cursor. A notification read leaves the message history and unread message count intact.
 
 ## Retention and operations
 
@@ -100,4 +80,4 @@ Admin roles need MFA, least-privilege case assignment, and audited access. Publi
 
 ## Required verification
 
-Test unauthorized history and subscription, unrelated order IDs, self-notification prevention, paused and revoked memberships, settled conversation restrictions, concurrent sends, duplicate keys with changed text, read-cursor races, gaps during subscription, offline retries, paginated catch-up, and account changes. Test worker overlap, stale leases, duplicate webhooks, delayed jobs, provider timeout, post-send crash, dead-letter replay, bounce suppression, retention holds, and private-file expiry. Use multiple actual authenticated sessions rather than the demo persona switcher.
+Test unauthorized history and subscription, unrelated order IDs, self-notification prevention, paused and revoked memberships, settled conversation restrictions, concurrent sends, duplicate keys with changed text, read-cursor races, gaps during subscription, offline retries, paginated catch-up, and account changes. Test in-app delivery, retired application email routes, retention holds, and private-file expiry. Use multiple actual authenticated sessions rather than the demo persona switcher.

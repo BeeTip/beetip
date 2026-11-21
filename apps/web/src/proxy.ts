@@ -5,10 +5,11 @@ import { identityConfig, identityConfigured, mode } from "./server/identity/conf
 export async function proxy(request: NextRequest) {
   if (mode() === "demo") return NextResponse.next();
   const path = request.nextUrl.pathname;
-  if (path === "/api/jobs/transactional-email" || path === "/api/webhooks/brevo") return NextResponse.next();
+  if (["/api/jobs/transactional-email", "/api/webhooks/brevo", "/api/identity/email-operations", "/account/email-operations"].includes(path)) {
+    return new NextResponse(null, { status: 404 });
+  }
   const connected = path === "/account/listing-moderation"
     || path === "/account/order-cases"
-    || path === "/account/email-operations"
     || path === "/" || ["/drink.svg", "/food.svg", "/bag.svg"].includes(path) || /^\/listings\/[^/]+$/.test(path) || path === "/account" || path === "/account/affiliation" || path === "/support" || path === "/login"
     || /^\/(orders|chat)\/[^/]+$/.test(path) || path === "/chat" || path === "/account/orders" || path === "/account/listings" || path === "/account/offers" || path === "/account/notifications" || path === "/api/listings" || path.startsWith("/auth/") || path.startsWith("/api/identity/");
   if (!connected) return NextResponse.redirect(new URL("/account", request.url));

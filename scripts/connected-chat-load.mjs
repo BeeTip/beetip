@@ -71,14 +71,14 @@ export async function rehearseConnectedChatLoad({ admin, origin, sql }) {
       for (const message of page.messages) assert.equal(message.body, expected.get(message.id));
       durableMessages += page.messages.length;
     }
-    const intents = await sql.query(`select count(*)::int as count from private.notification_delivery_intents
-      where event_id = any($1::uuid[]) and channel='email' and status='pending'`, [[...expected.keys()]]);
-    assert.equal(intents.rows[0].count, latency.length, "Every chat acknowledgment must have an email intent");
+    const intents = await sql.query(`select channel, count(*)::int as count from private.notification_delivery_intents
+      where event_id = any($1::uuid[]) group by channel`, [[...expected.keys()]]);
+    assert.deepEqual(intents.rows, [{ channel: "in_app", count: latency.length }], "Every chat acknowledgment must have only an in-app intent");
 
     latency.sort((a, b) => a - b);
     return {
       members: members.length, sessions: sessions.length, orders: orders.length,
-      acknowledgments: latency.length, durableMessages, emailIntents: intents.rows[0].count,
+      acknowledgments: latency.length, durableMessages, inAppIntents: intents.rows[0].count,
       p95Ms: Math.round(latency[Math.ceil(latency.length * 0.95) - 1]),
     };
   } finally {

@@ -38,7 +38,7 @@ export const notificationRegistrySeed = {
   transfer_outcome: { recipients: "parties_and_assignees", target: "order", template: "transfer_outcome.v1", title: "Status transfer diperbarui", email: "summary", implemented: false },
 } as const satisfies Record<Exclude<NotificationEventType, "order_case_activity" | "listing_moderated">, Rule>;
 
-export const notificationRegistry = {
+const currentRegistry = {
   ...notificationRegistrySeed,
   amendment_action: { ...notificationRegistrySeed.amendment_action, implemented: true },
   funding_review: { ...notificationRegistrySeed.funding_review, implemented: true },
@@ -53,11 +53,11 @@ export const notificationRegistry = {
     title: "Status moderasi listing berubah", email: "in_app_only", implemented: true },
 } as const satisfies Record<NotificationEventType, Rule>;
 
+export const notificationRegistry = Object.fromEntries(
+  notificationEventTypes.map(event => [event, { ...currentRegistry[event], email: "in_app_only" }]),
+) as Record<NotificationEventType, Rule>;
+
 export const notificationQuerySchema = z.object({ before: z.iso.datetime({ offset: true }).optional(), beforeId: z.uuid().optional() }).strict()
   .refine(value => Boolean(value.before) === Boolean(value.beforeId));
-export const notificationCommandSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("read"), id: z.uuid() }).strict(),
-  z.object({ action: z.literal("preference"), eventType: z.enum(notificationEventTypes), email: z.boolean() }).strict(),
-]);
+export const notificationCommandSchema = z.object({ action: z.literal("read"), id: z.uuid() }).strict();
 export type InboxNotification = { id: string; event_type: NotificationEventType; created_at: string; read_at: string | null };
-export type NotificationPreference = { event_type: NotificationEventType; email_enabled: boolean };

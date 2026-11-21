@@ -55,8 +55,6 @@ try {
   const [owner, author, unrelated] = fixtures;
   const guest = await browser.newContext();
   assert.equal((await guest.request.get(`${origin}/api/identity/notifications`)).status(), 401);
-  await post(owner, "notifications", { action: "preference", eventType: "offer_received", email: false }, 403, { Origin: "https://unrelated.invalid" });
-  await post(owner, "notifications", { action: "preference", eventType: "offer_received", email: false }, 403, { "X-Beetip-Member": unrelated.id });
   await post(owner, "notifications", { action: "preference", eventType: "offer_received", email: false, actorId: owner.id }, 400);
   checks.push("separate real Auth sessions, safe login destination, guest/CSRF/account-change/actor-spoofing denials");
 
@@ -85,8 +83,10 @@ try {
   await post(owner, "notifications", { action: "read", id: first.id });
   assert.equal((await inbox(owner)).items[0].read_at, readAt);
   assert.equal((await inbox(owner)).unread, 0);
-  await post(owner, "notifications", { action: "preference", eventType: "offer_changed", email: false });
-  assert.equal((await inbox(owner)).preferences.find(row => row.event_type === "offer_changed").email_enabled, false);
+  await post(owner, "notifications", { action: "preference", eventType: "offer_changed", email: false }, 400);
+  assert.equal((await inbox(owner)).preferences, undefined);
+  await post(owner, "notifications", { action: "read", id: first.id }, 403, { Origin: "https://unrelated.invalid" });
+  await post(owner, "notifications", { action: "read", id: first.id }, 403, { "X-Beetip-Member": unrelated.id });
   for (let revision = 1; revision < 24; revision++) await post(author, "offers", { ...command, operationId: randomUUID(), version: revision, fee: 6000 + revision });
   const page1 = await inbox(owner);
   const page2 = await inbox(owner, page1.next);
@@ -94,7 +94,7 @@ try {
   assert.equal(page2.items.length, 4);
   assert.equal(new Set([...page1.items, ...page2.items].map(row => row.id)).size, 24);
   assert.equal(page1.unread, 23);
-  checks.push("monotonic concurrent reads, persisted email preferences, real-event keyset pagination and exact unread totals");
+  checks.push("monotonic concurrent reads, retired email preferences, real-event keyset pagination and exact unread totals");
 
   for (const width of [390, 768, 1440]) {
     await owner.page.setViewportSize({ width, height: 900 });

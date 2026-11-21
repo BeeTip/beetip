@@ -55,3 +55,17 @@ test("the connected artifact gate requires the simulated checkout handler", t =>
   assert.equal(result.status, 1, result.stdout || result.stderr);
   assert.match(result.stderr, /missing the simulated checkout handler/);
 });
+
+test("the connected artifact gate rejects application email routes and retains Auth routes", t => {
+  const auth = { "/api/identity/auth/route": "/api/identity/auth", "/auth/confirm/page": "/auth/confirm" };
+  const email = {
+    "/account/email-operations/page": "/account/email-operations",
+    "/api/identity/email-operations/route": "/api/identity/email-operations",
+    "/api/jobs/transactional-email/route": "/api/jobs/transactional-email",
+    "/api/webhooks/brevo/route": "/api/webhooks/brevo",
+  };
+  const retired = checkBuild(t, { [checkout]: checkoutPath, ...auth, ...email });
+  assert.equal(retired.status, 1, retired.stdout || retired.stderr);
+  for (const route of Object.values(email)) assert.ok(retired.stderr.includes(route), route);
+  assert.equal(checkBuild(t, { [checkout]: checkoutPath, ...auth }).status, 0);
+});

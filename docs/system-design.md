@@ -6,7 +6,7 @@ Proposed design, 17 November 2026. Product scope was confirmed in this planning 
 
 ## Problem
 
-BeeTip needs real accounts, private order and support messaging, in-app and email notifications, and supervised manual payment operations. The current interface depends on synchronous browser state and synthetic personas. A connected pilot needs trusted identity, atomic shared-state changes, private projections, and recoverable background delivery without a separate backend deployment.
+BeeTip needs real accounts, private order and support messaging, in-app notifications, and supervised manual payment operations. The current interface depends on synchronous browser state and synthetic personas. A connected pilot needs trusted identity, atomic shared-state changes, private projections, and recoverable background delivery without a separate backend deployment.
 
 The [current-system explanation](current-system.md) establishes the migration constraints. The [PRD](PRD.md) remains the product contract. Preserve mobile web, Indonesian copy, integer IDR, two-way listings, immutable commitments, funding gates, and independent review. Structured actions govern financial and fulfillment state even when participants discuss those actions in chat.
 
@@ -32,7 +32,7 @@ A timeout is not a business rejection. Retrying the same intended command retain
 
 ## Shape
 
-Choose a Next.js modular monolith on Vercel, with Supabase Auth, PostgreSQL, private Storage, and Realtime. Next.js is the sole application transport for protected reads and commands. Browser SDK access is limited to Auth, authorized upload intents, and private realtime subscriptions. PostgreSQL transaction functions own shared invariants. Supabase Cron triggers expiry and notification delivery work. A transactional email provider supplies Auth and application mail. Staging uses Brevo Free: initial custom SMTP was validated, then a signed Auth email hook added exact recipient restrictions through Brevo's HTTPS API. Application notification delivery remains later work.
+Choose a Next.js modular monolith on Vercel, with Supabase Auth, PostgreSQL, private Storage, and Realtime. Next.js is the sole application transport for protected reads and commands. Browser SDK access is limited to Auth, authorized upload intents, and private realtime subscriptions. PostgreSQL transaction functions own shared invariants. Supabase Cron triggers reservation expiry. The Auth email provider handles signup confirmation and password recovery. Staging uses Brevo Free: initial custom SMTP was validated, then a signed Auth email hook added exact recipient restrictions through Brevo's HTTPS API.
 
 ```mermaid
 flowchart TD
@@ -105,7 +105,7 @@ Parse branded IDs and decimal sequences behind boundary schemas. The browser nev
 | `apps/web/src/server/orders` | Acceptance, capacity, terms, amendments, fulfillment, confirmation |
 | `apps/web/src/server/ledger` | Funding, receipts, allocations, cancellations, disputes, transfers, reconciliation |
 | `apps/web/src/server/messaging` | Both conversation kinds, messages, membership, read cursors, case assignment |
-| `apps/web/src/server/notifications` | Inbox, preferences, leased outbox, delivery outcomes |
+| `apps/web/src/server/notifications` | Private inbox, authorized targets and read state |
 | `apps/web/src/server/files` | Upload intents, validation, finalization, authorized download |
 | `apps/web/src/app/api` | Thin transport adapters and protected job/webhook routes |
 | `packages/domain` | Pure transition decisions, money calculations, value types |
