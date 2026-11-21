@@ -56,7 +56,7 @@ Use the appropriate supported Supabase key form when provisioning. Never expose 
 6. Create private evidence buckets with size, content-type, ownership, and retention limits. Test upload finalization and short-lived authorized downloads.
 7. Disable public Realtime channels. Authorize private per-member invalidation topics. Deploy the transactional notification triggers and test reconnect fetching.
 8. Enable Supabase Cron for expiry and outbox wakeups. Store the authenticated worker URL and credentials in secret storage. Deploy bounded worker execution and inspect scheduler run records. [Supabase Cron](https://supabase.com/docs/guides/cron) supports SQL jobs and HTTP invocation.
-9. Restore a backup into an isolated environment, including private object recovery. Record measured recovery time and the actual recovery point. Proposed pilot targets are RPO at most 24 hours and RTO at most 4 hours, pending operator and budget agreement.
+9. Restore a database export and its companion private-object backup into an isolated environment. Measure against the [pilot targets](pilot-operating-policy.md) of at most 24 hours of data loss and 4 hours to restore service. Use encrypted exports on the Free plan and retain a manifest that binds the database and object copies.
 
 ## Configure the Vercel build
 

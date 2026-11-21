@@ -18,6 +18,8 @@ The [handover rehearsal](connected-handover.md#verification) verifies the simula
 
 The 20 November hosted rehearsal verified that two separate browser sessions could publish and take a request, exchange messages that survived reload, reuse a private sample receipt from an earlier listing, and confirm delivery with a backup code. A separate temporary account confirmed and replaced its password using generated Auth links. The 18 November [onboarding record](public-onboarding.md) covers actual email delivery. See [BTP-21](https://github.com/BeeTip/beetip/issues/23) for deployment and rehearsal evidence.
 
+After [PR #51](https://github.com/BeeTip/beetip/pull/51), hosted schema read-back showed all 37 migrations through `20261121015951` and both incident-pause triggers enabled with the pause inactive. Separate booth sessions at 390 px could read a shared order with private, uncached responses. An anonymous session was denied. Public smoke passed after migration. The 50-member load rehearsal, camera fallback and accessibility checks ran on the isolated candidate.
+
 ## Start the full synthetic demo
 
 From the repository root in PowerShell, use Node.js 24.22.1 and the pinned pnpm version:
@@ -152,7 +154,7 @@ Record the source commit, last migration, target environment and validation resu
 | Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
 | Connected production startup | CI starts the compiled app with identity configuration empty and verifies the [unavailable screens and blocked demo routes](btp21-production-startup.md). |
 | Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
-| Real-data pilot | Before collecting real evidence, record the approved retention and account data procedures, named operators, the exact candidate's staging and device results, and a hosted recovery rehearsal against approved recovery targets. |
+| Real-data pilot | Apply the [pilot operating policy](pilot-operating-policy.md). Before collecting real evidence, rehearse retention and account-data controls, name operators, and verify the exact candidate's staging, device and hosted recovery results. |
 
 The [manual-payment pilot](https://github.com/BeeTip/beetip/issues/26) was closed as not planned. Any future paid pilot would need a separate release and acceptance for settlement.
 
