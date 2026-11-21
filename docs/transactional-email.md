@@ -30,6 +30,8 @@ When a recipient has corrected their address and an operator has already queued 
 
 ## Verification and remaining staged gates
 
+The hosted booth's Vercel environment has no `BEETIP_EMAIL_*` settings as of 21 November 2026. Order and chat emails use this separate worker, so the hosted demo relies on in-app notifications. Supabase signup and recovery use the Brevo-backed Auth hook recorded in [public onboarding](public-onboarding.md). Supabase's built-in SMTP is limited to project team addresses and two messages per hour, and only handles Auth email. [Supabase SMTP documentation](https://supabase.com/docs/guides/auth/auth-smtp)
+
 Run the following from the repository root. Set `BEETIP_LOCAL_DATABASE_URL` to a disposable loopback PostgreSQL server without pg_cron for the database harness. It creates a fresh database, applies all migrations, exercises job and member roles, and drops its own fixtures. A complete local Supabase stack can separately verify migration application and Data API access. Use a distinct Supabase project ID and unused ports.
 
 ```text

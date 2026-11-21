@@ -142,7 +142,7 @@ Follow the [local recovery rehearsal](btp23-local-recovery.md) to verify that a 
 
 ## Release boundary
 
-The current release target is a synthetic demo. Every new connected order uses one-click simulated checkout. Migration `20261121004000` removes executable funding, transfer, and reconciliation commands while preserving any historical records. It converts active unpaid orders only when no funding record exists, retaining their original reservation deadline.
+The current release target is a synthetic demo. Use synthetic listings, order details, receipts, and affiliation documents on both the local and hosted demo. Every new connected order uses one-click simulated checkout. Migration `20261121004000` removes executable funding, transfer, and reconciliation commands while preserving any historical records. It converts active unpaid orders only when no funding record exists, retaining their original reservation deadline.
 
 Record the source commit, last migration, target environment and validation results together before promoting a candidate. Use the following evidence for each target.
 
@@ -152,6 +152,8 @@ Record the source commit, last migration, target environment and validation resu
 | Connected rehearsal | Migrations apply in order, the production build starts with the correct origin, and separate confirmed test accounts complete the implemented journey. Verify authorized staff actions separately with a scoped MFA account. |
 | Connected production startup | CI starts the compiled app with identity configuration empty and verifies the [unavailable screens and blocked demo routes](btp21-production-startup.md). |
 | Deployment | Verify the deployed revision, target database schema, callback origin and configuration, then rerun the target environment's smoke and session checks. |
-| Real-data pilot | Record the approved retention and account data procedures, the exact candidate's staging and device results, and the recovery and settlement rehearsals before collecting real evidence or taking payments. |
+| Real-data pilot | Before collecting real evidence, record the approved retention and account data procedures, named operators, the exact candidate's staging and device results, and a hosted recovery rehearsal against approved recovery targets. |
+
+The [manual-payment pilot](https://github.com/BeeTip/beetip/issues/26) was closed as not planned. Any future paid pilot would need a separate release and acceptance for settlement.
 
 Before hosting the demo, verify the exact candidate with separate sessions and the [deployment runbook](vercel-deployment.md). Record [release checks](https://github.com/BeeTip/beetip/issues/23), [recovery checks](https://github.com/BeeTip/beetip/issues/25), and any [transactional email](transactional-email.md) results for the target environment.

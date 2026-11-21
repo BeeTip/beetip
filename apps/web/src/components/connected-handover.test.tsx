@@ -24,6 +24,29 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
+it("keeps an incomplete backup code available for correction without submitting it", async () => {
+  const fetchHandover = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ ok: true }));
+  vi.stubGlobal("fetch", fetchHandover);
+  await act(async () => root.render(<ConnectedHandover orderId="00000000-0000-4000-8000-000000000001"
+    memberId="provider" orderState="delivering" provider onChange={vi.fn()} />));
+  const input = host.querySelector<HTMLInputElement>("[name=code]")!;
+  const submit = host.querySelector<HTMLButtonElement>("button[type=submit]")!;
+
+  input.value = "0123";
+  await act(async () => submit.click());
+  expect(fetchHandover).not.toHaveBeenCalled();
+  expect(input.value).toBe("0123");
+  expect(input.getAttribute("aria-invalid")).toBe("true");
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain("Masukkan 12 karakter");
+  expect(document.activeElement).toBe(input);
+
+  input.value = "0123 45ab-cdef";
+  await act(async () => submit.click());
+  expect(fetchHandover).toHaveBeenCalledOnce();
+  expect(JSON.parse(String(fetchHandover.mock.calls[0]![1].body)).code).toBe("012345ABCDEF");
+  expect(host.textContent).toContain("Serah terima dikonfirmasi.");
+});
+
 it.each(["2026-11-19T00:05:00Z", "2026-11-18T23:55:00Z"])(
   "shows and clears the issued code with a browser wall clock of %s",
   async browserTime => {
