@@ -45,6 +45,7 @@ export default async function Page() {
       <h2 id="dashboard-account">Akun dan bantuan</h2>
       <div className="dashboard-settings">
         <DashboardLink href="/support" label="Hubungi bantuan" icon={LifeBuoy} />
+        {member.status !== "suspended" && <DashboardLink href="/support?request=privacy" label="Permintaan data pribadi" icon={ShieldCheck} />}
         {member.status !== "suspended" && <DashboardLink href="/account/affiliation" label="Afiliasi dan keamanan akun" icon={ShieldCheck} />}
         {roles?.data?.some(grant => grant.role === "finance_operation") && <DashboardLink href="/account/order-cases" label="Pemeriksaan kasus pesanan" icon={ShieldCheck} />}
         {roles?.data?.some(grant => grant.role === "platform_admin") && <DashboardLink href="/account/listing-moderation" label="Moderasi listing" icon={ShieldCheck} />}

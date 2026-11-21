@@ -15,8 +15,9 @@ type Workspace = { cases: CaseSummary[]; queue: QueueCase[]; operators: Operator
 type LeadAction = "reassign" | "grant_order" | "revoke_order";
 
 const date = (value: string) => new Date(value).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) + " WIB";
+const privacyRequests = { access: "Permintaan salinan data pribadi.", deletion: "Permintaan penghapusan data pribadi." };
 
-export function ConnectedSupport({ memberId, order, initialCase }: { memberId: string; order?: string; initialCase?: string }) {
+export function ConnectedSupport({ memberId, order, initialCase, privacy }: { memberId: string; order?: string; initialCase?: string; privacy?: boolean }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [selected, select] = useState(initialCase);
   const [refresh, setRefresh] = useState(0);
@@ -125,7 +126,7 @@ export function ConnectedSupport({ memberId, order, initialCase }: { memberId: s
     {error && <p role="alert">{error}</p>}
     {!workspace && !error && <p role="status">Memuat percakapan...</p>}
     {selected && <SupportThread key={selected} id={selected} memberId={memberId} refresh={refresh} call={call} onChange={invalidate} onBack={() => select(undefined)} />}
-    <OpenSupport key={order} order={order} call={call} onOpen={id => { select(id); invalidate(); }} />
+    <OpenSupport key={privacy ? "privacy" : order} order={order} privacy={privacy} call={call} onOpen={id => { select(id); invalidate(); }} />
     {workspace && <>
       <section className="panel stack" aria-label="Percakapan bantuan">
         <h2>Percakapan bantuan</h2>
@@ -149,17 +150,18 @@ export function ConnectedSupport({ memberId, order, initialCase }: { memberId: s
   </section>;
 }
 
-function OpenSupport({ order, call, onOpen }: { order?: string; call: SupportCall; onOpen: (id: string) => void }) {
+function OpenSupport({ order, privacy, call, onOpen }: { order?: string; privacy?: boolean; call: SupportCall; onOpen: (id: string) => void }) {
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState<Category>(order ? "order" : "general");
+  const [category, setCategory] = useState<Category>(privacy ? "account" : order ? "order" : "general");
+  const [requestType, setRequestType] = useState<keyof typeof privacyRequests>("access");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
   const attempt = useRef<{ key: string; id: string } | null>(null);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || !body.trim()) return;
-    const text = body.trim();
+    const text = privacy ? [privacyRequests[requestType], body.trim()].filter(Boolean).join("\n\n") : body.trim();
+    if (busy || !text) return;
     const reference = category === "order" ? order : undefined;
     const key = JSON.stringify([text, category, reference]);
     if (attempt.current?.key !== key) attempt.current = { key, id: crypto.randomUUID() };
@@ -171,7 +173,7 @@ function OpenSupport({ order, call, onOpen }: { order?: string; call: SupportCal
       if (!result.conversationId) throw new Error("Permintaan belum dapat dikonfirmasi. Coba dengan pesan yang sama.");
       setBody("");
       attempt.current = null;
-      setMessage("Pesan bantuan tersimpan.");
+      setMessage(privacy ? "Permintaan tersimpan. Balasan petugas akan muncul di percakapan ini." : "Pesan bantuan tersimpan.");
       onOpen(result.conversationId);
     } catch (error) {
       setFailed(true);
@@ -179,15 +181,23 @@ function OpenSupport({ order, call, onOpen }: { order?: string; call: SupportCal
     } finally { setBusy(false); }
   }
   return <form className="panel stack" onSubmit={submit}>
-    <h2>Permintaan baru</h2>
-    <label className="field">Kategori
+    <h2>{privacy ? "Permintaan data pribadi" : "Permintaan baru"}</h2>
+    {privacy ? <>
+      <label className="field">Jenis permintaan
+        <select name="requestType" value={requestType} onChange={event => setRequestType(event.target.value as keyof typeof privacyRequests)} disabled={busy}>
+          <option value="access">Minta salinan data</option>
+          <option value="deletion">Minta penghapusan data</option>
+        </select>
+      </label>
+      <p>Petugas akan meninjau permintaanmu dan membalas di percakapan ini. Jangan sertakan kata sandi, kode verifikasi, atau foto identitas.</p>
+    </> : <label className="field">Kategori
       <select value={category} onChange={event => setCategory(event.target.value as Category)} disabled={busy}>
         {Object.entries(supportCategories).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
-    </label>
+    </label>}
     {order && category === "order" && <p>Pesanan dari tautan ini akan dilampirkan secara privat.</p>}
-    <label className="field">Pesan bantuan<textarea name="body" value={body} onChange={event => setBody(event.target.value)} maxLength={1000} disabled={busy} required /></label>
-    <Button type="submit" disabled={busy || !body.trim()}>{busy ? "Menyimpan..." : failed ? "Coba kirim lagi" : "Kirim ke bantuan"}</Button>
+    <label className="field">{privacy ? "Keterangan (opsional)" : "Pesan bantuan"}<textarea name="body" value={body} onChange={event => setBody(event.target.value)} maxLength={privacy ? 950 : 1000} disabled={busy} required={!privacy} /></label>
+    <Button type="submit" disabled={busy || (!privacy && !body.trim())}>{busy ? "Menyimpan..." : failed ? "Coba kirim lagi" : privacy ? "Kirim permintaan" : "Kirim ke bantuan"}</Button>
     <p role="status">{message}</p>
   </form>;
 }
